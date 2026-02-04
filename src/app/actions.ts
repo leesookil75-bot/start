@@ -171,7 +171,7 @@ export async function initializeDB() {
     try {
         await sql`
             CREATE TABLE IF NOT EXISTS users (
-                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                id UUID PRIMARY KEY,
                 phone_number VARCHAR(255) UNIQUE NOT NULL,
                 name VARCHAR(255) NOT NULL,
                 cleaning_area VARCHAR(255) NOT NULL,
@@ -182,7 +182,7 @@ export async function initializeDB() {
 
         await sql`
             CREATE TABLE IF NOT EXISTS usage_records (
-                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                id UUID PRIMARY KEY,
                 size INT NOT NULL,
                 user_id UUID REFERENCES users(id),
                 user_name VARCHAR(255),
@@ -191,16 +191,37 @@ export async function initializeDB() {
         `;
 
         // Attempt to create extension, might fail if not superuser but usually fine on Vercel
+        // gen_random_uuid() is built-in for Postgres 13+, so we might not need uuid-ossp
         try {
             await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`;
         } catch (e) {
             console.log('UUID extension creation failed or already exists (ignoring):', e);
         }
 
+        await seedAdminUser();
+
         return { success: true };
     } catch (error: any) {
         console.error('Init DB Failed:', error);
         return { success: false, error: error.message };
+    }
+}
+
+async function seedAdminUser() {
+    try {
+        const { rows } = await sql`SELECT COUNT(*) FROM users`;
+        const count = parseInt(rows[0].count);
+
+        if (count === 0) {
+            const adminId = crypto.randomUUID();
+            await sql`
+                INSERT INTO users (id, phone_number, name, cleaning_area, role)
+                VALUES (${adminId}, '010-1234-5678', '관리자', '관리실', 'admin')
+            `;
+            console.log('Seeded default admin user');
+        }
+    } catch (e) {
+        console.error('Failed to seed admin:', e);
     }
 }
 

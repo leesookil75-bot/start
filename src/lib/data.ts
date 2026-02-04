@@ -89,23 +89,19 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
 
   if (isPostgresEnabled()) {
     try {
+      const id = crypto.randomUUID();
       await sql`
-        INSERT INTO users (phone_number, name, cleaning_area, role, created_at)
-        VALUES (${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW())
+        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at)
+        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW())
        `;
-      // Return constructed user (ID fetching might need RETURNING clause)
-      // Let's use RETURNING
-      const { rows } = await sql<UserRow>`
-         SELECT * FROM users WHERE phone_number = ${user.phoneNumber}
-       `;
-      const r = rows[0];
+      // Return constructed user
       return {
-        id: r.id,
-        phoneNumber: r.phone_number,
-        name: r.name,
-        cleaningArea: r.cleaning_area,
-        role: r.role as 'admin' | 'cleaner',
-        createdAt: r.created_at.toString()
+        id: id,
+        phoneNumber: user.phoneNumber,
+        name: user.name,
+        cleaningArea: user.cleaningArea,
+        role: user.role,
+        createdAt: new Date().toISOString()
       };
     } catch {
       throw new Error('Database error adding user');
@@ -169,13 +165,14 @@ export async function getRecords(): Promise<UsageRecord[]> {
 
 export async function addRecord(size: 45 | 75, userId?: string, userName?: string): Promise<UsageRecord> {
   if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
     await sql`
-      INSERT INTO usage_records (size, user_id, user_name, timestamp)
-      VALUES (${size}, ${userId}, ${userName}, NOW())
+      INSERT INTO usage_records (id, size, user_id, user_name, timestamp)
+      VALUES (${id}, ${size}, ${userId}, ${userName}, NOW())
      `;
     // Construct generic return
     return {
-      id: 'generated-by-db',
+      id: id,
       size,
       timestamp: new Date().toISOString(),
       userId,
@@ -209,7 +206,7 @@ export async function manageUsageDelta(
 
     if (delta45 > 0) {
       for (let i = 0; i < delta45; i++) {
-        await sql`INSERT INTO usage_records (size, user_id, user_name, timestamp) VALUES (45, ${userId}, ${userName}, NOW())`;
+        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 45, ${userId}, ${userName}, NOW())`;
       }
     } else if (delta45 < 0) {
       const limit = Math.abs(delta45);
@@ -227,7 +224,7 @@ export async function manageUsageDelta(
 
     if (delta75 > 0) {
       for (let i = 0; i < delta75; i++) {
-        await sql`INSERT INTO usage_records (size, user_id, user_name, timestamp) VALUES (75, ${userId}, ${userName}, NOW())`;
+        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 75, ${userId}, ${userName}, NOW())`;
       }
     } else if (delta75 < 0) {
       const limit = Math.abs(delta75);

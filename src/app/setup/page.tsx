@@ -39,7 +39,7 @@ export default function SetupPage() {
 
     return (
         <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-            <h1 style={{ marginBottom: '1rem' }}>🔧 DB 연결 진단 및 초기화</h1>
+            <h1 style={{ marginBottom: '1rem' }}>🔧 DB 연결 진단 및 초기화 (v1.2 - Ultimate Fix)</h1>
 
             <div style={{ backgroundColor: '#f5f5f5', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
                 <p style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
