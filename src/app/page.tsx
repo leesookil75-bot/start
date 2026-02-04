@@ -1,6 +1,7 @@
 import styles from './page.module.css';
-import { recordUsage, getCurrentUser, logout, getTodayUserUsage } from './actions';
+import { recordUsage, getCurrentUser, logout, getTodayUserUsage, getMyStats } from './actions';
 import { redirect } from 'next/navigation';
+import ClientHome from './client-home';
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -15,6 +16,7 @@ export default async function Home() {
   }
 
   const initialUsage = await getTodayUserUsage();
+  const stats = await getMyStats();
 
   return (
     <main className={styles.main}>
@@ -28,12 +30,9 @@ export default async function Home() {
         </form>
       </div>
 
-      <ClientHome initialUsage={initialUsage} />
+      <ClientHome initialUsage={initialUsage} stats={stats} />
 
     </main>
   );
 }
-
-// Client component for interactivity
-import ClientHome from './client-home';
 

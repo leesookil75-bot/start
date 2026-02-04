@@ -253,143 +253,61 @@
   color: #888;
 }
 
-.header {
+
+/* Tabs */
+.tabs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
   width: 100%;
-  max-width: 400px;
-  margin-bottom: 2rem;
+  max-width: 480px;
 }
 
-.userInfo {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.userName {
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.userArea {
-  font-size: 0.8rem;
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: #888;
-}
-
-.logoutButton {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #aaa;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.logoutButton:hover {
+.activeTab {
   background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.card {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  border-radius: 16px;
-  background: rgba(var(--card-rgb), 0.1);
-  border: 1px solid rgba(var(--card-border-rgb), 0.15);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-  letter-spacing: -0.02em;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 140px;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: white;
+  color: #fff;
   font-weight: 600;
-  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Slider Layout */
+.sliderWindow {
+  width: 100%;
+  max-width: 480px;
   overflow: hidden;
+  position: relative;
+  touch-action: pan-y;
+  /* Allow vertical scroll, capture horizontal swipes */
+  /* Optional: ensure min height or let content dictate */
 }
 
-.button:active {
-  transform: scale(0.95);
+.sliderContainer {
+  display: flex;
+  width: 200%;
+  /* For 2 slides */
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.btn45 {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.btn45:hover {
-  background: rgba(16, 185, 129, 0.2);
-  box-shadow: 0 0 20px var(--accent-45-glow);
-  border-color: var(--accent-45);
-}
-
-.btn75 {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.btn75:hover {
-  background: rgba(245, 158, 11, 0.2);
-  box-shadow: 0 0 20px var(--accent-75-glow);
-  border-color: var(--accent-75);
-}
-
-.label {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.subLabel {
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-.message {
-  margin-top: 1rem;
-  min-height: 1.5rem;
-  font-size: 0.875rem;
-  color: var(--foreground);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.messageVisible {
-  opacity: 1;
-}
-
-.footer {
-  margin-top: 2rem;
-  font-size: 0.75rem;
-  color: #666;
+.slide {
+  width: 50%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 2px;
+  /* Slight padding if needed */
 }
