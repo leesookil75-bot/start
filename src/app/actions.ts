@@ -164,6 +164,52 @@ export async function getUsageStats() {
     return { stats, records };
 }
 
+export async function getMyStats() {
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    const records = await getRecords();
+    const userRecords = records.filter(r => r.userId === user.id);
+
+    const now = new Date();
+    // Reset to start of today
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Start of this week (Sunday)
+    const day = now.getDay();
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - day);
+    // Start of this month
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const stats = {
+        daily: { count45: 0, count75: 0 },
+        weekly: { count45: 0, count75: 0 },
+        monthly: { count45: 0, count75: 0 }
+    };
+
+    userRecords.forEach(r => {
+        const rDate = new Date(r.timestamp);
+
+        // Count just for aggregation logic, simplistic comparison
+        if (rDate >= todayStart) {
+            if (r.size === 45) stats.daily.count45++;
+            else if (r.size === 75) stats.daily.count75++;
+        }
+
+        if (rDate >= weekStart) {
+            if (r.size === 45) stats.weekly.count45++;
+            else if (r.size === 75) stats.weekly.count75++;
+        }
+
+        if (rDate >= monthStart) {
+            if (r.size === 45) stats.monthly.count45++;
+            else if (r.size === 75) stats.monthly.count75++;
+        }
+    });
+
+    return stats;
+}
+
 // --- Database Initialization ---
 import { sql } from '@vercel/postgres';
 

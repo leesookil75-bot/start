@@ -36,9 +36,10 @@ export default function ClientHome({ initialUsage }: ClientHomeProps) {
             const result = await submitUsage(pendingDelta.count45, pendingDelta.count75);
             if (result.success) {
                 // Update saved counts to match the new reality
+                // Reset saved counts to 0 to visually clear the form as requested
                 setSavedCounts({
-                    count45: current45,
-                    count75: current75
+                    count45: 0,
+                    count75: 0
                 });
                 // Reset delta
                 setPendingDelta({ count45: 0, count75: 0 });
@@ -53,7 +54,12 @@ export default function ClientHome({ initialUsage }: ClientHomeProps) {
 
     return (
         <div className={styles.card}>
-            <h1 className={styles.title}>오늘의 배출량</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h1 className={styles.title} style={{ marginBottom: 0 }}>오늘의 배출량</h1>
+                <a href="/my-stats" style={{ color: '#aaa', fontSize: '0.9rem', textDecoration: 'underline' }}>
+                    📊 내 통계 보기
+                </a>
+            </div>
 
             <div className={styles.inputRows}>
                 {/* 45L Row */}
