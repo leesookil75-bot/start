@@ -6,13 +6,5 @@
     "cleaningArea": "관리실",
     "role": "admin",
     "createdAt": "2024-01-01T00:00:00.000Z"
-  },
-  {
-    "name": "이수길",
-    "phoneNumber": "01035208808",
-    "cleaningArea": "사우동 2구역",
-    "role": "cleaner",
-    "id": "c267fbed-c59b-4896-bc63-d5a9b51b20f8",
-    "createdAt": "2026-02-03T05:50:28.324Z"
   }
 ]

@@ -124,9 +124,9 @@ export async function submitUsage(delta45: number, delta75: number): Promise<{ s
         revalidatePath('/admin');
         revalidatePath('/');
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to submit usage:', error);
-        return { success: false, error: 'Failed to submit usage' };
+        return { success: false, error: error.message || 'Failed to submit usage' };
     }
 }
 
@@ -162,4 +162,58 @@ export async function getUsageStats() {
     );
 
     return { stats, records };
+}
+
+// --- Database Initialization ---
+import { sql } from '@vercel/postgres';
+
+export async function initializeDB() {
+    try {
+        await sql`
+            CREATE TABLE IF NOT EXISTS users (
+                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                phone_number VARCHAR(255) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                cleaning_area VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        await sql`
+            CREATE TABLE IF NOT EXISTS usage_records (
+                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                size INT NOT NULL,
+                user_id UUID REFERENCES users(id),
+                user_name VARCHAR(255),
+                timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        // Attempt to create extension, might fail if not superuser but usually fine on Vercel
+        try {
+            await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`;
+        } catch (e) {
+            console.log('UUID extension creation failed or already exists (ignoring):', e);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Init DB Failed:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function debugConnection() {
+    try {
+        const hasUrl = !!process.env.POSTGRES_URL;
+        if (!hasUrl) {
+            return { success: false, error: 'MISSING_ENV: POSTGRES_URL environment variable is not set. Did you Redeploy?' };
+        }
+
+        await sql`SELECT 1`;
+        return { success: true, message: 'Database connection successful!' };
+    } catch (e: any) {
+        return { success: false, error: 'CONNECTION_FAILED: ' + e.message };
+    }
 }

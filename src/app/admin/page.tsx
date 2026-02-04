@@ -1,13 +1,19 @@
 import Link from 'next/link';
 import styles from './admin.module.css';
-import { getUsageStats, logout } from '../actions';
+import { getUsageStats, logout, getCurrentUser } from '../actions';
 import { getStatsByPeriod, getStatsByArea, getExcelData } from '@/lib/statistics';
 import AdminDashboardClient from './dashboard-client';
+import { redirect } from 'next/navigation';
 
 // Ensure dynamic rendering to fetch fresh data on every request
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') {
+        redirect('/login');
+    }
+
     const { stats, records } = await getUsageStats();
 
     // Fetch all stats server-side

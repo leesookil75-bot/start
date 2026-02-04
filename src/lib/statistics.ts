@@ -1,4 +1,4 @@
-import { UsageRecord, getRecords, User, getUsers } from './data';
+import { getRecords, getUsers } from './data';
 
 export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type StatEntry = {
@@ -44,7 +44,7 @@ export async function getStatsByPeriod(
     });
 
     // Sort keys
-    let sortedKeys = Object.keys(rawData).sort();
+    const sortedKeys = Object.keys(rawData).sort();
     // Reverse sort for display (recent first for some views, but charts usually need old->new. Let's send old->new)
     if (period === 'daily') {
         sortedKeys.sort((a, b) => new Date(a.replace(/\. /g, '-')).getTime() - new Date(b.replace(/\. /g, '-')).getTime());

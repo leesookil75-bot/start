@@ -37,11 +37,15 @@ const USERS_FILE_PATH = path.join(process.cwd(), 'users.json');
 const isPostgresEnabled = () => !!process.env.POSTGRES_URL;
 
 // --- Helper to ensure files exist ---
-async function ensureFile(filePath: string, defaultData: any) {
+async function ensureFile(filePath: string, defaultData: unknown) {
   try {
     await fs.access(filePath);
   } catch {
-    await fs.writeFile(filePath, JSON.stringify(defaultData, null, 2), 'utf-8');
+    try {
+      await fs.writeFile(filePath, JSON.stringify(defaultData, null, 2), 'utf-8');
+    } catch (error) {
+      console.warn(`Could not create file ${filePath}. This is expected on Vercel if DB is not connected.`, error);
+    }
   }
 }
 
@@ -67,8 +71,8 @@ export async function getUsers(): Promise<User[]> {
 
   // Fallback to File System
   await ensureFile(USERS_FILE_PATH, []);
-  const data = await fs.readFile(USERS_FILE_PATH, 'utf-8');
   try {
+    const data = await fs.readFile(USERS_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch {
     return [];
@@ -103,7 +107,7 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         role: r.role as 'admin' | 'cleaner',
         createdAt: r.created_at.toString()
       };
-    } catch (e) {
+    } catch {
       throw new Error('Database error adding user');
     }
   }
@@ -153,9 +157,10 @@ export async function getRecords(): Promise<UsageRecord[]> {
     }
   }
 
+  // Fallback to File System
   await ensureFile(DATA_FILE_PATH, []);
-  const data = await fs.readFile(DATA_FILE_PATH, 'utf-8');
   try {
+    const data = await fs.readFile(DATA_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch {
     return [];
@@ -244,16 +249,10 @@ export async function manageUsageDelta(
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
 
-  // Helper to get today's records for this user
-  const getUserTodayRecords = (size: 45 | 75) =>
-    records.filter(r =>
-      r.userId === userId &&
-      r.size === size &&
-      r.timestamp.startsWith(todayStr)
-    );
+
 
   // We can just construct the new list.
-  let newRecordsList = [...records];
+  const newRecordsList = [...records];
 
   // Removal Logic 45L
   if (delta45 < 0) {

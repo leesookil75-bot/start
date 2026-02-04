@@ -1,4 +1,6 @@
 import { getUsers } from '@/lib/data';
+import { getCurrentUser } from '../../actions';
+import { redirect } from 'next/navigation';
 import UserManagement from './user-management';
 import Link from 'next/link';
 import styles from './user-management.module.css';
@@ -6,6 +8,11 @@ import styles from './user-management.module.css';
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        redirect('/login');
+    }
+
     const users = await getUsers();
 
     return (
