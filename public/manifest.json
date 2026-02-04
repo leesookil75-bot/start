@@ -1,0 +1,17 @@
+{
+  "name": "Clean Track",
+  "short_name": "Clean Track",
+  "description": "Track your waste bag usage simply.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait-primary"
+}
