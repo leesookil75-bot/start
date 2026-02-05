@@ -422,3 +422,18 @@
         /* Active slightly bigger? or same */
     }
 }
+    /* Dashboard internal tabs (Records, Daily, Weekly...) */
+    .tabs {
+        overflow-x: auto; /* Allow scroll if it still barely fits */
+        max-width: 100%;
+        gap: 0.25rem; /* Tighter gap */
+        justify-content: flex-start; /* Start from left */
+    }
+    
+    .tab {
+        padding: 0.4rem 0.6rem; /* Smaller padding */
+        font-size: 0.75rem; /* Smaller font */
+        white-space: nowrap;
+        flex-shrink: 0; /* Prevent squishing too much */
+    }
+}
