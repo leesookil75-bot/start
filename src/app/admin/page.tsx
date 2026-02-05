@@ -2,6 +2,7 @@ import Link from 'next/link';
 import styles from './admin.module.css';
 import { getUsageStats, logout, getCurrentUser } from '../actions';
 import { getStatsByPeriod, getStatsByArea, getExcelData } from '@/lib/statistics';
+import { getNotices } from '@/lib/data';
 import AdminDashboardClient from './dashboard-client';
 import { redirect } from 'next/navigation';
 
@@ -23,14 +24,16 @@ export default async function AdminPage() {
         monthlyStats,
         yearlyStats,
         areaStats,
-        excelData
+        excelData,
+        notices
     ] = await Promise.all([
         getStatsByPeriod('daily'),
         getStatsByPeriod('weekly'),
         getStatsByPeriod('monthly'),
         getStatsByPeriod('yearly'),
         getStatsByArea(),
-        getExcelData()
+        getExcelData(),
+        getNotices()
     ]);
 
     return (
@@ -38,9 +41,6 @@ export default async function AdminPage() {
             <header className={styles.header}>
                 <h1 className={styles.title}>Dashboard</h1>
                 <div className={styles.headerActions}>
-                    <Link href="/admin/notices" className={styles.backLink} style={{ background: 'rgba(255, 165, 0, 0.1)', color: 'orange' }}>
-                        Manage Notices
-                    </Link>
                     <Link href="/change-password" className={styles.changePasswordLink}>
                         Change Password
                     </Link>
@@ -55,21 +55,7 @@ export default async function AdminPage() {
                 </div>
             </header>
 
-            {/* Stats Grid - Server Side Rendered */}
-            <div className={styles.statsGrid}>
-                <div className={styles.card}>
-                    <div className={styles.statLabel}>45L Bags</div>
-                    <div className={`${styles.statValue} ${styles.value45}`}>{stats.count45}</div>
-                </div>
-                <div className={styles.card}>
-                    <div className={styles.statLabel}>75L Bags</div>
-                    <div className={`${styles.statValue} ${styles.value75}`}>{stats.count75}</div>
-                </div>
-                <div className={styles.card}>
-                    <div className={styles.statLabel}>Total Usage</div>
-                    <div className={styles.statValue}>{stats.total}</div>
-                </div>
-            </div>
+            {/* Stats Grid moved inside Client for Swipe context */}
 
             <AdminDashboardClient
                 records={records}
@@ -80,7 +66,9 @@ export default async function AdminPage() {
                     yearly: yearlyStats,
                     area: areaStats
                 }}
+                summaryStats={stats}
                 excelData={excelData}
+                notices={notices}
             />
         </div>
     );

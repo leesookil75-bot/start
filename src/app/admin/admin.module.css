@@ -328,3 +328,48 @@
         font-size: 0.8rem;
     }
 }
+
+/* Slider / Swipe Styles */
+.sliderContainer {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    touch-action: pan-y;
+}
+
+.slideTrack {
+    display: flex;
+    transition: transform 0.3s ease-out;
+}
+
+.slide {
+    flex-shrink: 0;
+    padding: 0.5rem;
+}
+
+/* Page Indicator / Tabs */
+.pageTabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.pageTab {
+    padding: 0.4rem 0.8rem;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.activePageTab {
+    background: #fff;
+    color: #000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
