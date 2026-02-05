@@ -130,17 +130,29 @@ export async function submitUsage(delta45: number, delta75: number): Promise<{ s
     }
 }
 
+// Helper to get KST midnight in UTC
+function getStartOfTodayKST() {
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000; // 9 hours in ms
+    const nowKst = new Date(now.getTime() + kstOffset);
+
+    // Set to 00:00:00.000 KST (which effectively resets it in the "shifted" UTC)
+    nowKst.setUTCHours(0, 0, 0, 0);
+
+    // Shift back to real UTC to get the comparison point
+    return new Date(nowKst.getTime() - kstOffset);
+}
+
 export async function getTodayUserUsage(): Promise<{ count45: number; count75: number }> {
     const user = await getCurrentUser();
     if (!user) return { count45: 0, count75: 0 };
 
     const records = await getRecords();
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const startOfToday = getStartOfTodayKST();
 
     const todayRecords = records.filter(r =>
         r.userId === user.id &&
-        r.timestamp.startsWith(todayStr)
+        new Date(r.timestamp) >= startOfToday
     );
 
     return {
@@ -171,15 +183,18 @@ export async function getMyStats() {
     const records = await getRecords();
     const userRecords = records.filter(r => r.userId === user.id);
 
-    const now = new Date();
-    // Reset to start of today
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    // Start of this week (Sunday)
-    const day = now.getDay();
+    const todayStart = getStartOfTodayKST();
+
+    // Start of this week (Sunday is 0) - Calculated based on KST today
+    // We treat "Today KST" as the anchor
+    const kstNow = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+    const dayOfWeek = kstNow.getUTCDay(); // 0-6
     const weekStart = new Date(todayStart);
-    weekStart.setDate(todayStart.getDate() - day);
-    // Start of this month
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    weekStart.setDate(todayStart.getDate() - dayOfWeek);
+
+    // Start of this month - Based on KST
+    const monthStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1));
+    monthStart.setHours(monthStart.getHours() - 9); // Shift back to real UTC
 
     const stats = {
         daily: { count45: 0, count75: 0 },
@@ -190,7 +205,6 @@ export async function getMyStats() {
     userRecords.forEach(r => {
         const rDate = new Date(r.timestamp);
 
-        // Count just for aggregation logic, simplistic comparison
         if (rDate >= todayStart) {
             if (r.size === 45) stats.daily.count45++;
             else if (r.size === 75) stats.daily.count75++;
