@@ -18,14 +18,18 @@ interface DashboardClientProps {
         yearly: any[];
         area: any[];
     };
+    summaryStats: {
+        count45: number;
+        count75: number;
+        total: number;
+    };
     excelData: any[];
     notices: any[];
 }
 
-export default function AdminDashboardClient({ records, stats, excelData, notices }: DashboardClientProps) {
+export default function AdminDashboardClient({ records, stats, summaryStats, excelData, notices }: DashboardClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('records');
     const [page, setPage] = useState(0); // 0: Dashboard, 1: Notices
-    const sliderRef = useRef<HTMLDivElement>(null);
     const touchStartX = useRef(0);
     const touchEndX = useRef(0);
 
@@ -57,13 +61,34 @@ export default function AdminDashboardClient({ records, stats, excelData, notice
         touchEndX.current = 0;
     };
 
+    // Add mouse event handlers for desktop testing
+    const [isMouseDown, setIsMouseDown] = useState(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsMouseDown(true);
+        touchStartX.current = e.clientX;
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isMouseDown) {
+            touchEndX.current = e.clientX;
+        }
+    };
+
+    const handleMouseUp = () => {
+        if (isMouseDown) {
+            setIsMouseDown(false);
+            handleTouchEnd(); // Re-use logic
+        }
+    };
+
     // Sort records locally for display
     const sortedRecords = [...records].sort((a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
 
     return (
-        <div className={styles.dashboardContainer}>
+        <div className={styles.dashboardContainer} style={{ marginTop: 0 }}>
             {/* Page Tabs for easy switching (and indicator) */}
             <div className={styles.pageTabs}>
                 <button
@@ -85,6 +110,10 @@ export default function AdminDashboardClient({ records, stats, excelData, notice
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={() => setIsMouseDown(false)}
             >
                 <div
                     className={styles.slideTrack}
@@ -92,6 +121,22 @@ export default function AdminDashboardClient({ records, stats, excelData, notice
                 >
                     {/* Slide 1: Dashboard */}
                     <div className={styles.slide}>
+                        {/* Stats Grid - Moved Inside for better Swipe context */}
+                        <div className={styles.statsGrid}>
+                            <div className={styles.card}>
+                                <div className={styles.statLabel}>45L Bags</div>
+                                <div className={`${styles.statValue} ${styles.value45}`}>{summaryStats.count45}</div>
+                            </div>
+                            <div className={styles.card}>
+                                <div className={styles.statLabel}>75L Bags</div>
+                                <div className={`${styles.statValue} ${styles.value75}`}>{summaryStats.count75}</div>
+                            </div>
+                            <div className={styles.card}>
+                                <div className={styles.statLabel}>Total Usage</div>
+                                <div className={styles.statValue}>{summaryStats.total}</div>
+                            </div>
+                        </div>
+
                         <div className={styles.tabBar}>
                             <div className={styles.tabs}>
                                 <button className={`${styles.tab} ${activeTab === 'records' ? styles.activeTab : ''}`} onClick={() => setActiveTab('records')}>Records</button>

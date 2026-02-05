@@ -304,13 +304,19 @@
     .statsGrid {
         /* Keep grid columns auto-fit minmax(200px) might still stack if screen < 200px (unlikely) or < 400px (2 cards) */
         /* If user wants EXACT layout, we might need minmax(100px, 1fr) */
-        grid-template-columns: repeat(3, 1fr);
-        /* Force 3 columns if possible */
-        gap: 0.5rem;
+        /* Force 3 columns horizontal using flexbox to avoid grid collapse issues */
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        /* Just in case */
     }
 
     .card {
         padding: 0.75rem;
+        flex: 1;
+        /* Equal width */
+        min-width: 0;
+        /* Allow shrinking */
     }
 
     .statValue {

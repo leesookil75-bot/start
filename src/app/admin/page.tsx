@@ -58,20 +58,7 @@ export default async function AdminPage() {
                 </div>
             </header>
 
-            <div className={styles.statsGrid}>
-                <div className={styles.card}>
-                    <div className={styles.statLabel}>45L Bags Used</div>
-                    <div className={`${styles.statValue} ${styles.value45}`}>{stats.count45}</div>
-                </div>
-                <div className={styles.card}>
-                    <div className={styles.statLabel}>75L Bags Used</div>
-                    <div className={`${styles.statValue} ${styles.value75}`}>{stats.count75}</div>
-                </div>
-                <div className={styles.card}>
-                    <div className={styles.statLabel}>Total Usage</div>
-                    <div className={styles.statValue}>{stats.total}</div>
-                </div>
-            </div>
+            {/* Stats Grid has been moved inside AdminDashboardClient for Swipe compatibility */}
 
             <AdminDashboardClient
                 records={records}
@@ -82,6 +69,7 @@ export default async function AdminPage() {
                     yearly: yearlyStats,
                     area: areaStats
                 }}
+                summaryStats={stats}
                 excelData={excelData}
                 notices={notices}
             />
