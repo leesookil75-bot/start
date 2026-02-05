@@ -157,6 +157,14 @@
     color: #ccc;
     line-height: 1.6;
     white-space: pre-wrap;
+    /* Preserve whitespace and newlines */
+    word-break: break-word;
+    /* Prevent overflow */
+    letter-spacing: normal;
+    font-family: inherit;
+    /* Use same font as input */
+    line-height: 1.7;
+    /* Slightly more breathing room for paragraphs */
 }
 
 .noticeImage img {
