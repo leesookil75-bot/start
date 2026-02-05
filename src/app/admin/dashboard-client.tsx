@@ -86,21 +86,24 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
 
     return (
         <div className={styles.dashboardContainer} style={{ marginTop: 0 }}>
-            {/* Header Actions - Only visible on Page 0 (Dashboard) */}
+            {/* Header - Only visible on Page 0 (Dashboard) */}
             {page === 0 && (
-                <div className={styles.headerActions} style={{ marginBottom: '1rem', justifyContent: 'flex-end' }}>
-                    <Link href="/change-password" className={styles.changePasswordLink}>
-                        Change Password
-                    </Link>
-                    <Link href="/admin/users" className={styles.backLink}>
-                        Manage Users
-                    </Link>
-                    <form action={logout}>
-                        <button className={styles.logoutButton}>
-                            Logout
-                        </button>
-                    </form>
-                </div>
+                <header className={styles.header}>
+                    <h1 className={styles.title}>Dashboard</h1>
+                    <div className={styles.headerActions}>
+                        <Link href="/change-password" className={styles.changePasswordLink}>
+                            Change Password
+                        </Link>
+                        <Link href="/admin/users" className={styles.backLink}>
+                            Manage Users
+                        </Link>
+                        <form action={logout}>
+                            <button className={styles.logoutButton}>
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </header>
             )}
 
             {/* Page Tabs for easy switching (and indicator) */}

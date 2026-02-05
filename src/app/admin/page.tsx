@@ -38,10 +38,7 @@ export default async function AdminPage() {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <h1 className={styles.title}>Dashboard</h1>
-                {/* Header Actions moved to Client component for conditional page visibility */}
-            </header>
+            {/* Header moved to Client component for conditional page visibility */}
 
             <AdminDashboardClient
                 records={records}
