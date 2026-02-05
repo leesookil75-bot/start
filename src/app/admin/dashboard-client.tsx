@@ -178,13 +178,12 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
                                                 <th>Type</th>
                                                 <th>User</th>
                                                 <th>Time</th>
-                                                <th>ID</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {sortedRecords.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={4} style={{ textAlign: 'center', opacity: 0.5 }}>No records yet</td>
+                                                    <td colSpan={3} style={{ textAlign: 'center', opacity: 0.5 }}>No records yet</td>
                                                 </tr>
                                             ) : (
                                                 sortedRecords.slice(0, 50).map((record) => ( // Limit to 50 for performance
@@ -196,7 +195,6 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
                                                         </td>
                                                         <td>{record.userName || '-'}</td>
                                                         <td className={styles.time}>{new Date(record.timestamp).toLocaleString()}</td>
-                                                        <td className={styles.time} style={{ fontSize: '0.8em' }}>{record.id.slice(0, 8)}...</td>
                                                     </tr>
                                                 ))
                                             )}

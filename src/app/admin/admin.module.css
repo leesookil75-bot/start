@@ -152,14 +152,6 @@
     font-weight: 600;
 }
 
-.table td:nth-child(4) {
-    /* ID Column */
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .table th {
     color: #888;
     font-weight: 500;
@@ -354,13 +346,7 @@
        For now, let's keep it but ensure User has priority.
     */
 
-    .table td:nth-child(4),
-    .table th:nth-child(4) {
-        max-width: 60px;
-        /* Force ID to be small */
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+
 }
 
 /* Slider / Swipe Styles */
