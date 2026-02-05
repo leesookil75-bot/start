@@ -54,6 +54,24 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.changePasswordLink {
+  font-size: 0.875rem;
+  color: #ccc;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.changePasswordLink:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .card {
   width: 100%;
   max-width: 480px;

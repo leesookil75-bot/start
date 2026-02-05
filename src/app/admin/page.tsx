@@ -38,6 +38,9 @@ export default async function AdminPage() {
             <header className={styles.header}>
                 <h1 className={styles.title}>Dashboard</h1>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <Link href="/change-password" className={styles.changePasswordLink}>
+                        Change Password
+                    </Link>
                     <Link href="/admin/users" className={styles.backLink}>
                         Manage Users
                     </Link>

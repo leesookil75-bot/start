@@ -8,6 +8,7 @@ export type User = {
   cleaningArea: string;
   role: 'admin' | 'cleaner';
   createdAt: string;
+  password?: string;
 };
 
 export type UsageRecord = {
@@ -26,6 +27,7 @@ type UserRow = {
   cleaning_area: string;
   role: string;
   created_at: Date;
+  password?: string;
 };
 
 import { sql } from '@vercel/postgres';
@@ -60,7 +62,8 @@ export async function getUsers(): Promise<User[]> {
         name: r.name,
         cleaningArea: r.cleaning_area,
         role: r.role as 'admin' | 'cleaner',
-        createdAt: r.created_at.toString()
+        createdAt: r.created_at.toString(),
+        password: r.password
       }));
     } catch (error) {
       // Fallback or error if table doesn't exist?
@@ -90,9 +93,11 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
   if (isPostgresEnabled()) {
     try {
       const id = crypto.randomUUID();
+      const password = user.password || user.phoneNumber.slice(-4);
+
       await sql`
-        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at)
-        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW())
+        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password)
+        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password})
        `;
       // Return constructed user
       return {
@@ -101,9 +106,11 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         name: user.name,
         cleaningArea: user.cleaningArea,
         role: user.role,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        password
       };
-    } catch {
+    } catch (e: any) {
+      console.error('Database error adding user', e);
       throw new Error('Database error adding user');
     }
   }
@@ -112,6 +119,7 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
     ...user,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
+    password: user.password || user.phoneNumber.slice(-4)
   };
 
   users.push(newUser);
@@ -305,4 +313,18 @@ export async function manageUsageDelta(
 
   await fs.writeFile(DATA_FILE_PATH, JSON.stringify(newRecordsList, null, 2), 'utf-8');
   return { success: true };
+}
+
+export async function updateUserPassword(userId: string, newPassword: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE users SET password = ${newPassword} WHERE id = ${userId}`;
+    return;
+  }
+
+  const users = await getUsers();
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex !== -1) {
+    users[userIndex].password = newPassword;
+    await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
+  }
 }

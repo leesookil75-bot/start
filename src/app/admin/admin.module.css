@@ -55,6 +55,19 @@
     background: rgba(59, 130, 246, 0.2);
 }
 
+.changePasswordLink {
+    color: #ccc;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.changePasswordLink:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
 .statsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

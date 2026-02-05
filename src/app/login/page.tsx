@@ -9,6 +9,7 @@ type LoginMode = 'worker' | 'admin';
 
 export default function LoginPage() {
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [mode, setMode] = useState<LoginMode>('worker');
     const [isPending, startTransition] = useTransition();
@@ -19,7 +20,9 @@ export default function LoginPage() {
         setError('');
 
         startTransition(async () => {
-            const result = await login(phoneNumber);
+            // For admin, we force password check (actions.ts handles it)
+            // For worker, we also force password check now.
+            const result = await login(phoneNumber, password);
             if (result.success) {
                 // The server action sets the cookie, redirection handles by next logic
                 router.push(mode === 'admin' ? '/admin' : '/');
@@ -54,7 +57,7 @@ export default function LoginPage() {
                     {mode === 'worker' ? 'Clean Track' : 'Admin Login'}
                 </h1>
                 <p className={styles.subtitle}>
-                    {mode === 'worker' ? '전화번호로 로그인하세요' : '관리자 전화번호를 입력하세요'}
+                    {mode === 'worker' ? '전화번호와 비밀번호로 로그인하세요' : '관리자 로그인을 해주세요'}
                 </p>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
@@ -67,6 +70,20 @@ export default function LoginPage() {
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             placeholder="010-0000-0000"
                             className={styles.input}
+                            required
+                        />
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                        <label htmlFor="password" className={styles.label}>Password (4자리)</label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="비밀번호 4자리"
+                            className={styles.input}
+                            maxLength={4}
                             required
                         />
                     </div>
