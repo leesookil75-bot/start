@@ -141,6 +141,23 @@
     padding: 1rem 1.5rem;
     text-align: left;
     border-bottom: 1px solid var(--card-border);
+    white-space: nowrap;
+    /* Prevent all wrapping for simplicity in this context */
+}
+
+/* Specific column adjustments */
+.table td:nth-child(2) {
+    /* User Column */
+    min-width: 80px;
+    font-weight: 600;
+}
+
+.table td:nth-child(4) {
+    /* ID Column */
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .table th {
@@ -326,6 +343,23 @@
     .table td {
         padding: 0.5rem;
         font-size: 0.8rem;
+    }
+
+    /* Hide ID column on mobile to save space? The red box implied focusing on User width. 
+       If we hide ID, User gets plenty of space. 
+       Let's try truncating ID strictly first, or hiding it if it's not critical. 
+       Given the screenshot showed user highlighting ID too, maybe they want to SEE it but not wrap?
+       Actually IDs are long. Mobile space is tight.
+       Better to truncate ID heavily or hide. 
+       For now, let's keep it but ensure User has priority.
+    */
+
+    .table td:nth-child(4),
+    .table th:nth-child(4) {
+        max-width: 60px;
+        /* Force ID to be small */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
 
