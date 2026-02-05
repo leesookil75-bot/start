@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "Clean Track",
   description: "Track your waste bag usage",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
