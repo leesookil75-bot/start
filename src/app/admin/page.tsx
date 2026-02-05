@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import styles from './admin.module.css';
 import { getUsageStats, logout, getCurrentUser } from '../actions';
-import { getNotices } from '@/lib/data';
 import { getStatsByPeriod, getStatsByArea, getExcelData } from '@/lib/statistics';
 import AdminDashboardClient from './dashboard-client';
 import { redirect } from 'next/navigation';
@@ -24,16 +23,14 @@ export default async function AdminPage() {
         monthlyStats,
         yearlyStats,
         areaStats,
-        excelData,
-        notices
+        excelData
     ] = await Promise.all([
         getStatsByPeriod('daily'),
         getStatsByPeriod('weekly'),
         getStatsByPeriod('monthly'),
         getStatsByPeriod('yearly'),
         getStatsByArea(),
-        getExcelData(),
-        getNotices()
+        getExcelData()
     ]);
 
     return (
@@ -58,7 +55,21 @@ export default async function AdminPage() {
                 </div>
             </header>
 
-            {/* Stats Grid has been moved inside AdminDashboardClient for Swipe compatibility */}
+            {/* Stats Grid - Server Side Rendered */}
+            <div className={styles.statsGrid}>
+                <div className={styles.card}>
+                    <div className={styles.statLabel}>45L Bags</div>
+                    <div className={`${styles.statValue} ${styles.value45}`}>{stats.count45}</div>
+                </div>
+                <div className={styles.card}>
+                    <div className={styles.statLabel}>75L Bags</div>
+                    <div className={`${styles.statValue} ${styles.value75}`}>{stats.count75}</div>
+                </div>
+                <div className={styles.card}>
+                    <div className={styles.statLabel}>Total Usage</div>
+                    <div className={styles.statValue}>{stats.total}</div>
+                </div>
+            </div>
 
             <AdminDashboardClient
                 records={records}
@@ -69,9 +80,7 @@ export default async function AdminPage() {
                     yearly: yearlyStats,
                     area: areaStats
                 }}
-                summaryStats={stats}
                 excelData={excelData}
-                notices={notices}
             />
         </div>
     );
