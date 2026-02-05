@@ -109,6 +109,20 @@
     background: rgba(255, 68, 68, 0.2);
 }
 
+.resetButton {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.resetButton:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
 .error {
     color: #ff4444;
     margin-top: 1rem;

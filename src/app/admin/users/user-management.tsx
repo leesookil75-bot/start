@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import styles from './user-management.module.css';
-import { createUser, deleteUserAction } from '../../actions';
+import { createUser, deleteUserAction, resetUserPassword } from '../../actions';
 
 type User = {
     id: string;
@@ -122,13 +122,34 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 </td>
                                 <td>
                                     {user.role !== 'admin' && (
-                                        <button
-                                            className={styles.deleteButton}
-                                            onClick={() => handleDelete(user.id)}
-                                            disabled={isPending}
-                                        >
-                                            Delete
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button
+                                                className={styles.resetButton}
+                                                onClick={() => {
+                                                    if (confirm(`비밀번호를 초기화하시겠습니까?\n(${user.phoneNumber.slice(-4)})`)) {
+                                                        startTransition(async () => {
+                                                            const result = await resetUserPassword(user.id);
+                                                            if (result.success) {
+                                                                alert('비밀번호가 초기화되었습니다.');
+                                                            } else {
+                                                                setError(result.error || 'Failed to reset password');
+                                                            }
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={isPending}
+                                                title="비밀번호를 전화번호 뒤 4자리로 초기화"
+                                            >
+                                                Reset PW
+                                            </button>
+                                            <button
+                                                className={styles.deleteButton}
+                                                onClick={() => handleDelete(user.id)}
+                                                disabled={isPending}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     )}
                                 </td>
                             </tr>

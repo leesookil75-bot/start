@@ -8,6 +8,7 @@ import {
     addUser as addNewUser,
     deleteUser as removeUser,
     getUserByPhone,
+    updateUserPassword,
     User
 } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
@@ -163,6 +164,39 @@ export async function deleteUserAction(userId: string): Promise<{ success: boole
         return { success: true };
     } catch (error) {
         return { success: false, error: 'Failed to delete user' };
+    }
+}
+
+export async function resetUserPassword(userId: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        const users = await getUsers();
+        const targetUser = users.find(u => u.id === userId);
+
+        if (!targetUser) {
+            return { success: false, error: 'User not found' };
+        }
+
+        const defaultPassword = targetUser.phoneNumber.slice(-4);
+
+        // We imported updateUserPassword at the top, so we can use it directly if available.
+        // Or re-implement the simple check:
+        // Use helper or direct SQL
+        if (process.env.POSTGRES_URL) {
+            await sql`UPDATE users SET password = ${defaultPassword} WHERE id = ${userId}`;
+        } else {
+            // Fallback for file system using the imported helper
+            await updateUserPassword(userId, defaultPassword);
+        }
+
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to reset password' };
     }
 }
 
