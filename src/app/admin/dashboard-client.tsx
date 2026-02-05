@@ -5,6 +5,8 @@ import styles from './admin.module.css';
 import StatsCharts from './components/StatsCharts';
 import ExcelDownloadBtn from './components/ExcelDownloadBtn';
 import { NoticeForm, NoticeList, Notice } from './notices/client';
+import Link from 'next/link';
+import { logout } from '../actions';
 
 type Tab = 'records' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area';
 
@@ -84,6 +86,23 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
 
     return (
         <div className={styles.dashboardContainer} style={{ marginTop: 0 }}>
+            {/* Header Actions - Only visible on Page 0 (Dashboard) */}
+            {page === 0 && (
+                <div className={styles.headerActions} style={{ marginBottom: '1rem', justifyContent: 'flex-end' }}>
+                    <Link href="/change-password" className={styles.changePasswordLink}>
+                        Change Password
+                    </Link>
+                    <Link href="/admin/users" className={styles.backLink}>
+                        Manage Users
+                    </Link>
+                    <form action={logout}>
+                        <button className={styles.logoutButton}>
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            )}
+
             {/* Page Tabs for easy switching (and indicator) */}
             <div className={styles.pageTabs}>
                 <button

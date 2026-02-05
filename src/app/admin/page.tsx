@@ -40,22 +40,8 @@ export default async function AdminPage() {
         <div className={styles.container}>
             <header className={styles.header}>
                 <h1 className={styles.title}>Dashboard</h1>
-                <div className={styles.headerActions}>
-                    <Link href="/change-password" className={styles.changePasswordLink}>
-                        Change Password
-                    </Link>
-                    <Link href="/admin/users" className={styles.backLink}>
-                        Manage Users
-                    </Link>
-                    <form action={logout}>
-                        <button className={styles.logoutButton}>
-                            Logout
-                        </button>
-                    </form>
-                </div>
+                {/* Header Actions moved to Client component for conditional page visibility */}
             </header>
-
-            {/* Stats Grid moved inside Client for Swipe context */}
 
             <AdminDashboardClient
                 records={records}
