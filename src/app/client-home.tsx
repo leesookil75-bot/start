@@ -5,12 +5,15 @@ import styles from './page.module.css';
 import { submitUsage } from './actions';
 import MyStatsView from './components/MyStatsView';
 
+import Link from 'next/link';
+
 interface ClientHomeProps {
     initialUsage: { count45: number; count75: number };
     stats: any;
+    recentNotice?: any; // Avoiding strict type sharing for now to keep client component clean
 }
 
-export default function ClientHome({ initialUsage, stats }: ClientHomeProps) {
+export default function ClientHome({ initialUsage, stats, recentNotice }: ClientHomeProps) {
     // 0 = Usage, 1 = Stats
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -79,6 +82,35 @@ export default function ClientHome({ initialUsage, stats }: ClientHomeProps) {
 
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* Notice Widget */}
+            {recentNotice && (
+                <div style={{ width: '100%', maxWidth: '480px', padding: '0 1rem', marginBottom: '1rem' }}>
+                    <Link href="/notices" style={{ textDecoration: 'none' }}>
+                        <div style={{
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            cursor: 'pointer'
+                        }}>
+                            <span style={{ fontSize: '1.5rem' }}>📢</span>
+                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {recentNotice.title}
+                                </h3>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {recentNotice.content}
+                                </p>
+                            </div>
+                            <span style={{ color: '#60a5fa', fontSize: '0.9rem' }}>&rarr;</span>
+                        </div>
+                    </Link>
+                </div>
+            )}
+
             {/* Custom Tabs */}
             <div className={styles.tabs}>
                 <div

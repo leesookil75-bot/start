@@ -18,6 +18,11 @@ export default async function Home() {
   const initialUsage = await getTodayUserUsage();
   const stats = await getMyStats();
 
+  // Get recent notices
+  const { getNotices } = await import('@/lib/data');
+  const notices = await getNotices();
+  const recentNotice = notices.length > 0 ? notices[0] : null;
+
   return (
     <main className={styles.main}>
       <div className={styles.header}>
@@ -26,6 +31,7 @@ export default async function Home() {
           <span className={styles.userArea}>({user.cleaningArea})</span>
         </div>
         <div className={styles.headerActions}>
+          <a href="/notices" className={styles.changePasswordLink} style={{ color: 'orange', marginRight: '0.5rem' }}>공지사항</a>
           <a href="/change-password" className={styles.changePasswordLink}>비밀번호 변경</a>
           <form action={logout}>
             <button className={styles.logoutButton}>Logout</button>
@@ -33,7 +39,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <ClientHome initialUsage={initialUsage} stats={stats} />
+      <ClientHome initialUsage={initialUsage} stats={stats} recentNotice={recentNotice} />
 
     </main>
   );

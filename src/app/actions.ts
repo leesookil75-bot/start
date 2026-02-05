@@ -200,6 +200,48 @@ export async function resetUserPassword(userId: string): Promise<{ success: bool
     }
 }
 
+// --- Notice Actions ---
+import { addNotice, deleteNotice as removeNotice } from '@/lib/data';
+
+export async function createNoticeAction(title: string, content: string, imageData?: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        await addNotice({
+            title,
+            content,
+            imageData,
+            authorId: currentUser.id
+        });
+        revalidatePath('/admin/notices');
+        revalidatePath('/notices');
+        revalidatePath('/'); // For homepage widget
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to create notice' };
+    }
+}
+
+export async function deleteNoticeAction(id: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        await removeNotice(id);
+        revalidatePath('/admin/notices');
+        revalidatePath('/notices');
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to delete notice' };
+    }
+}
+
 // --- Usage Actions ---
 
 export async function recordUsage(size: 45 | 75): Promise<{ success: boolean; data?: UsageRecord; error?: string }> {
@@ -376,6 +418,17 @@ export async function initializeDB() {
                 user_id UUID REFERENCES users(id),
                 user_name VARCHAR(255),
                 timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        await sql`
+            CREATE TABLE IF NOT EXISTS notices (
+                id UUID PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                image_data TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                author_id UUID REFERENCES users(id)
             );
         `;
 

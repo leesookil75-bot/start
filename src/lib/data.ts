@@ -328,3 +328,79 @@ export async function updateUserPassword(userId: string, newPassword: string): P
     await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
   }
 }
+
+// --- Notices ---
+export type Notice = {
+  id: string;
+  title: string;
+  content: string;
+  imageData?: string; // Base64
+  createdAt: string;
+  authorId: string;
+};
+
+const NOTICES_FILE_PATH = path.join(process.cwd(), 'notices.json');
+
+export async function getNotices(): Promise<Notice[]> {
+  if (isPostgresEnabled()) {
+    try {
+      // Using generic/any for row type for now to avoid extensive type definitions overhead
+      const { rows } = await sql`SELECT * FROM notices ORDER BY created_at DESC`;
+      return rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        content: r.content,
+        imageData: r.image_data,
+        createdAt: r.created_at.toString(),
+        authorId: r.author_id
+      }));
+    } catch (e) {
+      console.error('DB Error getting notices', e);
+      return [];
+    }
+  }
+
+  await ensureFile(NOTICES_FILE_PATH, []);
+  try {
+    const data = await fs.readFile(NOTICES_FILE_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function addNotice(notice: Omit<Notice, 'id' | 'createdAt'>): Promise<Notice> {
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
+            INSERT INTO notices (id, title, content, image_data, created_at, author_id)
+            VALUES (${id}, ${notice.title}, ${notice.content}, ${notice.imageData || null}, NOW(), ${notice.authorId})
+         `;
+    return {
+      ...notice,
+      id,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  const notices = await getNotices();
+  const newNotice: Notice = {
+    ...notice,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString()
+  };
+  notices.unshift(newNotice); // Add to beginning
+  await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
+  return newNotice;
+}
+
+export async function deleteNotice(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM notices WHERE id = ${id}`;
+    return;
+  }
+
+  const notices = await getNotices();
+  const filtered = notices.filter(n => n.id !== id);
+  await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+}
