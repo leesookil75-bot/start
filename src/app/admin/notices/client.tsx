@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react';
 import styles from './notices.module.css';
-import { createNoticeAction, deleteNoticeAction } from '../../actions';
+import { createNoticeAction, deleteNoticeAction, updateNoticeAction } from '../../actions';
 import { compressImage } from '@/lib/image-utils';
 import Link from 'next/link';
 
@@ -22,6 +22,7 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,18 +47,38 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
         setError('');
 
         startTransition(async () => {
-            const result = await createNoticeAction(title, content, imagePreview || undefined, isPinned);
-            if (result.success) {
-                setTitle('');
-                setContent('');
-                setIsPinned(false);
-                setImagePreview(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                alert('Notice posted successfully!');
+            let result;
+            if (editingId) {
+                result = await updateNoticeAction(editingId, title, content, imagePreview || undefined, isPinned);
             } else {
-                setError(result.error || 'Failed to post notice');
+                result = await createNoticeAction(title, content, imagePreview || undefined, isPinned);
+            }
+
+            if (result.success) {
+                resetForm();
+                alert(editingId ? 'Notice updated successfully!' : 'Notice posted successfully!');
+            } else {
+                setError(result.error || 'Failed to save notice');
             }
         });
+    };
+
+    const resetForm = () => {
+        setTitle('');
+        setContent('');
+        setIsPinned(false);
+        setImagePreview(null);
+        setEditingId(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleEdit = (notice: Notice) => {
+        setTitle(notice.title);
+        setContent(notice.content);
+        setIsPinned(!!notice.isPinned);
+        setImagePreview(notice.imageData || null);
+        setEditingId(notice.id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDelete = async (id: string) => {
@@ -80,7 +101,7 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
             </header>
 
             <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Post New Notice</h2>
+                <h2 className={styles.sectionTitle}>{editingId ? 'Edit Notice' : 'Post New Notice'}</h2>
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.inputGroup}>
                         <label className={styles.label}>Title</label>
@@ -136,9 +157,22 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
 
                     {error && <div className={styles.error}>{error}</div>}
 
-                    <button type="submit" className={styles.submitButton} disabled={isPending}>
-                        {isPending ? 'Posting...' : 'Post Notice'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button type="submit" className={styles.submitButton} disabled={isPending}>
+                            {isPending ? 'Saving...' : (editingId ? 'Update Notice' : 'Post Notice')}
+                        </button>
+                        {editingId && (
+                            <button
+                                type="button"
+                                onClick={resetForm}
+                                className={styles.deleteButton} // Reuse delete style for cancel or add new style
+                                style={{ backgroundColor: '#666' }}
+                                disabled={isPending}
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
                 </form>
             </section>
 
@@ -157,13 +191,23 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
                                         {new Date(notice.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(notice.id)}
-                                    className={styles.deleteButton}
-                                    disabled={isPending}
-                                >
-                                    Delete
-                                </button>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button
+                                        onClick={() => handleEdit(notice)}
+                                        className={styles.submitButton} // Reusing submit button style but smaller
+                                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: '#4caf50' }}
+                                        disabled={isPending}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(notice.id)}
+                                        className={styles.deleteButton}
+                                        disabled={isPending}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                             <div className={styles.noticeContent}>{notice.content}</div>
                             {notice.imageData && (

@@ -201,7 +201,7 @@ export async function resetUserPassword(userId: string): Promise<{ success: bool
 }
 
 // --- Notice Actions ---
-import { addNotice, deleteNotice as removeNotice } from '@/lib/data';
+import { addNotice, deleteNotice as removeNotice, updateNotice } from '@/lib/data';
 
 export async function createNoticeAction(title: string, content: string, imageData?: string, isPinned: boolean = false): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
@@ -240,6 +240,28 @@ export async function deleteNoticeAction(id: string): Promise<{ success: boolean
         return { success: true };
     } catch (e: any) {
         return { success: false, error: e.message || 'Failed to delete notice' };
+    }
+}
+
+export async function updateNoticeAction(id: string, title: string, content: string, imageData?: string, isPinned?: boolean): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        await updateNotice(id, {
+            title,
+            content,
+            imageData, // If undefined, data layer should handle logic (keep existing)
+            isPinned
+        });
+        revalidatePath('/admin/notices');
+        revalidatePath('/notices');
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to update notice' };
     }
 }
 

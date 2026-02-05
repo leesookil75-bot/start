@@ -412,3 +412,51 @@ export async function deleteNotice(id: string): Promise<void> {
   const filtered = notices.filter(n => n.id !== id);
   await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
 }
+
+export async function updateNotice(id: string, updates: Partial<Notice>): Promise<void> {
+  if (isPostgresEnabled()) {
+    // Dynamic query construction is tricky with template literals helper, so we handle fields individually or basic coalesce
+    // For simplicity, we'll update fields if they are provided. 
+    // Ideally use a builder, but here we can check keys.
+    // However, since we usually update all fields in the form, let's assume we pass what we have.
+    // Actually, SQL template tags don't support dynamic columns easily.
+    // We will assume 'updates' contains the full set of editable fields for simplicity, or we write a smarter query.
+    // Let's just update all editable fields (title, content, isPinned, imageData). Note: imageData might be null or undefined.
+
+    // If imageData is undefined, we shouldn't overwrite it if we want partial updates?
+    // But the form usually sends the new state. If image isn't changed, we might send the old one or undefined?
+    // Let's assume the action logic handles "keep existing image".
+    // Here we act on what is passed.
+
+    // We need to construct the SET clause safely.
+    // Since sql`` is a function, we can't easily map.
+    // We will do a robust check.
+
+    // Simplest approach: Retrieve existing, merge, update.
+    const { rows } = await sql`SELECT * FROM notices WHERE id = ${id}`;
+    if (rows.length === 0) throw new Error('Notice not found');
+    const existing = rows[0];
+
+    const newTitle = updates.title ?? existing.title;
+    const newContent = updates.content ?? existing.content;
+    const newPinned = updates.isPinned ?? existing.is_pinned; // DB uses snake_case column
+    const newImage = updates.imageData === undefined ? existing.image_data : updates.imageData; // Allow setting to null? If updates.imageData is null, it means remove image. If undefined, means no change.
+
+    await sql`
+      UPDATE notices 
+      SET title = ${newTitle}, 
+          content = ${newContent}, 
+          is_pinned = ${newPinned},
+          image_data = ${newImage}
+      WHERE id = ${id}
+    `;
+    return;
+  }
+
+  const notices = await getNotices();
+  const index = notices.findIndex(n => n.id === id);
+  if (index === -1) throw new Error('Notice not found');
+
+  notices[index] = { ...notices[index], ...updates };
+  await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
+}
