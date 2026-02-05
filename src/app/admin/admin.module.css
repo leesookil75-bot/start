@@ -239,74 +239,96 @@
     min-height: 400px;
 }
 
-/* Mobile Optimization */
+/* Slider / Swipe Styles */
+.sliderContainer {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+}
+
+.slideTrack {
+    display: flex;
+    transition: transform 0.3s ease-out;
+    width: 200%;
+}
+
+.slide {
+    width: 50%;
+    flex-shrink: 0;
+    padding: 0.5rem;
+}
+
+/* Page Indicator / Tabs */
+.pageTabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.pageTab {
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.activePageTab {
+    background: #fff;
+    color: #000;
+}
+
+/* Mobile Optimization: Keep desktop layout but scale/scroll if needed, or just adjust padding */
 @media (max-width: 768px) {
     .container {
-        padding: 1rem;
+        padding: 0.5rem;
+        /* Minimal padding to use more screen space */
     }
 
+    /* We keep the grid and flex layouts as is (desktop style) */
+    /* Just ensure things don't overflow ungracefully */
+
     .header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-        padding: 1rem;
+        /* Keep flex-direction row, maybe scale down font */
+        padding: 0.75rem;
     }
 
     .title {
-        font-size: 1.25rem;
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
-
-    .headerActions {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+        font-size: 1.2rem;
     }
 
     .statsGrid {
-        grid-template-columns: 1fr;
-        /* Stack cards vertically */
-        gap: 1rem;
+        /* Keep grid columns auto-fit minmax(200px) might still stack if screen < 200px (unlikely) or < 400px (2 cards) */
+        /* If user wants EXACT layout, we might need minmax(100px, 1fr) */
+        grid-template-columns: repeat(3, 1fr);
+        /* Force 3 columns if possible */
+        gap: 0.5rem;
+    }
+
+    .card {
+        padding: 0.75rem;
     }
 
     .statValue {
-        font-size: 2.5rem;
+        font-size: 1.5rem;
     }
 
+    .statLabel {
+        font-size: 0.7rem;
+    }
+
+    /* Allow table to scroll if needed, but try to keep it compact */
     .tableContainer {
         overflow-x: auto;
-        /* Enable horizontal scroll for table */
     }
 
     .table th,
     .table td {
-        white-space: nowrap;
-        /* Prevent text wrapping from breaking rows */
-        padding: 0.75rem 1rem;
-        font-size: 0.85rem;
-    }
-
-    .tabBar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .tabs {
-        overflow-x: auto;
-        padding-bottom: 0.5rem;
-        /* Hide scrollbar if possible */
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .tabs::-webkit-scrollbar {
-        display: none;
-    }
-
-    .tab {
-        white-space: nowrap;
-        flex: 0 0 auto;
+        padding: 0.5rem;
+        font-size: 0.8rem;
     }
 }
