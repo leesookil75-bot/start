@@ -55,7 +55,10 @@
 .inputGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.8rem;
+    /* Slightly more space between label and input */
+    margin-bottom: 0.5rem;
+    /* Extra breathing room between groups */
 }
 
 .label {

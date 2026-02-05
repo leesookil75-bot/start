@@ -371,18 +371,34 @@
 .activePageTab {
     background: #fff;
     color: #000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
     .pageTabs {
-        gap: 0.3rem;
+        /* User wants more space from top (currently margin-top is implicitly small due to no specific padding in parent) */
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+        /* More space below */
+        gap: 0.5rem;
+        /* Increase gap */
     }
+
     .pageTab {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.75rem;
+        /* User wants bigger buttons and text */
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        /* Larger font */
         flex: 1;
         text-align: center;
         white-space: nowrap;
+        background: rgba(255, 255, 255, 0.15);
+        /* Slightly clearer bg */
+    }
+
+    .activePageTab {
+        font-weight: 800;
+        font-size: 1rem;
+        /* Active slightly bigger? or same */
     }
 }
