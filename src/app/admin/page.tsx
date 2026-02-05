@@ -37,7 +37,7 @@ export default async function AdminPage() {
         <div className={styles.container}>
             <header className={styles.header}>
                 <h1 className={styles.title}>Dashboard</h1>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div className={styles.headerActions}>
                     <Link href="/admin/notices" className={styles.backLink} style={{ background: 'rgba(255, 165, 0, 0.1)', color: 'orange' }}>
                         Manage Notices
                     </Link>
