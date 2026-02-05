@@ -11,12 +11,14 @@ type Notice = {
     title: string;
     content: string;
     imageData?: string;
+    isPinned?: boolean;
     createdAt: string;
 };
 
 export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [isPinned, setIsPinned] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
@@ -44,10 +46,11 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
         setError('');
 
         startTransition(async () => {
-            const result = await createNoticeAction(title, content, imagePreview || undefined);
+            const result = await createNoticeAction(title, content, imagePreview || undefined, isPinned);
             if (result.success) {
                 setTitle('');
                 setContent('');
+                setIsPinned(false);
                 setImagePreview(null);
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 alert('Notice posted successfully!');
@@ -118,6 +121,19 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
                         )}
                     </div>
 
+                    <div className={styles.inputGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                            type="checkbox"
+                            id="isPinned"
+                            checked={isPinned}
+                            onChange={(e) => setIsPinned(e.target.checked)}
+                            style={{ width: 'auto', margin: 0 }}
+                        />
+                        <label htmlFor="isPinned" className={styles.label} style={{ marginBottom: 0, cursor: 'pointer' }}>
+                            상단 고정 (Pin to Top) 📌
+                        </label>
+                    </div>
+
                     {error && <div className={styles.error}>{error}</div>}
 
                     <button type="submit" className={styles.submitButton} disabled={isPending}>
@@ -133,7 +149,10 @@ export default function AdminNoticesClient({ notices }: { notices: Notice[] }) {
                         <div key={notice.id} className={styles.noticeItem}>
                             <div className={styles.noticeHeader}>
                                 <div>
-                                    <h3 className={styles.noticeTitle}>{notice.title}</h3>
+                                    <h3 className={styles.noticeTitle}>
+                                        {notice.isPinned && <span style={{ marginRight: '0.5rem' }}>📌</span>}
+                                        {notice.title}
+                                    </h3>
                                     <span className={styles.noticeDate}>
                                         {new Date(notice.createdAt).toLocaleDateString()}
                                     </span>

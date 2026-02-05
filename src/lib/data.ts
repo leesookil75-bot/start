@@ -335,6 +335,7 @@ export type Notice = {
   title: string;
   content: string;
   imageData?: string; // Base64
+  isPinned?: boolean;
   createdAt: string;
   authorId: string;
 };
@@ -345,12 +346,13 @@ export async function getNotices(): Promise<Notice[]> {
   if (isPostgresEnabled()) {
     try {
       // Using generic/any for row type for now to avoid extensive type definitions overhead
-      const { rows } = await sql`SELECT * FROM notices ORDER BY created_at DESC`;
+      const { rows } = await sql`SELECT * FROM notices ORDER BY is_pinned DESC, created_at DESC`;
       return rows.map(r => ({
         id: r.id,
         title: r.title,
         content: r.content,
         imageData: r.image_data,
+        isPinned: r.is_pinned,
         createdAt: r.created_at.toString(),
         authorId: r.author_id
       }));
@@ -363,7 +365,13 @@ export async function getNotices(): Promise<Notice[]> {
   await ensureFile(NOTICES_FILE_PATH, []);
   try {
     const data = await fs.readFile(NOTICES_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
+    const notices: Notice[] = JSON.parse(data);
+    return notices.sort((a, b) => {
+      // Sort by Pinned (true first), then Date (newest first)
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   } catch {
     return [];
   }
@@ -373,8 +381,8 @@ export async function addNotice(notice: Omit<Notice, 'id' | 'createdAt'>): Promi
   if (isPostgresEnabled()) {
     const id = crypto.randomUUID();
     await sql`
-            INSERT INTO notices (id, title, content, image_data, created_at, author_id)
-            VALUES (${id}, ${notice.title}, ${notice.content}, ${notice.imageData || null}, NOW(), ${notice.authorId})
+            INSERT INTO notices (id, title, content, image_data, is_pinned, created_at, author_id)
+            VALUES (${id}, ${notice.title}, ${notice.content}, ${notice.imageData || null}, ${notice.isPinned || false}, NOW(), ${notice.authorId})
          `;
     return {
       ...notice,

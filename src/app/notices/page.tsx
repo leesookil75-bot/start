@@ -25,7 +25,10 @@ export default async function NoticesPage() {
                             </div>
                         )}
                         <div className={styles.content}>
-                            <h2 className={styles.cardTitle}>{notice.title}</h2>
+                            <h2 className={styles.cardTitle}>
+                                {notice.isPinned && <span style={{ marginRight: '0.4rem' }}>📌</span>}
+                                {notice.title}
+                            </h2>
                             <time className={styles.date}>{new Date(notice.createdAt).toLocaleDateString()}</time>
                             <p className={styles.cardBody}>{notice.content}</p>
                         </div>

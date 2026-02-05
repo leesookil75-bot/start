@@ -203,7 +203,7 @@ export async function resetUserPassword(userId: string): Promise<{ success: bool
 // --- Notice Actions ---
 import { addNotice, deleteNotice as removeNotice } from '@/lib/data';
 
-export async function createNoticeAction(title: string, content: string, imageData?: string): Promise<{ success: boolean; error?: string }> {
+export async function createNoticeAction(title: string, content: string, imageData?: string, isPinned: boolean = false): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
     if (!currentUser || currentUser.role !== 'admin') {
         return { success: false, error: 'Unauthorized' };
@@ -214,6 +214,7 @@ export async function createNoticeAction(title: string, content: string, imageDa
             title,
             content,
             imageData,
+            isPinned,
             authorId: currentUser.id
         });
         revalidatePath('/admin/notices');
@@ -427,10 +428,13 @@ export async function initializeDB() {
                 title VARCHAR(255) NOT NULL,
                 content TEXT NOT NULL,
                 image_data TEXT,
+                is_pinned BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 author_id UUID REFERENCES users(id)
             );
         `;
+
+        await sql`ALTER TABLE notices ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;`;
 
         // Attempt to create extension, might fail if not superuser but usually fine on Vercel
         // gen_random_uuid() is built-in for Postgres 13+, so we might not need uuid-ossp

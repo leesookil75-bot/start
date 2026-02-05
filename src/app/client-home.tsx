@@ -99,6 +99,7 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
                             <span style={{ fontSize: '1.5rem' }}>📢</span>
                             <div style={{ flex: 1, overflow: 'hidden' }}>
                                 <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {recentNotice.isPinned && <span style={{ marginRight: '0.4rem' }}>📌</span>}
                                     {recentNotice.title}
                                 </h3>
                                 <p style={{ margin: 0, fontSize: '0.8rem', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
