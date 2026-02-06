@@ -84,29 +84,20 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {/* Notice Widget */}
             {recentNotice && (
-                <div style={{ width: '100%', maxWidth: '480px', padding: '0 1rem', marginBottom: '1rem' }}>
+                <div className={styles.noticeContainer}>
                     <Link href="/notices" style={{ textDecoration: 'none' }}>
-                        <div style={{
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            border: '1px solid rgba(59, 130, 246, 0.2)',
-                            borderRadius: '12px',
-                            padding: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            cursor: 'pointer'
-                        }}>
-                            <span style={{ fontSize: '1.5rem' }}>📢</span>
-                            <div style={{ flex: 1, overflow: 'hidden' }}>
-                                <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div className={styles.noticeBanner}>
+                            <span className={styles.noticeIcon}>📢</span>
+                            <div className={styles.noticeContent}>
+                                <h3 className={styles.noticeTitle}>
                                     {recentNotice.isPinned && <span style={{ marginRight: '0.4rem' }}>📌</span>}
                                     {recentNotice.title}
                                 </h3>
-                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <p className={styles.noticeText}>
                                     {recentNotice.content}
                                 </p>
                             </div>
-                            <span style={{ color: '#60a5fa', fontSize: '0.9rem' }}>&rarr;</span>
+                            <span className={styles.noticeArrow}>&rarr;</span>
                         </div>
                     </Link>
                 </div>

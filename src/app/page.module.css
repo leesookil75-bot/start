@@ -329,3 +329,66 @@
   padding: 0 2px;
   /* Slight padding if needed */
 }
+/* Notice Banner */
+.noticeContainer {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 0.5rem; /* Less horizontal padding for container to allow banner to avail more width */
+    margin-bottom: 1.5rem;
+}
+
+.noticeBanner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.2));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px; /* Rounder */
+    padding: 1.25rem 1.5rem; /* Bigger padding */
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.noticeBanner:active {
+    transform: scale(0.98);
+}
+
+.noticeIcon {
+    font-size: 2rem; /* Bigger icon */
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.noticeContent {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; /* Space between title and text */
+}
+
+.noticeTitle {
+    margin: 0;
+    font-size: 1.1rem; /* Bigger title */
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.noticeText {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.noticeArrow {
+    color: #60a5fa;
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
