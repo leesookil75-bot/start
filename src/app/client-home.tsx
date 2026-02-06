@@ -102,70 +102,85 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
                         </div>
                     </Link>
                 </div>
+            )}
+
+            {/* Custom Tabs */}
+            <div className={styles.tabs}>
+                <div
+                    className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
+                    onClick={() => setActiveIndex(0)}
+                >
+                    오늘의 배출량
                 </div>
-    )
-}
+                <div
+                    className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
+                    onClick={() => setActiveIndex(1)}
+                >
+                    내 사용량 통계
+                </div>
+            </div>
 
-{/* PWA Install Prompt */ }
-<InstallPrompt />
+            {/* Slider Window */}
+            <div
+                className={styles.sliderWindow}
+                onPointerDown={onPointerDown}
+                onPointerUp={onPointerUp}
+                onPointerLeave={onPointerLeave}
+            >
+                <div
+                    className={styles.sliderContainer}
+                    style={{ transform: `translateX(-${activeIndex * 50}%)` }}
+                >
+                    {/* Slide 1: Usage Input */}
+                    <div className={styles.slide}>
+                        <div className={styles.card}>
+                            <h1 className={styles.title}>오늘의 배출량 입력</h1>
 
-{/* Custom Tabs */ }
-<div className={styles.tabs}>
-    <div
-        className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
-        onClick={() => setActiveIndex(0)}
-    >
-        오늘의 배출량
-    </div>
-    <div
-        className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
-        onClick={() => setActiveIndex(1)}
-    >
-        내 사용량 통계
-    </div>
-</div>
+                            <div className={styles.inputRows}>
+                                <div className={`${styles.row} ${styles.row45}`}>
+                                    <div className={styles.bagInfo}>
+                                        <div className={styles.bagIcon}>45L</div>
+                                        <span className={styles.bagLabel}>일반 쓰레기</span>
+                                    </div>
+                                    <div className={styles.controls}>
+                                        <button className={styles.controlBtn} onClick={() => handleDelta(45, -1)} disabled={current45 <= 0 || isPending}>−</button>
+                                        <span className={styles.countValue}>{current45}</span>
+                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(45, 1)} disabled={isPending}>+</button>
+                                    </div>
+                                </div>
 
-{/* Slider Window */ }
-<div
-    className={styles.sliderWindow}
-    onPointerDown={onPointerDown}
-    onPointerUp={onPointerUp}
-    onPointerLeave={onPointerLeave}
->
-    <div
-        className={styles.sliderContainer}
-        style={{ transform: `translateX(-${activeIndex * 50}%)` }}
-    >
-        {/* Slide 1: Usage Input */}
-        <div className={styles.slide}>
-            <div className={styles.card}>
-                <h1 className={styles.title}>오늘의 배출량 입력</h1>
+                                <div className={`${styles.row} ${styles.row75}`}>
+                                    <div className={styles.bagInfo}>
+                                        <div className={styles.bagIcon}>75L</div>
+                                        <span className={styles.bagLabel}>대형 쓰레기</span>
+                                    </div>
+                                    <div className={styles.controls}>
+                                        <button className={styles.controlBtn} onClick={() => handleDelta(75, -1)} disabled={current75 <= 0 || isPending}>−</button>
+                                        <span className={styles.countValue}>{current75}</span>
+                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(75, 1)} disabled={isPending}>+</button>
+                                    </div>
+                                </div>
+                            </div>
 
-                <div className={styles.inputRows}>
-                    <div className={`${styles.row} ${styles.row45}`}>
-                        <div className={styles.bagInfo}>
-                            <div className={styles.bagIcon}>45L</div>
-                            <span className={styles.bagLabel}>일반 쓰레기</span>
-                        </div>
-                        <div className={styles.controls}>
-                            <button className={styles.controlBtn} onClick={() => handleDelta(45, -1)} disabled={current45 <= 0 || isPending}>−</button>
-                            <span className={styles.countValue}>{current45}</span>
-                            <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(45, 1)} disabled={isPending}>+</button>
+                            {message && <p className={styles.message}>{message}</p>}
+
+                            <button
+                                className={styles.submitButton}
+                                onClick={handleSubmit}
+                                disabled={isPending || !hasChanges}
+                            >
+                                {isPending ? '전송 중...' : '오늘 배출량 전송'}
+                            </button>
                         </div>
                     </div>
 
-                    <div className={`${styles.row} ${styles.row75}`}>
-                        <div className={styles.bagInfo}>
-                            <div className={styles.bagIcon}>75L</div>
-                            <span className={styles.bagLabel}>대형 쓰레기</span>
-                        </div>
-
-                        {/* Slide 2: Stats View */}
-                        <div className={styles.slide}>
-                            <MyStatsView stats={stats} />
-                        </div>
+                    {/* Slide 2: Stats View */}
+                    <div className={styles.slide}>
+                        <MyStatsView stats={stats} />
                     </div>
                 </div>
-            </div >
-            );
-}
+            </div>
+
+            {/* Global InstallPrompt is now in layout.tsx, removed from here */}
+        </div>
+    );
