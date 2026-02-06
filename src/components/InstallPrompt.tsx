@@ -61,22 +61,20 @@ export default function InstallPrompt() {
         } else {
             // Fallback Logic
             const userAgent = window.navigator.userAgent.toLowerCase();
-            const isKakao = /kakaotalk/.test(userAgent);
             const isAndroid = /android/.test(userAgent);
 
-            if (isKakao && isAndroid) {
-                // KakaoTalk Android -> Android Chrome Intent
-                // This forces opening in the external Chrome browser
-                if (confirm("앱 설치를 위해 크롬 브라우저로 전환합니다. 이동하시겠습니까?")) {
-                    location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-                }
+            if (isAndroid) {
+                // If on Android but no deferredPrompt, we are likely in an In-App Browser (Kakao, Naver, etc.)
+                // Force open in Chrome
+                alert("설치를 위해 크롬 브라우저로 이동합니다.");
+                location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
                 return;
             }
 
             if (isIOS) {
                 alert("아이폰/아이패드 설치 방법:\n하단 '공유' 버튼 → '홈 화면에 추가'를 선택해주세요.");
             } else {
-                alert("앱 설치 방법:\n브라우저 우측 상단/하단 메뉴(⋮ 또는 N)에서 '앱 설치' 또는 '홈 화면에 추가'를 선택해주세요.\n(카카오톡 등 인앱 브라우저에서는 '다른 브라우저로 열기' 후 시도해주세요.)");
+                alert("앱 설치 방법:\n브라우저 우측 상단/하단 메뉴(⋮ 또는 N)에서 '앱 설치' 또는 '홈 화면에 추가'를 선택해주세요.");
             }
         }
     };
