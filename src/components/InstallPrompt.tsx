@@ -5,7 +5,7 @@ import styles from '../app/page.module.css';
 
 export default function InstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(true); // Force true initially
     const [isIOS, setIsIOS] = useState(false);
     const [redirecting, setRedirecting] = useState(false);
 
@@ -23,18 +23,18 @@ export default function InstallPrompt() {
         }
 
         // Check if already in standalone mode
+        // For debugging, we will SHOW it even if standalone for a moment to verify it exists
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-        if (isStandalone) {
-            setIsVisible(false);
-            return;
-        }
+        console.log("Is Standalone:", isStandalone);
+
+        // if (isStandalone) {
+        //     setIsVisible(false);
+        //     return;
+        // }
 
         // Detect iOS
         const userAgent = window.navigator.userAgent.toLowerCase();
         setIsIOS(/iphone|ipad|ipod/.test(userAgent));
-
-        // Always show the button for visibility (fallback mode), unless standalone
-        setIsVisible(true);
 
         const handler = (e: any) => {
             // Prevent the mini-infobar from appearing on mobile
@@ -56,7 +56,7 @@ export default function InstallPrompt() {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             setDeferredPrompt(null);
-            if (outcome === 'accepted') setIsVisible(false);
+            // if (outcome === 'accepted') setIsVisible(false);
         } else {
             // Fallback Logic
             const userAgent = window.navigator.userAgent.toLowerCase();
@@ -82,17 +82,27 @@ export default function InstallPrompt() {
 
     return (
         <div
-            className={styles.installContainer}
             style={{
-                zIndex: 9999,
-                position: 'relative',
-                background: 'rgba(0,0,0,0.5)',
-                padding: '10px',
-                marginBottom: '10px'
+                zIndex: 99999,
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                background: 'rgba(50, 50, 50, 0.95)',
+                padding: '12px',
+                display: 'flex',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(5px)'
             }}
         >
-            <button className={styles.installButton} onClick={handleInstallClick} disabled={redirecting}>
-                {redirecting ? '크롬으로 이동 중...' : '📲 앱 내려받기'}
+            <button
+                className={styles.installButton}
+                onClick={handleInstallClick}
+                disabled={redirecting}
+                style={{ margin: 0 }} // Override any external margin
+            >
+                {redirecting ? '크롬으로 이동 중...' : 'DEBUG: 앱 설치 (보이나요?)'}
             </button>
         </div>
     );
