@@ -184,3 +184,5 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
             {/* Global InstallPrompt is now in layout.tsx, removed from here */}
         </div>
     );
+}
+
