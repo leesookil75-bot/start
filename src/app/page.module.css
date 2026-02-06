@@ -226,30 +226,30 @@
   opacity: 1;
 }
 
-.sendButton {
+.submitButton {
   width: 100%;
   padding: 1rem;
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #ef4444, #ea580c);
   color: white;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
 }
 
-.sendButton:hover:not(:disabled) {
+.submitButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
 }
 
-.sendButton:active:not(:disabled) {
+.submitButton:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.sendButton:disabled {
+.submitButton:disabled {
   background: #333;
   color: #666;
   box-shadow: none;
@@ -329,97 +329,103 @@
   padding: 0 2px;
   /* Slight padding if needed */
 }
+
 /* Notice Banner */
 .noticeContainer {
-    width: 100%;
-    max-width: 480px;
-    padding: 0 0.5rem; /* Less horizontal padding for container to allow banner to avail more width */
-    margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 0.5rem;
+  /* Less horizontal padding for container to allow banner to avail more width */
+  margin-bottom: 1.5rem;
 }
 
 .noticeBanner {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.2));
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 20px; /* Rounder */
-    padding: 1.25rem 1.5rem; /* Bigger padding */
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.2));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 20px;
+  /* Rounder */
+  padding: 1.25rem 1.5rem;
+  /* Bigger padding */
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .noticeBanner:active {
-    transform: scale(0.98);
+  transform: scale(0.98);
 }
 
 .noticeIcon {
-    font-size: 2rem; /* Bigger icon */
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  font-size: 2rem;
+  /* Bigger icon */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .noticeContent {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem; /* Space between title and text */
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  /* Space between title and text */
 }
 
 .noticeTitle {
-    margin: 0;
-    font-size: 1.1rem; /* Bigger title */
-    font-weight: 700;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  margin: 0;
+  font-size: 1.1rem;
+  /* Bigger title */
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .noticeText {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #cbd5e1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .noticeArrow {
-    color: #60a5fa;
-    font-size: 1.2rem;
-    opacity: 0.8;
+  color: #60a5fa;
+  font-size: 1.2rem;
+  opacity: 0.8;
 }
 
 
 /* Install Prompt */
 .installContainer {
-    width: 100%;
-    max-width: 480px;
-    padding: 0 0.5rem;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: center;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
 }
 
 .installButton {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    padding: 0.75rem 1.5rem;
-    border-radius: 99px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 99px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
 .installButton:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
-
