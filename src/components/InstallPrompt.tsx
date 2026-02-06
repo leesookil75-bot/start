@@ -5,7 +5,7 @@ import styles from '../app/page.module.css';
 
 export default function InstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-    const [isVisible, setIsVisible] = useState(true); // Force true initially
+    const [isVisible, setIsVisible] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
     const [redirecting, setRedirecting] = useState(false);
 
@@ -23,18 +23,18 @@ export default function InstallPrompt() {
         }
 
         // Check if already in standalone mode
-        // For debugging, we will SHOW it even if standalone for a moment to verify it exists
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-        console.log("Is Standalone:", isStandalone);
-
-        // if (isStandalone) {
-        //     setIsVisible(false);
-        //     return;
-        // }
+        if (isStandalone) {
+            setIsVisible(false);
+            return;
+        }
 
         // Detect iOS
         const userAgent = window.navigator.userAgent.toLowerCase();
         setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+
+        // Show the prompt if not in standalone (fallback for browsers that don't fire beforeinstallprompt instantly)
+        setIsVisible(true);
 
         const handler = (e: any) => {
             // Prevent the mini-infobar from appearing on mobile
@@ -56,7 +56,7 @@ export default function InstallPrompt() {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             setDeferredPrompt(null);
-            // if (outcome === 'accepted') setIsVisible(false);
+            if (outcome === 'accepted') setIsVisible(false);
         } else {
             // Fallback Logic
             const userAgent = window.navigator.userAgent.toLowerCase();
@@ -88,7 +88,7 @@ export default function InstallPrompt() {
                 top: 0,
                 left: 0,
                 width: '100%',
-                background: 'rgba(50, 50, 50, 0.95)',
+                background: 'rgba(20, 20, 20, 0.95)', // Slightly cleaner dark bg
                 padding: '12px',
                 display: 'flex',
                 justifyContent: 'center',
@@ -102,7 +102,7 @@ export default function InstallPrompt() {
                 disabled={redirecting}
                 style={{ margin: 0 }} // Override any external margin
             >
-                {redirecting ? '크롬으로 이동 중...' : 'DEBUG: 앱 설치 (보이나요?)'}
+                {redirecting ? '크롬으로 이동 중...' : '홈화면 바로가기 설치'}
             </button>
         </div>
     );
