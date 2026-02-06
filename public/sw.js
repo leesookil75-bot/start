@@ -10,6 +10,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Minimal pass-through fetch handler satisfying PWA requirements
-    // event.respondWith(fetch(event.request));
+    // Basic pass-through fetch
+    event.respondWith(fetch(event.request));
 });
