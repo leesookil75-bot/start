@@ -59,7 +59,18 @@ export default function InstallPrompt() {
             setDeferredPrompt(null);
             if (outcome === 'accepted') setIsVisible(false);
         } else {
-            // Fallback: iOS or In-App Browser or Prompt missed
+            // Fallback Logic
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            const isKakao = /kakaotalk/.test(userAgent);
+            const isAndroid = /android/.test(userAgent);
+
+            if (isKakao && isAndroid) {
+                // KakaoTalk Android -> Android Chrome Intent
+                // This forces opening in the external Chrome browser
+                location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=http;package=com.android.chrome;end';
+                return;
+            }
+
             if (isIOS) {
                 alert("아이폰/아이패드 설치 방법:\n하단 '공유' 버튼 → '홈 화면에 추가'를 선택해주세요.");
             } else {
