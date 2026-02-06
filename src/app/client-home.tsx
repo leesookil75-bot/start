@@ -4,6 +4,7 @@ import { useState, useTransition, useRef } from 'react';
 import styles from './page.module.css';
 import { submitUsage } from './actions';
 import MyStatsView from './components/MyStatsView';
+import InstallPrompt from '@/components/InstallPrompt';
 
 import Link from 'next/link';
 
@@ -101,80 +102,70 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
                         </div>
                     </Link>
                 </div>
-            )}
-
-            {/* Custom Tabs */}
-            <div className={styles.tabs}>
-                <div
-                    className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
-                    onClick={() => setActiveIndex(0)}
-                >
-                    오늘의 배출량
                 </div>
-                <div
-                    className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
-                    onClick={() => setActiveIndex(1)}
-                >
-                    내 사용량 통계
-                </div>
-            </div>
+    )
+}
 
-            {/* Slider Window */}
-            <div
-                className={styles.sliderWindow}
-                onPointerDown={onPointerDown}
-                onPointerUp={onPointerUp}
-                onPointerLeave={onPointerLeave}
-            >
-                <div
-                    className={styles.sliderContainer}
-                    style={{ transform: `translateX(-${activeIndex * 50}%)` }}
-                >
-                    {/* Slide 1: Usage Input */}
-                    <div className={styles.slide}>
-                        <div className={styles.card}>
-                            <h1 className={styles.title}>오늘의 배출량 입력</h1>
+{/* PWA Install Prompt */ }
+<InstallPrompt />
 
-                            <div className={styles.inputRows}>
-                                <div className={`${styles.row} ${styles.row45}`}>
-                                    <div className={styles.bagInfo}>
-                                        <div className={styles.bagIcon}>45L</div>
-                                        <span className={styles.bagLabel}>일반 쓰레기</span>
-                                    </div>
-                                    <div className={styles.controls}>
-                                        <button className={styles.controlBtn} onClick={() => handleDelta(45, -1)} disabled={current45 <= 0 || isPending}>−</button>
-                                        <span className={styles.countValue}>{current45}</span>
-                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(45, 1)} disabled={isPending}>+</button>
-                                    </div>
-                                </div>
+{/* Custom Tabs */ }
+<div className={styles.tabs}>
+    <div
+        className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
+        onClick={() => setActiveIndex(0)}
+    >
+        오늘의 배출량
+    </div>
+    <div
+        className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
+        onClick={() => setActiveIndex(1)}
+    >
+        내 사용량 통계
+    </div>
+</div>
 
-                                <div className={`${styles.row} ${styles.row75}`}>
-                                    <div className={styles.bagInfo}>
-                                        <div className={styles.bagIcon}>75L</div>
-                                        <span className={styles.bagLabel}>대형 쓰레기</span>
-                                    </div>
-                                    <div className={styles.controls}>
-                                        <button className={styles.controlBtn} onClick={() => handleDelta(75, -1)} disabled={current75 <= 0 || isPending}>−</button>
-                                        <span className={styles.countValue}>{current75}</span>
-                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(75, 1)} disabled={isPending}>+</button>
-                                    </div>
-                                </div>
-                            </div>
+{/* Slider Window */ }
+<div
+    className={styles.sliderWindow}
+    onPointerDown={onPointerDown}
+    onPointerUp={onPointerUp}
+    onPointerLeave={onPointerLeave}
+>
+    <div
+        className={styles.sliderContainer}
+        style={{ transform: `translateX(-${activeIndex * 50}%)` }}
+    >
+        {/* Slide 1: Usage Input */}
+        <div className={styles.slide}>
+            <div className={styles.card}>
+                <h1 className={styles.title}>오늘의 배출량 입력</h1>
 
-                            <div className={`${styles.message} ${message ? styles.messageVisible : ''}`}>{message}</div>
-
-                            <button className={styles.sendButton} onClick={handleSubmit} disabled={!hasChanges || isPending}>
-                                {isPending ? '전송 중...' : '전송하기'}
-                            </button>
+                <div className={styles.inputRows}>
+                    <div className={`${styles.row} ${styles.row45}`}>
+                        <div className={styles.bagInfo}>
+                            <div className={styles.bagIcon}>45L</div>
+                            <span className={styles.bagLabel}>일반 쓰레기</span>
+                        </div>
+                        <div className={styles.controls}>
+                            <button className={styles.controlBtn} onClick={() => handleDelta(45, -1)} disabled={current45 <= 0 || isPending}>−</button>
+                            <span className={styles.countValue}>{current45}</span>
+                            <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(45, 1)} disabled={isPending}>+</button>
                         </div>
                     </div>
 
-                    {/* Slide 2: Stats View */}
-                    <div className={styles.slide}>
-                        <MyStatsView stats={stats} />
+                    <div className={`${styles.row} ${styles.row75}`}>
+                        <div className={styles.bagInfo}>
+                            <div className={styles.bagIcon}>75L</div>
+                            <span className={styles.bagLabel}>대형 쓰레기</span>
+                        </div>
+
+                        {/* Slide 2: Stats View */}
+                        <div className={styles.slide}>
+                            <MyStatsView stats={stats} />
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    );
+            </div >
+            );
 }
