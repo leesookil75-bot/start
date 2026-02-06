@@ -8,6 +8,18 @@ export default function InstallPrompt() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+                .register('/sw.js')
+                .then((registration) => {
+                    console.log('SW registered:', registration);
+                })
+                .catch((error) => {
+                    console.error('SW registration failed:', error);
+                });
+        }
+
         const handler = (e: any) => {
             // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
