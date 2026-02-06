@@ -7,6 +7,7 @@ export default function InstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
+    const [redirecting, setRedirecting] = useState(false);
 
     useEffect(() => {
         // Register Service Worker
@@ -65,8 +66,8 @@ export default function InstallPrompt() {
 
             if (isAndroid) {
                 // If on Android but no deferredPrompt, we are likely in an In-App Browser (Kakao, Naver, etc.)
-                // Force open in Chrome
-                alert("설치를 위해 크롬 브라우저로 이동합니다.");
+                // Force open in Chrome without blocking alert (preserves user gesture)
+                setRedirecting(true);
                 location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
                 return;
             }
@@ -83,9 +84,15 @@ export default function InstallPrompt() {
 
     return (
         <div className={styles.installContainer}>
-            <button className={styles.installButton} onClick={handleInstallClick}>
-                📲 앱 설치하기
+            <button className={styles.installButton} onClick={handleInstallClick} disabled={redirecting}>
+                {redirecting ? '크롬으로 이동 중...' : '📲 앱 설치하기'}
             </button>
+            {/* Debug Info: remove in production if needed, but helpful now */}
+            {!deferredPrompt && isVisible && (
+                <p style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.2rem' }}>
+
+                </p>
+            )}
         </div>
     );
 }
