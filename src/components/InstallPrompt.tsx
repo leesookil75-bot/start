@@ -67,7 +67,9 @@ export default function InstallPrompt() {
             if (isKakao && isAndroid) {
                 // KakaoTalk Android -> Android Chrome Intent
                 // This forces opening in the external Chrome browser
-                location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                if (confirm("앱 설치를 위해 크롬 브라우저로 전환합니다. 이동하시겠습니까?")) {
+                    location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                }
                 return;
             }
 
