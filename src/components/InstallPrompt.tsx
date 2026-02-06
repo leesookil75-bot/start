@@ -41,8 +41,6 @@ export default function InstallPrompt() {
             e.preventDefault();
             // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
-            // Update UI notify the user they can install the PWA
-            // setIsVisible(true); // Already true
         };
 
         window.addEventListener('beforeinstallprompt', handler);
@@ -83,16 +81,19 @@ export default function InstallPrompt() {
     if (!isVisible) return null;
 
     return (
-        <div className={styles.installContainer}>
+        <div
+            className={styles.installContainer}
+            style={{
+                zIndex: 9999,
+                position: 'relative',
+                background: 'rgba(0,0,0,0.5)',
+                padding: '10px',
+                marginBottom: '10px'
+            }}
+        >
             <button className={styles.installButton} onClick={handleInstallClick} disabled={redirecting}>
-                {redirecting ? '크롬으로 이동 중...' : '📲 앱 설치하기'}
+                {redirecting ? '크롬으로 이동 중...' : '📲 앱 내려받기'}
             </button>
-            {/* Debug Info: remove in production if needed, but helpful now */}
-            {!deferredPrompt && isVisible && (
-                <p style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.2rem' }}>
-
-                </p>
-            )}
         </div>
     );
 }
