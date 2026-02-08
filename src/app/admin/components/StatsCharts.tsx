@@ -18,21 +18,29 @@ interface StatsChartsProps {
 export default function StatsCharts({ data, type }: StatsChartsProps) {
     if (type === 'bar') {
         return (
-            <div className={styles.chartContainer}>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                        <XAxis dataKey="key" stroke="#888" fontSize={12} tickMargin={10} />
-                        <YAxis stroke="#888" fontSize={12} />
-                        <Tooltip
-                            contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                            labelStyle={{ color: '#fff' }}
-                        />
-                        <Legend />
-                        <Bar dataKey="count45" name="45L Bag" fill={COLORS_45} stackId="a" />
-                        <Bar dataKey="count75" name="75L Bag" fill={COLORS_75} stackId="a" />
-                    </BarChart>
-                </ResponsiveContainer>
+            <div
+                className={styles.chartContainer}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}
+            >
+                <div style={{ minWidth: Math.max(100, data.length * 50) + 'px', height: 300 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                            <XAxis dataKey="key" stroke="#888" fontSize={12} tickMargin={10} />
+                            <YAxis stroke="#888" fontSize={12} />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                                labelStyle={{ color: '#fff' }}
+                            />
+                            <Legend />
+                            <Bar dataKey="count45" name="45L Bag" fill={COLORS_45} stackId="a" />
+                            <Bar dataKey="count75" name="75L Bag" fill={COLORS_75} stackId="a" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         );
     }
@@ -41,7 +49,12 @@ export default function StatsCharts({ data, type }: StatsChartsProps) {
 
     if (type === 'pie') {
         return (
-            <div className={styles.chartContainer}>
+            <div
+                className={styles.chartContainer}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+            >
                 <ResponsiveContainer width="100%" height={400}>
                     <PieChart>
                         <Pie
