@@ -54,10 +54,10 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
     return (
         <div className={styles.container}>
             <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Add New User</h2>
+                <h2 className={styles.sectionTitle}>새 사용자 추가</h2>
                 <form onSubmit={handleAdd} className={styles.form}>
                     <div className={styles.inputGroup}>
-                        <label className={styles.label}>Name</label>
+                        <label className={styles.label}>이름</label>
                         <input
                             className={styles.input}
                             value={newUser.name}
@@ -67,7 +67,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                         />
                     </div>
                     <div className={styles.inputGroup}>
-                        <label className={styles.label}>Phone Number</label>
+                        <label className={styles.label}>전화번호</label>
                         <input
                             className={styles.input}
                             value={newUser.phoneNumber}
@@ -77,7 +77,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                         />
                     </div>
                     <div className={styles.inputGroup}>
-                        <label className={styles.label}>Area</label>
+                        <label className={styles.label}>담당 구역</label>
                         <input
                             className={styles.input}
                             value={newUser.cleaningArea}
@@ -87,23 +87,23 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                         />
                     </div>
                     <button type="submit" className={styles.addButton} disabled={isPending}>
-                        {isPending ? 'Adding...' : 'Add User'}
+                        {isPending ? '추가 중...' : '사용자 추가'}
                     </button>
                 </form>
                 {error && <p className={styles.error}>{error}</p>}
             </div>
 
             <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Registered Users</h2>
+                <h2 className={styles.sectionTitle}>등록된 사용자</h2>
                 <div className={styles.tableWrapper}>
                     <table className={styles.table}>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Area</th>
-                                <th>Role</th>
-                                <th>Action</th>
+                                <th>이름</th>
+                                <th>전화번호</th>
+                                <th>담당 구역</th>
+                                <th>역할</th>
+                                <th>관리</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -120,7 +120,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                             fontSize: '0.8rem',
                                             color: 'white'
                                         }}>
-                                            {user.role}
+                                            {user.role === 'admin' ? '관리자' : '청소부'}
                                         </span>
                                     </td>
                                     <td>
@@ -130,7 +130,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                                 onClick={() => setEditingUser(user)}
                                                 style={{ background: '#2196F3', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem' }}
                                             >
-                                                Edit
+                                                수정
                                             </button>
                                             {user.role !== 'admin' && (
                                                 <>
@@ -151,14 +151,14 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                                         disabled={isPending}
                                                         title="비밀번호를 전화번호 뒤 4자리로 초기화"
                                                     >
-                                                        Reset
+                                                        비번초기화
                                                     </button>
                                                     <button
                                                         className={styles.deleteButton}
                                                         onClick={() => handleDelete(user.id)}
                                                         disabled={isPending}
                                                     >
-                                                        Delete
+                                                        삭제
                                                     </button>
                                                 </>
                                             )}
@@ -168,7 +168,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                             ))}
                             {initialUsers.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} style={{ textAlign: 'center', opacity: 0.5 }}>No users found</td>
+                                    <td colSpan={5} style={{ textAlign: 'center', opacity: 0.5 }}>등록된 사용자가 없습니다.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -186,7 +186,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                         background: '#1a1a1a', padding: '2rem', borderRadius: '8px',
                         width: '90%', maxWidth: '400px', border: '1px solid #333'
                     }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'white' }}>Edit User</h3>
+                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'white' }}>사용자 정보 수정</h3>
                         <form onSubmit={(e) => {
                             e.preventDefault();
                             setError('');
@@ -209,7 +209,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                             });
                         }}>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Name</label>
+                                <label className={styles.label}>이름</label>
                                 <input
                                     name="name"
                                     defaultValue={editingUser.name}
@@ -218,7 +218,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 />
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Phone Number</label>
+                                <label className={styles.label}>전화번호</label>
                                 <input
                                     name="phoneNumber"
                                     defaultValue={editingUser.phoneNumber}
@@ -227,7 +227,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 />
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Area</label>
+                                <label className={styles.label}>담당 구역</label>
                                 <input
                                     name="cleaningArea"
                                     defaultValue={editingUser.cleaningArea}
@@ -236,15 +236,15 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 />
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Role</label>
+                                <label className={styles.label}>역할</label>
                                 <select
                                     name="role"
                                     defaultValue={editingUser.role}
                                     className={styles.input}
                                     style={{ background: '#333', color: 'white', border: '1px solid #444' }}
                                 >
-                                    <option value="cleaner">Cleaner</option>
-                                    <option value="admin">Admin</option>
+                                    <option value="cleaner">청소부</option>
+                                    <option value="admin">관리자</option>
                                 </select>
                             </div>
 
@@ -254,14 +254,14 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                     onClick={() => setEditingUser(null)}
                                     style={{ flex: 1, padding: '0.8rem', background: '#444', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
                                 >
-                                    Cancel
+                                    취소
                                 </button>
                                 <button
                                     type="submit"
                                     style={{ flex: 1, padding: '0.8rem', background: 'var(--accent-color)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
                                     disabled={isPending}
                                 >
-                                    {isPending ? 'Saving...' : 'Save Changes'}
+                                    {isPending ? '저장 중...' : '저장'}
                                 </button>
                             </div>
                         </form>
