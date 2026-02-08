@@ -91,6 +91,11 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         XLSX.writeFile(wb, `daily_report_${year}_${month}.xlsx`);
     };
 
+    const isSunday = (day: number) => {
+        const date = new Date(year, month - 1, day);
+        return date.getDay() === 0;
+    };
+
     return (
         <div className={styles.tableContainer}>
             <div className={styles.tableHeader}>
@@ -107,7 +112,13 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                             <th>Area</th>
                             <th>Type</th>
                             {days.map(d => (
-                                <th key={d} style={{ minWidth: '30px', textAlign: 'center', padding: '0.5rem 0.2rem' }}>{d}</th>
+                                <th key={d} style={{
+                                    minWidth: '30px',
+                                    textAlign: 'center',
+                                    padding: '0.5rem 0.2rem',
+                                    color: isSunday(d) ? '#ff6b6b' : 'inherit',
+                                    backgroundColor: isSunday(d) ? 'rgba(255, 107, 107, 0.1)' : 'transparent'
+                                }}>{d}</th>
                             ))}
                             <th>Total</th>
                         </tr>
@@ -126,7 +137,12 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                         <span className={`${styles.badge} ${styles.badge45}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>45L</span>
                                     </td>
                                     {user.daily.map((d, i) => (
-                                        <td key={i} style={{ textAlign: 'center', padding: '0.5rem 0', color: d.count45 ? 'inherit' : '#444' }}>
+                                        <td key={i} style={{
+                                            textAlign: 'center',
+                                            padding: '0.5rem 0',
+                                            color: d.count45 ? 'inherit' : '#444',
+                                            backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
+                                        }}>
                                             {d.count45 || '-'}
                                         </td>
                                     ))}
@@ -139,7 +155,12 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                         <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>75L</span>
                                     </td>
                                     {user.daily.map((d, i) => (
-                                        <td key={i} style={{ textAlign: 'center', padding: '0.5rem 0', color: d.count75 ? 'inherit' : '#444' }}>
+                                        <td key={i} style={{
+                                            textAlign: 'center',
+                                            padding: '0.5rem 0',
+                                            color: d.count75 ? 'inherit' : '#444',
+                                            backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
+                                        }}>
                                             {d.count75 || '-'}
                                         </td>
                                     ))}
@@ -156,14 +177,22 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                             <td rowSpan={2}></td>
                             <td>45L</td>
                             {dailyTotals.map((d, i) => (
-                                <td key={i} style={{ textAlign: 'center', padding: '0.5rem 0' }}>{d.count45}</td>
+                                <td key={i} style={{
+                                    textAlign: 'center',
+                                    padding: '0.5rem 0',
+                                    backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
+                                }}>{d.count45}</td>
                             ))}
                             <td style={{ textAlign: 'center', color: 'var(--accent-45)' }}>{grandTotal45}</td>
                         </tr>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
                             <td>75L</td>
                             {dailyTotals.map((d, i) => (
-                                <td key={i} style={{ textAlign: 'center', padding: '0.5rem 0' }}>{d.count75}</td>
+                                <td key={i} style={{
+                                    textAlign: 'center',
+                                    padding: '0.5rem 0',
+                                    backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
+                                }}>{d.count75}</td>
                             ))}
                             <td style={{ textAlign: 'center', color: 'var(--accent-75)' }}>{grandTotal75}</td>
                         </tr>
