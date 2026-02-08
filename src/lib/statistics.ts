@@ -103,3 +103,67 @@ export async function getExcelData() {
         };
     }).sort((a, b) => new Date(b.Time).getTime() - new Date(a.Time).getTime());
 }
+
+export interface MonthlyUserStat {
+    userId: string;
+    userName: string;
+    monthly: { count45: number; count75: number }[]; // Index 0 = Jan, 11 = Dec
+    total45: number;
+    total75: number;
+}
+
+export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
+    const records = await getRecords();
+    const users = await getUsers();
+
+    // Create a map to store stats for each user
+    // Key: userId
+    const statsMap = new Map<string, MonthlyUserStat>();
+
+    // Initialize map with all users
+    users.forEach(user => {
+        statsMap.set(user.id, {
+            userId: user.id,
+            userName: user.name,
+            monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
+            total45: 0,
+            total75: 0
+        });
+    });
+
+    const currentYear = new Date().getFullYear();
+
+    records.forEach(record => {
+        const date = new Date(record.timestamp);
+        if (date.getFullYear() !== currentYear) return;
+
+        const month = date.getMonth(); // 0-11
+        const userId = record.userId || 'unknown';
+
+        // If user not in map (e.g. admin or deleted), create entry if we want to show them
+        // Or if userId is strictly required to be in users list, we might skip.
+        // Assuming we want to show all activity.
+        let stat = statsMap.get(userId);
+        if (!stat) {
+            stat = {
+                userId: userId,
+                userName: record.userName || 'Unknown',
+                monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
+                total45: 0,
+                total75: 0
+            };
+            statsMap.set(userId, stat);
+        }
+
+        if (record.size === 45) {
+            stat.monthly[month].count45++;
+            stat.total45++;
+        } else if (record.size === 75) {
+            stat.monthly[month].count75++;
+            stat.total75++;
+        }
+    });
+
+    // Convert map to array and sort by name
+    return Array.from(statsMap.values()).sort((a, b) => a.userName.localeCompare(b.userName));
+}

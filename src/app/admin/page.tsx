@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import styles from './admin.module.css';
 import { getUsageStats, logout, getCurrentUser } from '../actions';
-import { getStatsByPeriod, getStatsByArea, getExcelData } from '@/lib/statistics';
+import { getStatsByPeriod, getStatsByArea, getExcelData, getMonthlyUserStats } from '@/lib/statistics';
 import { getNotices } from '@/lib/data';
 import AdminDashboardClient from './dashboard-client';
 import { redirect } from 'next/navigation';
@@ -25,7 +25,8 @@ export default async function AdminPage() {
         yearlyStats,
         areaStats,
         excelData,
-        notices
+        notices,
+        monthlyUserStats
     ] = await Promise.all([
         getStatsByPeriod('daily'),
         getStatsByPeriod('weekly'),
@@ -33,7 +34,8 @@ export default async function AdminPage() {
         getStatsByPeriod('yearly'),
         getStatsByArea(),
         getExcelData(),
-        getNotices()
+        getNotices(),
+        getMonthlyUserStats()
     ]);
 
     return (
@@ -47,7 +49,8 @@ export default async function AdminPage() {
                     weekly: weeklyStats,
                     monthly: monthlyStats,
                     yearly: yearlyStats,
-                    area: areaStats
+                    area: areaStats,
+                    monthlyUser: monthlyUserStats
                 }}
                 summaryStats={stats}
                 excelData={excelData}

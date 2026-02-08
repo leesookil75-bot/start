@@ -8,7 +8,10 @@ import { NoticeForm, NoticeList, Notice } from './notices/client';
 import Link from 'next/link';
 import { logout } from '../actions';
 
-type Tab = 'records' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area';
+import { MonthlyUserStat } from '@/lib/statistics';
+import MonthlyReportTable from './components/MonthlyReportTable';
+
+type Tab = 'records' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area' | 'user-report';
 
 interface DashboardClientProps {
     records: any[];
@@ -18,6 +21,7 @@ interface DashboardClientProps {
         monthly: any[];
         yearly: any[];
         area: any[];
+        monthlyUser: MonthlyUserStat[];
     };
     summaryStats: {
         count45: number;
@@ -159,6 +163,7 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
                         <div className={styles.tabBar}>
                             <div className={styles.tabs}>
                                 <button className={`${styles.tab} ${activeTab === 'records' ? styles.activeTab : ''}`} onClick={() => setActiveTab('records')}>Records</button>
+                                <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
                                 <button className={`${styles.tab} ${activeTab === 'daily' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily')}>Daily</button>
                                 <button className={`${styles.tab} ${activeTab === 'weekly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('weekly')}>Weekly</button>
                                 <button className={`${styles.tab} ${activeTab === 'monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('monthly')}>Monthly</button>
@@ -204,6 +209,7 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
                                 </div>
                             )}
 
+                            {activeTab === 'user-report' && <MonthlyReportTable data={stats.monthlyUser} year={new Date().getFullYear()} />}
                             {activeTab === 'daily' && <StatsCharts data={stats.daily} type="bar" />}
                             {activeTab === 'weekly' && <StatsCharts data={stats.weekly} type="bar" />}
                             {activeTab === 'monthly' && <StatsCharts data={stats.monthly} type="bar" />}
