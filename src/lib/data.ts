@@ -143,6 +143,44 @@ export async function getUserByPhone(phoneNumber: string): Promise<User | undefi
   return users.find(u => u.phoneNumber === phoneNumber);
 }
 
+export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<void> {
+  if (isPostgresEnabled()) {
+    // Construct dynamic query or just update all fields if provided
+    // We fetch first to merge, or use COALESCE in SQL
+    // Fetching first is safer for selective updates without complex SQL building
+    const { rows } = await sql`SELECT * FROM users WHERE id = ${id}`;
+    if (rows.length === 0) throw new Error('User not found');
+    const user = rows[0];
+
+    const newName = updates.name ?? user.name;
+    const newPhone = updates.phoneNumber ?? user.phone_number;
+    const newArea = updates.cleaningArea ?? user.cleaning_area;
+    const newRole = updates.role ?? user.role;
+    // Password update is handled separately typically, but let's allow it if passed? 
+    // No, let's keep password separate or handled by updateUserPassword. 
+    // But if updates has password, we should update it.
+    const newPassword = updates.password ?? user.password;
+
+    await sql`
+            UPDATE users
+            SET name = ${newName},
+                phone_number = ${newPhone},
+                cleaning_area = ${newArea},
+                role = ${newRole},
+                password = ${newPassword}
+            WHERE id = ${id}
+        `;
+    return;
+  }
+
+  const users = await getUsers();
+  const index = users.findIndex(u => u.id === id);
+  if (index === -1) throw new Error('User not found');
+
+  users[index] = { ...users[index], ...updates };
+  await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
+}
+
 // --- Usage Records ---
 export async function getRecords(): Promise<UsageRecord[]> {
   if (isPostgresEnabled()) {

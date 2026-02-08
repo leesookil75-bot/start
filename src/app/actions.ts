@@ -200,6 +200,21 @@ export async function resetUserPassword(userId: string): Promise<{ success: bool
     }
 }
 
+export async function updateUserAction(id: string, updates: Partial<User>): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        await import('@/lib/data').then(mod => mod.updateUser(id, updates));
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to update user' };
+    }
+}
+
 // --- Notice Actions ---
 import { addNotice, deleteNotice as removeNotice, updateNotice } from '@/lib/data';
 
