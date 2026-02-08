@@ -107,6 +107,7 @@ export async function getExcelData() {
 export interface MonthlyUserStat {
     userId: string;
     userName: string;
+    area: string;
     monthly: { count45: number; count75: number }[]; // Index 0 = Jan, 11 = Dec
     total45: number;
     total75: number;
@@ -125,6 +126,7 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
         statsMap.set(user.id, {
             userId: user.id,
             userName: user.name,
+            area: user.cleaningArea || '-',
             monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
             total45: 0,
             total75: 0
@@ -141,13 +143,12 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
         const userId = record.userId || 'unknown';
 
         // If user not in map (e.g. admin or deleted), create entry if we want to show them
-        // Or if userId is strictly required to be in users list, we might skip.
-        // Assuming we want to show all activity.
         let stat = statsMap.get(userId);
         if (!stat) {
             stat = {
                 userId: userId,
                 userName: record.userName || 'Unknown',
+                area: userId === 'admin-user' || record.userName === '관리자' ? '관리실' : '-', // Fallback area logic
                 monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
                 total45: 0,
                 total75: 0
@@ -164,6 +165,10 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
         }
     });
 
-    // Convert map to array and sort by name
-    return Array.from(statsMap.values()).sort((a, b) => a.userName.localeCompare(b.userName));
+    // Convert map to array and sort by area first, then name
+    return Array.from(statsMap.values()).sort((a, b) => {
+        if (a.area < b.area) return -1;
+        if (a.area > b.area) return 1;
+        return a.userName.localeCompare(b.userName);
+    });
 }
