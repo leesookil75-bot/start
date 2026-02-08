@@ -95,83 +95,85 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
 
             <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>Registered Users</h2>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone</th>
-                            <th>Area</th>
-                            <th>Role</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {initialUsers.map(user => (
-                            <tr key={user.id}>
-                                <td>{user.name}</td>
-                                <td>{user.phoneNumber}</td>
-                                <td>{user.cleaningArea}</td>
-                                <td>
-                                    <span style={{
-                                        padding: '0.2rem 0.5rem',
-                                        borderRadius: '4px',
-                                        background: user.role === 'admin' ? '#7c4dff' : '#444',
-                                        fontSize: '0.8rem',
-                                        color: 'white'
-                                    }}>
-                                        {user.role}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button
-                                            className={styles.resetButton}
-                                            onClick={() => setEditingUser(user)}
-                                            style={{ background: '#2196F3', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem' }}
-                                        >
-                                            Edit
-                                        </button>
-                                        {user.role !== 'admin' && (
-                                            <>
-                                                <button
-                                                    className={styles.resetButton}
-                                                    onClick={() => {
-                                                        if (confirm(`비밀번호를 초기화하시겠습니까?\n(${user.phoneNumber.slice(-4)})`)) {
-                                                            startTransition(async () => {
-                                                                const result = await resetUserPassword(user.id);
-                                                                if (result.success) {
-                                                                    alert('비밀번호가 초기화되었습니다.');
-                                                                } else {
-                                                                    setError(result.error || 'Failed to reset password');
-                                                                }
-                                                            });
-                                                        }
-                                                    }}
-                                                    disabled={isPending}
-                                                    title="비밀번호를 전화번호 뒤 4자리로 초기화"
-                                                >
-                                                    Reset
-                                                </button>
-                                                <button
-                                                    className={styles.deleteButton}
-                                                    onClick={() => handleDelete(user.id)}
-                                                    disabled={isPending}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {initialUsers.length === 0 && (
+                <div className={styles.tableWrapper}>
+                    <table className={styles.table}>
+                        <thead>
                             <tr>
-                                <td colSpan={5} style={{ textAlign: 'center', opacity: 0.5 }}>No users found</td>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Area</th>
+                                <th>Role</th>
+                                <th>Action</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {initialUsers.map(user => (
+                                <tr key={user.id}>
+                                    <td>{user.name}</td>
+                                    <td>{user.phoneNumber}</td>
+                                    <td>{user.cleaningArea}</td>
+                                    <td>
+                                        <span style={{
+                                            padding: '0.2rem 0.5rem',
+                                            borderRadius: '4px',
+                                            background: user.role === 'admin' ? '#7c4dff' : '#444',
+                                            fontSize: '0.8rem',
+                                            color: 'white'
+                                        }}>
+                                            {user.role}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button
+                                                className={styles.resetButton}
+                                                onClick={() => setEditingUser(user)}
+                                                style={{ background: '#2196F3', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem' }}
+                                            >
+                                                Edit
+                                            </button>
+                                            {user.role !== 'admin' && (
+                                                <>
+                                                    <button
+                                                        className={styles.resetButton}
+                                                        onClick={() => {
+                                                            if (confirm(`비밀번호를 초기화하시겠습니까?\n(${user.phoneNumber.slice(-4)})`)) {
+                                                                startTransition(async () => {
+                                                                    const result = await resetUserPassword(user.id);
+                                                                    if (result.success) {
+                                                                        alert('비밀번호가 초기화되었습니다.');
+                                                                    } else {
+                                                                        setError(result.error || 'Failed to reset password');
+                                                                    }
+                                                                });
+                                                            }
+                                                        }}
+                                                        disabled={isPending}
+                                                        title="비밀번호를 전화번호 뒤 4자리로 초기화"
+                                                    >
+                                                        Reset
+                                                    </button>
+                                                    <button
+                                                        className={styles.deleteButton}
+                                                        onClick={() => handleDelete(user.id)}
+                                                        disabled={isPending}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {initialUsers.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} style={{ textAlign: 'center', opacity: 0.5 }}>No users found</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {editingUser && (
