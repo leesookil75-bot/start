@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import styles from './admin.module.css';
 import { getUsageStats, logout, getCurrentUser } from '../actions';
-import { getStatsByPeriod, getStatsByArea, getExcelData, getMonthlyUserStats } from '@/lib/statistics';
+import { getStatsByPeriod, getStatsByArea, getExcelData, getMonthlyUserStats, getDailyUserStats } from '@/lib/statistics';
 import { getNotices } from '@/lib/data';
 import AdminDashboardClient from './dashboard-client';
 import { redirect } from 'next/navigation';
@@ -9,13 +9,26 @@ import { redirect } from 'next/navigation';
 // Ensure dynamic rendering to fetch fresh data on every request
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
+export default async function AdminPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
     const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
         redirect('/login');
     }
 
     const { stats, records } = await getUsageStats();
+
+    // Parse Year/Month from query params or default to current
+    const params = await searchParams;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const queryYear = params.year ? parseInt(params.year as string) : currentYear;
+    const queryMonth = params.month ? parseInt(params.month as string) : currentMonth;
 
     // Fetch all stats server-side
     const [
@@ -26,7 +39,8 @@ export default async function AdminPage() {
         areaStats,
         excelData,
         notices,
-        monthlyUserStats
+        monthlyUserStats,
+        dailyUserStats
     ] = await Promise.all([
         getStatsByPeriod('daily'),
         getStatsByPeriod('weekly'),
@@ -35,7 +49,8 @@ export default async function AdminPage() {
         getStatsByArea(),
         getExcelData(),
         getNotices(),
-        getMonthlyUserStats()
+        getMonthlyUserStats(),
+        getDailyUserStats(queryYear, queryMonth)
     ]);
 
     return (
@@ -50,8 +65,10 @@ export default async function AdminPage() {
                     monthly: monthlyStats,
                     yearly: yearlyStats,
                     area: areaStats,
-                    monthlyUser: monthlyUserStats
+                    monthlyUser: monthlyUserStats,
+                    dailyUser: dailyUserStats
                 }}
+                currentDate={{ year: queryYear, month: queryMonth }}
                 summaryStats={stats}
                 excelData={excelData}
                 notices={notices}

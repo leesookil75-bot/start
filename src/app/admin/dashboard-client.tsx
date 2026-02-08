@@ -7,11 +7,13 @@ import ExcelDownloadBtn from './components/ExcelDownloadBtn';
 import { NoticeForm, NoticeList, Notice } from './notices/client';
 import Link from 'next/link';
 import { logout } from '../actions';
+import { useRouter } from 'next/navigation';
 
-import { MonthlyUserStat } from '@/lib/statistics';
+import { MonthlyUserStat, DailyUserStat } from '@/lib/statistics';
 import MonthlyReportTable from './components/MonthlyReportTable';
+import DailyReportTable from './components/DailyReportTable';
 
-type Tab = 'records' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area' | 'user-report';
+type Tab = 'daily-report' | 'user-report' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area';
 
 interface DashboardClientProps {
     records: any[];
@@ -22,6 +24,11 @@ interface DashboardClientProps {
         yearly: any[];
         area: any[];
         monthlyUser: MonthlyUserStat[];
+        dailyUser: DailyUserStat[];
+    };
+    currentDate: {
+        year: number;
+        month: number;
     };
     summaryStats: {
         count45: number;
@@ -32,10 +39,11 @@ interface DashboardClientProps {
     notices: Notice[];
 }
 
-export default function AdminDashboardClient({ records, stats, summaryStats, excelData, notices }: DashboardClientProps) {
-    const [activeTab, setActiveTab] = useState<Tab>('records');
+export default function AdminDashboardClient({ records, stats, currentDate, summaryStats, excelData, notices }: DashboardClientProps) {
+    const [activeTab, setActiveTab] = useState<Tab>('daily-report');
     const [page, setPage] = useState(0); // 0: Dashboard, 1: Create/Edit Notice, 2: Notice List
     const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
+    const router = useRouter();
 
     // Swipe Logic
     const touchStartX = useRef(0);
@@ -69,11 +77,6 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
         touchEndX.current = 0;
     };
 
-    // Sort records locally for display
-    const sortedRecords = [...records].sort((a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-
     const handleEditNotice = (notice: Notice) => {
         setEditingNotice(notice);
         setPage(1); // Go to Form page
@@ -86,6 +89,11 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
 
     const handleFormCancel = () => {
         setEditingNotice(null);
+    };
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const [y, m] = e.target.value.split('-');
+        router.push(`/admin?year=${y}&month=${m}`);
     };
 
     return (
@@ -160,55 +168,42 @@ export default function AdminDashboardClient({ records, stats, summaryStats, exc
                             </div>
                         </div>
 
-                        <div className={styles.tabBar}>
-                            <div className={styles.tabs}>
-                                <button className={`${styles.tab} ${activeTab === 'records' ? styles.activeTab : ''}`} onClick={() => setActiveTab('records')}>Records</button>
-                                <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
-                                <button className={`${styles.tab} ${activeTab === 'daily' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily')}>Daily</button>
-                                <button className={`${styles.tab} ${activeTab === 'weekly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('weekly')}>Weekly</button>
-                                <button className={`${styles.tab} ${activeTab === 'monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('monthly')}>Monthly</button>
-                                <button className={`${styles.tab} ${activeTab === 'yearly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('yearly')}>Yearly</button>
-                                <button className={`${styles.tab} ${activeTab === 'area' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area')}>By Area</button>
-                            </div>
-
-                            <ExcelDownloadBtn data={excelData} />
-                        </div>
-
                         <div className={styles.contentArea}>
-                            {activeTab === 'records' && (
-                                <div className={styles.tableContainer}>
-                                    <table className={styles.table}>
-                                        <thead>
-                                            <tr>
-                                                <th>Type</th>
-                                                <th>User</th>
-                                                <th>Time</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {sortedRecords.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={3} style={{ textAlign: 'center', opacity: 0.5 }}>No records yet</td>
-                                                </tr>
-                                            ) : (
-                                                sortedRecords.slice(0, 50).map((record) => ( // Limit to 50 for performance
-                                                    <tr key={record.id}>
-                                                        <td>
-                                                            <span className={`${styles.badge} ${record.size === 45 ? styles.badge45 : styles.badge75}`}>
-                                                                {record.size}L
-                                                            </span>
-                                                        </td>
-                                                        <td>{record.userName || '-'}</td>
-                                                        <td className={styles.time}>{new Date(record.timestamp).toLocaleString()}</td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
-                                    {sortedRecords.length > 50 && <div style={{ textAlign: 'center', padding: '1rem', color: '#666' }}>Showing recent 50 records</div>}
+                            {/* Date Selector for Daily Report */}
+                            {activeTab === 'daily-report' && (
+                                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
+                                    <label htmlFor="month-picker" style={{ fontWeight: 'bold' }}>Select Month: </label>
+                                    <input
+                                        type="month"
+                                        id="month-picker"
+                                        value={`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}`}
+                                        onChange={handleDateChange}
+                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                                    />
                                 </div>
                             )}
 
+                            <div className={styles.tabBar}>
+                                <div className={styles.tabs}>
+                                    <button className={`${styles.tab} ${activeTab === 'daily-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily-report')}>Daily Report</button>
+                                    <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
+                                    <button className={`${styles.tab} ${activeTab === 'daily' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily')}>Daily Graph</button>
+                                    <button className={`${styles.tab} ${activeTab === 'weekly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('weekly')}>Weekly</button>
+                                    <button className={`${styles.tab} ${activeTab === 'monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('monthly')}>Monthly</button>
+                                    <button className={`${styles.tab} ${activeTab === 'yearly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('yearly')}>Yearly</button>
+                                    <button className={`${styles.tab} ${activeTab === 'area' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area')}>By Area</button>
+                                </div>
+
+                                <ExcelDownloadBtn data={excelData} />
+                            </div>
+
+                            {activeTab === 'daily-report' && (
+                                <DailyReportTable
+                                    data={stats.dailyUser}
+                                    year={currentDate.year}
+                                    month={currentDate.month}
+                                />
+                            )}
                             {activeTab === 'user-report' && <MonthlyReportTable data={stats.monthlyUser} year={new Date().getFullYear()} />}
                             {activeTab === 'daily' && <StatsCharts data={stats.daily} type="bar" />}
                             {activeTab === 'weekly' && <StatsCharts data={stats.weekly} type="bar" />}

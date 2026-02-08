@@ -172,3 +172,75 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
         return a.userName.localeCompare(b.userName);
     });
 }
+
+export interface DailyUserStat {
+    userId: string;
+    userName: string;
+    area: string;
+    daily: { count45: number; count75: number }[]; // Index 0 = 1st
+    total45: number;
+    total75: number;
+}
+
+export async function getDailyUserStats(year: number, month: number): Promise<DailyUserStat[]> {
+    const records = await getRecords();
+    const users = await getUsers();
+
+    const statsMap = new Map<string, DailyUserStat>();
+
+    // Calculate days in month (0-based day for previous month's last day trick: new Date(year, month, 0))
+    // If month is 1-based (1=Jan), new Date(2024, 1, 0) is Jan 31. Correct.
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    users.forEach(user => {
+        statsMap.set(user.id, {
+            userId: user.id,
+            userName: user.name,
+            area: user.cleaningArea || '-',
+            daily: Array(daysInMonth).fill(0).map(() => ({ count45: 0, count75: 0 })),
+            total45: 0,
+            total75: 0
+        });
+    });
+
+    records.forEach(record => {
+        const date = new Date(record.timestamp);
+        // Check year and month (0-11)
+        // input month is 1-based. date.getMonth() is 0-based.
+        if (date.getFullYear() !== year || date.getMonth() + 1 !== month) return;
+
+        const day = date.getDate();
+        const dayIndex = day - 1;
+
+        if (dayIndex < 0 || dayIndex >= daysInMonth) return;
+
+        const userId = record.userId || 'unknown';
+
+        let stat = statsMap.get(userId);
+        if (!stat) {
+            stat = {
+                userId: userId,
+                userName: record.userName || 'Unknown',
+                area: userId === 'admin-user' || record.userName === '관리자' ? '관리실' : '-',
+                daily: Array(daysInMonth).fill(0).map(() => ({ count45: 0, count75: 0 })),
+                total45: 0,
+                total75: 0
+            };
+            statsMap.set(userId, stat);
+        }
+
+        if (record.size === 45) {
+            stat.daily[dayIndex].count45++;
+            stat.total45++;
+        } else if (record.size === 75) {
+            stat.daily[dayIndex].count75++;
+            stat.total75++;
+        }
+    });
+
+    return Array.from(statsMap.values()).sort((a, b) => {
+        if (a.area < b.area) return -1;
+        if (a.area > b.area) return 1;
+        return a.userName.localeCompare(b.userName);
+    });
+}
