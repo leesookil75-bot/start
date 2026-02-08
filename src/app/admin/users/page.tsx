@@ -18,9 +18,9 @@ export default async function UsersPage() {
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
             <header className={styles.header}>
-                <h1 className={styles.title}>User Management</h1>
+                <h1 className={styles.title}>사용자 관리</h1>
                 <Link href="/admin" className={styles.backLink}>
-                    &larr; Back to Dashboard
+                    &larr; 대시보드로 돌아가기
                 </Link>
             </header>
 
