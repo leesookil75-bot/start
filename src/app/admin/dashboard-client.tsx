@@ -197,14 +197,18 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                                 <ExcelDownloadBtn data={excelData} />
                             </div>
 
-                            {activeTab === 'daily-report' && (
-                                <DailyReportTable
-                                    data={stats.dailyUser}
-                                    year={currentDate.year}
-                                    month={currentDate.month}
-                                />
-                            )}
-                            {activeTab === 'user-report' && <MonthlyReportTable data={stats.monthlyUser} year={new Date().getFullYear()} />}
+                            {/* Stop propagation for touch events on tables to prevent page swipe */}
+                            <div onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+                                {activeTab === 'daily-report' && (
+                                    <DailyReportTable
+                                        data={stats.dailyUser}
+                                        year={currentDate.year}
+                                        month={currentDate.month}
+                                    />
+                                )}
+                                {activeTab === 'user-report' && <MonthlyReportTable data={stats.monthlyUser} year={new Date().getFullYear()} />}
+                            </div>
+
                             {activeTab === 'daily' && <StatsCharts data={stats.daily} type="bar" />}
                             {activeTab === 'weekly' && <StatsCharts data={stats.weekly} type="bar" />}
                             {activeTab === 'monthly' && <StatsCharts data={stats.monthly} type="bar" />}
