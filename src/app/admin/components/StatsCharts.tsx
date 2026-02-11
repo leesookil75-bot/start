@@ -4,7 +4,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
 } from 'recharts';
-import { StatEntry, AreaStatEntry } from '@/lib/statistics';
+import { StatEntry, AreaStatEntry } from '@/lib/types';
 import styles from './stats.module.css';
 
 const COLORS_45 = '#3b82f6'; // blue-500

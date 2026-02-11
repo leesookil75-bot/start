@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { logout } from '../actions';
 import { useRouter } from 'next/navigation';
 
-import { MonthlyUserStat, DailyUserStat } from '@/lib/statistics';
+import { MonthlyUserStat, DailyUserStat } from '@/lib/types';
 import MonthlyReportTable from './components/MonthlyReportTable';
 import DailyReportTable from './components/DailyReportTable';
 

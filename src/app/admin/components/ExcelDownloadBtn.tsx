@@ -1,7 +1,7 @@
 'use client';
 
 import * as XLSX from 'xlsx';
-import { StatEntry } from '@/lib/statistics';
+import { StatEntry } from '@/lib/types';
 import styles from '../admin.module.css';
 
 interface ExcelDownloadBtnProps {

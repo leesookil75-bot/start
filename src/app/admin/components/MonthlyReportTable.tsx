@@ -1,6 +1,6 @@
 'use client';
 
-import { MonthlyUserStat } from '@/lib/statistics';
+import { MonthlyUserStat } from '@/lib/types';
 import styles from '../admin.module.css';
 import * as XLSX from 'xlsx';
 
