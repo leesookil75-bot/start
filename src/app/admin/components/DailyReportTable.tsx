@@ -1,6 +1,6 @@
 'use client';
 
-import { DailyUserStat } from '@/lib/statistics';
+import { DailyUserStat } from '@/lib/types';
 import styles from '../admin.module.css';
 import * as XLSX from 'xlsx';
 import { useState } from 'react';

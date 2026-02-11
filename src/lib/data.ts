@@ -1,23 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-
-export type User = {
-  id: string;
-  phoneNumber: string;
-  name: string;
-  cleaningArea: string;
-  role: 'admin' | 'cleaner';
-  createdAt: string;
-  password?: string;
-};
-
-export type UsageRecord = {
-  id: string;
-  size: 45 | 75;
-  timestamp: string;
-  userId?: string;
-  userName?: string;
-};
+import { User, UsageRecord, Notice, DailyOverride } from './types';
+import { sql } from '@vercel/postgres';
 
 // Internal DB Row Type
 type UserRow = {
@@ -30,7 +14,8 @@ type UserRow = {
   password?: string;
 };
 
-import { sql } from '@vercel/postgres';
+
+
 
 const DATA_FILE_PATH = path.join(process.cwd(), 'data.json');
 const USERS_FILE_PATH = path.join(process.cwd(), 'users.json');
@@ -368,15 +353,8 @@ export async function updateUserPassword(userId: string, newPassword: string): P
 }
 
 // --- Notices ---
-export type Notice = {
-  id: string;
-  title: string;
-  content: string;
-  imageData?: string; // Base64
-  isPinned?: boolean;
-  createdAt: string;
-  authorId: string;
-};
+// Notice type imported from ./types
+
 
 const NOTICES_FILE_PATH = path.join(process.cwd(), 'notices.json');
 
@@ -500,12 +478,8 @@ export async function updateNotice(id: string, updates: Partial<Notice>): Promis
 }
 
 // --- Daily Overrides ---
-export type DailyOverride = {
-  date: string; // YYYY-MM-DD
-  userId: string;
-  type: '45' | '75';
-  value: string | number;
-};
+// DailyOverride type imported from ./types
+
 
 const DAILY_OVERRIDES_FILE_PATH = path.join(process.cwd(), 'daily_overrides.json');
 

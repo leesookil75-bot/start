@@ -1,13 +1,5 @@
 import { getRecords, getUsers, getDailyOverrides } from './data';
-
-export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly';
-export type StatEntry = {
-    key: string;       // "2024-01-01" or "Week 10" or "Jan 2024" or "A Area"
-    count45: number;
-    count75: number;
-    total: number;
-};
-export type AreaStatEntry = StatEntry;
+import { PeriodType, StatEntry, AreaStatEntry, DailyUserStat, MonthlyUserStat } from './types';
 
 function getWeekNumber(d: Date): number {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -104,89 +96,7 @@ export async function getExcelData() {
     }).sort((a, b) => new Date(b.Time).getTime() - new Date(a.Time).getTime());
 }
 
-export interface MonthlyUserStat {
-    userId: string;
-    userName: string;
-    area: string;
-    monthly: { count45: number; count75: number }[]; // Index 0 = Jan, 11 = Dec
-    total45: number;
-    total75: number;
-}
 
-export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
-    const records = await getRecords();
-    const users = await getUsers();
-
-    // Create a map to store stats for each user
-    // Key: userId
-    const statsMap = new Map<string, MonthlyUserStat>();
-
-    // Initialize map with all users
-    users.forEach(user => {
-        statsMap.set(user.id, {
-            userId: user.id,
-            userName: user.name,
-            area: user.cleaningArea || '-',
-            monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
-            total45: 0,
-            total75: 0
-        });
-    });
-
-    const currentYear = new Date().getFullYear();
-
-    records.forEach(record => {
-        const date = new Date(record.timestamp);
-        if (date.getFullYear() !== currentYear) return;
-
-        const month = date.getMonth(); // 0-11
-        const userId = record.userId || 'unknown';
-
-        // If user not in map (e.g. admin or deleted), create entry if we want to show them
-        let stat = statsMap.get(userId);
-        if (!stat) {
-            stat = {
-                userId: userId,
-                userName: record.userName || 'Unknown',
-                area: userId === 'admin-user' || record.userName === '관리자' ? '관리실' : '-', // Fallback area logic
-                monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
-                total45: 0,
-                total75: 0
-            };
-            statsMap.set(userId, stat);
-        }
-
-        if (record.size === 45) {
-            stat.monthly[month].count45++;
-            stat.total45++;
-        } else if (record.size === 75) {
-            stat.monthly[month].count75++;
-            stat.total75++;
-        }
-    });
-
-    // Convert map to array and sort by area first, then name
-    return Array.from(statsMap.values()).sort((a, b) => {
-        if (a.area < b.area) return -1;
-        if (a.area > b.area) return 1;
-        return a.userName.localeCompare(b.userName);
-    });
-}
-
-
-export interface DailyUserStat {
-    userId: string;
-    userName: string;
-    area: string;
-    daily: {
-        count45: number;
-        count75: number;
-        display45?: string | number;
-        display75?: string | number;
-    }[]; // Index 0 = 1st
-    total45: number;
-    total75: number;
-}
 
 export async function getDailyUserStats(year: number, month: number): Promise<DailyUserStat[]> {
     const records = await getRecords();
