@@ -194,7 +194,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                                     <button className={`${styles.tab} ${activeTab === 'area' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area')}>By Area</button>
                                 </div>
 
-                                <ExcelDownloadBtn data={excelData} />
+                                {activeTab !== 'daily-report' && activeTab !== 'user-report' && <ExcelDownloadBtn data={excelData} />}
                             </div>
 
                             {/* Stop propagation for touch events on tables to prevent page swipe */}
