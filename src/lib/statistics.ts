@@ -96,14 +96,7 @@ export async function getExcelData() {
     }).sort((a, b) => new Date(b.Time).getTime() - new Date(a.Time).getTime());
 }
 
-export interface MonthlyUserStat {
-    userId: string;
-    userName: string;
-    area: string;
-    monthly: { count45: number; count75: number }[]; // Index 0 = Jan, 11 = Dec
-    total45: number;
-    total75: number;
-}
+
 
 export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
     const records = await getRecords();
