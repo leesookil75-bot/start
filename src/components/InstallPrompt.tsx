@@ -3,8 +3,13 @@
 import { useEffect, useState } from 'react';
 import styles from '../app/page.module.css';
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function InstallPrompt() {
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
     const [redirecting, setRedirecting] = useState(false);
@@ -23,9 +28,10 @@ export default function InstallPrompt() {
         }
 
         // Check if already in standalone mode
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
         if (isStandalone) {
-            setIsVisible(false);
+            // Already initialized to false
             return;
         }
 
@@ -36,11 +42,11 @@ export default function InstallPrompt() {
         // Show the prompt if not in standalone (fallback for browsers that don't fire beforeinstallprompt instantly)
         setIsVisible(true);
 
-        const handler = (e: any) => {
+        const handler = (e: Event) => {
             // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
             // Stash the event so it can be triggered later.
-            setDeferredPrompt(e);
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
@@ -107,3 +113,4 @@ export default function InstallPrompt() {
         </div>
     );
 }
+

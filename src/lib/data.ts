@@ -96,10 +96,11 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         createdAt: new Date().toISOString(),
         password
       };
-    } catch (e: any) {
+    } catch (e) {
       console.error('Database error adding user', e);
       throw new Error('Database error adding user');
     }
+
   }
 
   const newUser: User = {
