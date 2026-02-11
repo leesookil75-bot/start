@@ -1,4 +1,4 @@
-import { getRecords, getUsers } from './data';
+import { getRecords, getUsers, getDailyOverrides } from './data';
 
 export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type StatEntry = {
@@ -173,11 +173,17 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
     });
 }
 
+
 export interface DailyUserStat {
     userId: string;
     userName: string;
     area: string;
-    daily: { count45: number; count75: number }[]; // Index 0 = 1st
+    daily: {
+        count45: number;
+        count75: number;
+        display45?: string | number;
+        display75?: string | number;
+    }[]; // Index 0 = 1st
     total45: number;
     total75: number;
 }
@@ -185,6 +191,7 @@ export interface DailyUserStat {
 export async function getDailyUserStats(year: number, month: number): Promise<DailyUserStat[]> {
     const records = await getRecords();
     const users = await getUsers();
+    const overrides = await getDailyOverrides();
 
     const statsMap = new Map<string, DailyUserStat>();
 
@@ -192,6 +199,7 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
     // If month is 1-based (1=Jan), new Date(2024, 1, 0) is Jan 31. Correct.
     const daysInMonth = new Date(year, month, 0).getDate();
 
+    // Initialize all users
     users.forEach(user => {
         statsMap.set(user.id, {
             userId: user.id,
@@ -203,6 +211,7 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
         });
     });
 
+    // Populate base counts from records
     records.forEach(record => {
         const date = new Date(record.timestamp);
         // Check year and month (0-11)
@@ -218,6 +227,7 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
 
         let stat = statsMap.get(userId);
         if (!stat) {
+            // Handle unknown users if necessary
             stat = {
                 userId: userId,
                 userName: record.userName || 'Unknown',
@@ -231,16 +241,63 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
 
         if (record.size === 45) {
             stat.daily[dayIndex].count45++;
-            stat.total45++;
         } else if (record.size === 75) {
             stat.daily[dayIndex].count75++;
-            stat.total75++;
         }
     });
 
-    return Array.from(statsMap.values()).sort((a, b) => {
+    // Apply Overrides and Calculate Totals
+    const stats = Array.from(statsMap.values());
+
+    stats.forEach(stat => {
+        let total45 = 0;
+        let total75 = 0;
+
+        stat.daily = stat.daily.map((dayStat, dayIndex) => {
+            const day = dayIndex + 1;
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+            // Check for overrides
+            const override45 = overrides.find(o => o.date === dateStr && o.userId === stat.userId && o.type === '45');
+            const override75 = overrides.find(o => o.date === dateStr && o.userId === stat.userId && o.type === '75');
+
+            // 45L Logic
+            let display45: string | number = dayStat.count45;
+            let effective45 = dayStat.count45;
+
+            if (override45) {
+                display45 = override45.value;
+                effective45 = typeof override45.value === 'number' ? override45.value : 0;
+            }
+
+            // 75L Logic
+            let display75: string | number = dayStat.count75;
+            let effective75 = dayStat.count75;
+
+            if (override75) {
+                display75 = override75.value;
+                effective75 = typeof override75.value === 'number' ? override75.value : 0;
+            }
+
+            total45 += effective45;
+            total75 += effective75;
+
+            return {
+                count45: effective45,
+                count75: effective75,
+                display45,
+                display75
+            };
+        });
+
+        stat.total45 = total45;
+        stat.total75 = total75;
+    });
+
+    return stats.sort((a, b) => {
         if (a.area < b.area) return -1;
         if (a.area > b.area) return 1;
         return a.userName.localeCompare(b.userName);
     });
 }
+

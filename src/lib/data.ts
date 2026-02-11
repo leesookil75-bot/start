@@ -498,3 +498,67 @@ export async function updateNotice(id: string, updates: Partial<Notice>): Promis
   notices[index] = { ...notices[index], ...updates };
   await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
 }
+
+// --- Daily Overrides ---
+export type DailyOverride = {
+  date: string; // YYYY-MM-DD
+  userId: string;
+  type: '45' | '75';
+  value: string | number;
+};
+
+const DAILY_OVERRIDES_FILE_PATH = path.join(process.cwd(), 'daily_overrides.json');
+
+export async function getDailyOverrides(): Promise<DailyOverride[]> {
+  if (isPostgresEnabled()) {
+    try {
+      // Postgres implementation - assumed table 'daily_overrides'
+      const { rows } = await sql`SELECT * FROM daily_overrides`;
+      return rows.map(r => ({
+        date: r.date, // formatting might be needed depending on DB type
+        userId: r.user_id,
+        type: r.type,
+        value: !isNaN(Number(r.value)) ? Number(r.value) : r.value
+      }));
+    } catch (e) {
+      console.error('DB Error getting overrides', e);
+      return [];
+    }
+  }
+
+  await ensureFile(DAILY_OVERRIDES_FILE_PATH, []);
+  try {
+    const data = await fs.readFile(DAILY_OVERRIDES_FILE_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveDailyOverride(override: DailyOverride): Promise<void> {
+  if (isPostgresEnabled()) {
+    // Postgres upsert
+    // Cast value to string for storage if mixed types are allowed, or use specific column
+    // Here we assume value column is TEXT
+    await sql`
+      INSERT INTO daily_overrides (date, user_id, type, value, updated_at)
+      VALUES (${override.date}, ${override.userId}, ${override.type}, ${String(override.value)}, NOW())
+      ON CONFLICT (date, user_id, type) 
+      DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `;
+    return;
+  }
+
+  const overrides = await getDailyOverrides();
+  const index = overrides.findIndex(
+    o => o.date === override.date && o.userId === override.userId && o.type === override.type
+  );
+
+  if (index !== -1) {
+    overrides[index] = override;
+  } else {
+    overrides.push(override);
+  }
+
+  await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(overrides, null, 2), 'utf-8');
+}

@@ -3,6 +3,9 @@
 import { DailyUserStat } from '@/lib/statistics';
 import styles from '../admin.module.css';
 import * as XLSX from 'xlsx';
+import { useState } from 'react';
+import EditRecordModal from './EditRecordModal';
+import { useRouter } from 'next/navigation';
 
 interface DailyReportTableProps {
     data: DailyUserStat[];
@@ -11,9 +14,51 @@ interface DailyReportTableProps {
 }
 
 export default function DailyReportTable({ data, year, month }: DailyReportTableProps) {
+    const router = useRouter();
     const daysInMonth = data.length > 0 ? data[0].daily.length : new Date(year, month, 0).getDate();
-    // Headers: Name, Area, Type, 1 .. LastDay, Total
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    // State for modal
+    const [editingCell, setEditingCell] = useState<{
+        userId: string;
+        userName: string;
+        day: number;
+        type: '45' | '75';
+        currentValue: string | number;
+    } | null>(null);
+
+    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
+        setEditingCell({ userId, userName, day, type, currentValue });
+    };
+
+    const handleSaveOverride = async (newValue: string | number) => {
+        if (!editingCell) return;
+
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(editingCell.day).padStart(2, '0')}`;
+
+        try {
+            const res = await fetch('/api/admin/overrides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: dateStr,
+                    userId: editingCell.userId,
+                    type: editingCell.type,
+                    value: newValue
+                })
+            });
+
+            if (res.ok) {
+                setEditingCell(null);
+                router.refresh(); // Refresh data to show new value
+            } else {
+                alert('Failed to save edit.');
+            }
+        } catch (error) {
+            console.error('Error saving:', error);
+            alert('Error saving edit.');
+        }
+    };
 
     // Calculate Totals per Day for Footer
     const dailyTotals = days.map(() => ({ count45: 0, count75: 0 }));
@@ -44,14 +89,14 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                 user.userName,
                 user.area,
                 '45L',
-                ...user.daily.map(d => d.count45 || ''),
+                ...user.daily.map(d => d.display45 !== undefined ? d.display45 : (d.count45 || '')),
                 user.total45
             ];
             const row75 = [
                 user.userName,
                 user.area,
                 '75L',
-                ...user.daily.map(d => d.count75 || ''),
+                ...user.daily.map(d => d.display75 !== undefined ? d.display75 : (d.count75 || '')),
                 user.total75
             ];
 
@@ -157,16 +202,25 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                     }}>
                                         <span className={`${styles.badge} ${styles.badge45}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>45L</span>
                                     </td>
-                                    {user.daily.map((d, i) => (
-                                        <td key={i} style={{
-                                            textAlign: 'center',
-                                            padding: '0.5rem 0',
-                                            color: d.count45 ? 'inherit' : '#444',
-                                            backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
-                                        }}>
-                                            {d.count45 || '-'}
-                                        </td>
-                                    ))}
+                                    {user.daily.map((d, i) => {
+                                        const displayVal = d.display45 !== undefined ? d.display45 : (d.count45 || '-');
+                                        const isString = typeof d.display45 === 'string';
+
+                                        return (
+                                            <td key={i}
+                                                onClick={() => handleCellClick(user.userId, user.userName, i + 1, '45', d.display45 ?? d.count45)}
+                                                style={{
+                                                    textAlign: 'center',
+                                                    padding: '0.5rem 0',
+                                                    cursor: 'pointer',
+                                                    color: d.count45 || isString ? 'inherit' : '#444',
+                                                    backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent',
+                                                    fontSize: isString ? '0.7rem' : 'inherit'
+                                                }}>
+                                                {displayVal}
+                                            </td>
+                                        )
+                                    })}
                                     <td style={{ fontWeight: 'bold', textAlign: 'center' }}>
                                         <span className={styles.value45}>{user.total45}</span>
                                     </td>
@@ -181,16 +235,25 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                     }}>
                                         <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>75L</span>
                                     </td>
-                                    {user.daily.map((d, i) => (
-                                        <td key={i} style={{
-                                            textAlign: 'center',
-                                            padding: '0.5rem 0',
-                                            color: d.count75 ? 'inherit' : '#444',
-                                            backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
-                                        }}>
-                                            {d.count75 || '-'}
-                                        </td>
-                                    ))}
+                                    {user.daily.map((d, i) => {
+                                        const displayVal = d.display75 !== undefined ? d.display75 : (d.count75 || '-');
+                                        const isString = typeof d.display75 === 'string';
+
+                                        return (
+                                            <td key={i}
+                                                onClick={() => handleCellClick(user.userId, user.userName, i + 1, '75', d.display75 ?? d.count75)}
+                                                style={{
+                                                    textAlign: 'center',
+                                                    padding: '0.5rem 0',
+                                                    cursor: 'pointer',
+                                                    color: d.count75 || isString ? 'inherit' : '#444',
+                                                    backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent',
+                                                    fontSize: isString ? '0.7rem' : 'inherit'
+                                                }}>
+                                                {displayVal}
+                                            </td>
+                                        )
+                                    })}
                                     <td style={{ fontWeight: 'bold', textAlign: 'center' }}>
                                         <span className={styles.value75}>{user.total75}</span>
                                     </td>
@@ -251,6 +314,15 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                     </tfoot>
                 </table>
             </div>
+
+            {/* Edit Modal */}
+            <EditRecordModal
+                isOpen={!!editingCell}
+                onClose={() => setEditingCell(null)}
+                onSave={handleSaveOverride}
+                initialValue={editingCell?.currentValue || 0}
+                title={editingCell ? `${editingCell.userName} - ${editingCell.day}일 (${editingCell.type}L)` : ''}
+            />
         </div>
     );
 }
