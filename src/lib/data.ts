@@ -54,7 +54,7 @@ export async function getUsers(): Promise<User[]> {
       }));
     } catch (error) {
       // Fallback or error if table doesn't exist?
-      console.error('Postgres error:', error);
+      console.warn('Postgres error (getUsers):', error);
       return [];
     }
   }
@@ -182,7 +182,7 @@ export async function getRecords(): Promise<UsageRecord[]> {
         userName: r.user_name
       }));
     } catch (e) {
-      console.error('DB Error getting records', e);
+      console.warn('DB Error getting records (ignoring for build):', e);
       return [];
     }
   }
@@ -376,7 +376,7 @@ export async function getNotices(): Promise<Notice[]> {
         authorId: r.author_id
       }));
     } catch (e) {
-      console.error('DB Error getting notices', e);
+      console.warn('DB Error getting notices (ignoring for build):', e);
       return [];
     }
   }
@@ -498,7 +498,7 @@ export async function getDailyOverrides(): Promise<DailyOverride[]> {
         value: !isNaN(Number(r.value)) ? Number(r.value) : r.value
       }));
     } catch (e) {
-      console.error('DB Error getting overrides', e);
+      console.warn('DB Error getting overrides (ignoring for build):', e);
       return [];
     }
   }

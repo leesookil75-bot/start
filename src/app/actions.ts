@@ -471,6 +471,18 @@ export async function initializeDB() {
             );
         `;
 
+        await sql`
+            CREATE TABLE IF NOT EXISTS daily_overrides (
+                date VARCHAR(10) NOT NULL,
+                user_id UUID REFERENCES users(id),
+                type VARCHAR(10) NOT NULL,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (date, user_id, type)
+            );
+        `;
+
+
         await sql`ALTER TABLE notices ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;`;
 
         // Attempt to create extension, might fail if not superuser but usually fine on Vercel
