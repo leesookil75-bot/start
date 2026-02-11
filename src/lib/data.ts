@@ -1,6 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { User, UsageRecord, Notice, DailyOverride } from './types';
+export type { User, UsageRecord, Notice, DailyOverride };
+
 import { sql } from '@vercel/postgres';
 
 // Internal DB Row Type
