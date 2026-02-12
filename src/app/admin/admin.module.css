@@ -449,6 +449,7 @@
         /* Helps with some flex bugs */
     }
 }
+
 /* Modal Styles */
 .modalOverlay {
     position: fixed;
@@ -553,30 +554,43 @@
 
 /* Enhanced EditRecordModal Styles */
 .modalContent {
-    background: #2a2a2a; /* Slightly lighter dark bg for contrast */
-    border: 2px solid #3b82f6; /* Blue border for visibility */
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); /* Glow effect */
+    background: #2a2a2a;
+    /* Slightly lighter dark bg for contrast */
+    border: 2px solid #3b82f6;
+    /* Blue border for visibility */
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+    /* Glow effect */
+    width: 85%;
+    /* Reduced from 90% */
+    max-width: 400px;
+    /* Reduced from 600px significantly */
+    padding: 1.5rem;
+    /* Reduced padding from 2rem */
 }
 
 .modalTitle {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    /* Reduced from 1.5rem */
     color: #fff;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .label {
-    color: #fff; /* Brighter label */
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+    color: #fff;
+    /* Brighter label */
+    font-size: 0.95rem;
+    /* Slightly smaller */
+    margin-bottom: 0.4rem;
 }
 
 .input {
     background: #000;
     border: 1px solid #555;
-    font-size: 1.2rem; /* Larger font for easy mobile input */
-    padding: 1rem;
+    font-size: 1.1rem;
+    /* Slightly smaller but still readable */
+    padding: 0.8rem;
     color: #fff;
 }
 
@@ -587,6 +601,6 @@
 }
 
 .formGroup p {
-    color: #ccc !important; /* Brighter hint text */
+    color: #ccc !important;
+    /* Brighter hint text */
 }
-
