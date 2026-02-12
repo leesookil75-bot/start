@@ -206,7 +206,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                                     cursor: 'pointer',
                                                     transition: 'all 0.2s',
                                                     minWidth: '40px',
-                                                    height: '40px'
+                                                    height: '40px',
+                                                    maxWidth: '40px'
                                                 }}
                                             >
                                                 {isSelected45 ? (
@@ -235,7 +236,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                                     cursor: 'pointer',
                                                     transition: 'all 0.2s',
                                                     minWidth: '40px',
-                                                    height: '40px'
+                                                    height: '40px',
+                                                    maxWidth: '40px'
                                                 }}
                                             >
                                                 {isSelected75 ? (

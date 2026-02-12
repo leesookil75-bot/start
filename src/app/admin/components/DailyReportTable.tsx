@@ -251,7 +251,8 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
                                                     height: '40px',
-                                                    minWidth: '40px'
+                                                    minWidth: '40px',
+                                                    maxWidth: '40px'
                                                 }}>
                                                 {isSelected ? (
                                                     <input
@@ -300,7 +301,8 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
                                                     height: '40px',
-                                                    minWidth: '40px'
+                                                    minWidth: '40px',
+                                                    maxWidth: '40px'
                                                 }}>
                                                 {isSelected ? (
                                                     <input
