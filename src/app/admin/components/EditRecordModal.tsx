@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../admin.module.css';
 
 interface EditRecordModalProps {
@@ -12,8 +13,15 @@ interface EditRecordModalProps {
 
 export default function EditRecordModal({ isOpen, onClose, onSave, initialValue, title }: EditRecordModalProps) {
     const [value, setValue] = useState<string>(String(initialValue));
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        setValue(String(initialValue));
+    }, [initialValue]);
 
     if (!isOpen) return null;
+    if (!mounted) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,7 +34,7 @@ export default function EditRecordModal({ isOpen, onClose, onSave, initialValue,
         }
     };
 
-    return (
+    return createPortal(
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
                 <h3 className={styles.modalTitle}>{title}</h3>
@@ -55,6 +63,7 @@ export default function EditRecordModal({ isOpen, onClose, onSave, initialValue,
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
