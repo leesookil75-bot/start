@@ -553,6 +553,7 @@
 
 
 /* Enhanced EditRecordModal Styles */
+/* Enhanced EditRecordModal Styles */
 .modalContent {
     background: #2a2a2a;
     /* Slightly lighter dark bg for contrast */
@@ -562,36 +563,42 @@
     /* Glow effect */
     width: 85%;
     /* Reduced from 90% */
-    max-width: 400px;
-    /* Reduced from 600px significantly */
-    padding: 1.5rem;
-    /* Reduced padding from 2rem */
+    max-width: 280px;
+    /* Reduced from 400px (approx 30% less) */
+    padding: 1rem;
+    /* Reduced padding from 1.5rem */
+    margin: auto;
+    /* Ensure centering if flex fails */
 }
 
 .modalTitle {
-    font-size: 1.25rem;
-    /* Reduced from 1.5rem */
+    font-size: 1.1rem;
+    /* Reduced from 1.25rem */
     color: #fff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 0.5rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    /* Center title */
 }
 
 .label {
     color: #fff;
     /* Brighter label */
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     /* Slightly smaller */
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.3rem;
 }
 
 .input {
     background: #000;
     border: 1px solid #555;
-    font-size: 1.1rem;
+    font-size: 1rem;
     /* Slightly smaller but still readable */
-    padding: 0.8rem;
+    padding: 0.6rem;
     color: #fff;
+    text-align: center;
+    /* Center text input for better focus in small modal */
 }
 
 .input:focus {
