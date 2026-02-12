@@ -33,20 +33,12 @@ export default async function AdminPage({
     // Fetch all stats server-side
     const [
         dailyStats,
-        weeklyStats,
-        monthlyStats,
-        yearlyStats,
-        areaStats,
         excelData,
         notices,
         monthlyUserStats,
         dailyUserStats
     ] = await Promise.all([
         getStatsByPeriod('daily'),
-        getStatsByPeriod('weekly'),
-        getStatsByPeriod('monthly'),
-        getStatsByPeriod('yearly'),
-        getStatsByArea(),
         getExcelData(),
         getNotices(),
         getMonthlyUserStats(),
@@ -61,10 +53,10 @@ export default async function AdminPage({
                 records={records}
                 stats={{
                     daily: dailyStats,
-                    weekly: weeklyStats,
-                    monthly: monthlyStats,
-                    yearly: yearlyStats,
-                    area: areaStats,
+                    weekly: [],
+                    monthly: [],
+                    yearly: [],
+                    area: [],
                     monthlyUser: monthlyUserStats,
                     dailyUser: dailyUserStats
                 }}

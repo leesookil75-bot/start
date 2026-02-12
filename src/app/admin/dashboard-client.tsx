@@ -191,10 +191,6 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                                     <button className={`${styles.tab} ${activeTab === 'area-monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area-monthly')}>Area Report</button>
                                     <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
                                     <button className={`${styles.tab} ${activeTab === 'daily' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily')}>Daily Graph</button>
-                                    <button className={`${styles.tab} ${activeTab === 'weekly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('weekly')}>Weekly</button>
-                                    <button className={`${styles.tab} ${activeTab === 'monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('monthly')}>Monthly</button>
-                                    <button className={`${styles.tab} ${activeTab === 'yearly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('yearly')}>Yearly</button>
-                                    <button className={`${styles.tab} ${activeTab === 'area' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area')}>By Area</button>
                                 </div>
 
                                 {activeTab === 'area-monthly' ? (
@@ -228,10 +224,6 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                             </div>
 
                             {activeTab === 'daily' && <StatsCharts data={stats.daily} type="bar" />}
-                            {activeTab === 'weekly' && <StatsCharts data={stats.weekly} type="bar" />}
-                            {activeTab === 'monthly' && <StatsCharts data={stats.monthly} type="bar" />}
-                            {activeTab === 'yearly' && <StatsCharts data={stats.yearly} type="bar" />}
-                            {activeTab === 'area' && <StatsCharts data={stats.area} type="pie" />}
                         </div>
                     </div>
 
