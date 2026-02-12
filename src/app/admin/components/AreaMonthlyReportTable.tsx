@@ -2,6 +2,9 @@
 
 import { DailyUserStat } from '@/lib/types';
 import styles from '../admin.module.css';
+import { useState } from 'react';
+import EditRecordModal from './EditRecordModal';
+import { useRouter } from 'next/navigation';
 
 interface AreaMonthlyReportTableProps {
     data: DailyUserStat[];
@@ -50,6 +53,50 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
     // Calculate Grand Total of Totals
     const grandTotal45 = data.reduce((sum, user) => sum + user.total45, 0);
     const grandTotal75 = data.reduce((sum, user) => sum + user.total75, 0);
+
+    // State for modal
+    const [editingCell, setEditingCell] = useState<{
+        userId: string;
+        userName: string;
+        day: number;
+        type: '45' | '75';
+        currentValue: string | number;
+    } | null>(null);
+
+    const router = useRouter();
+
+    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
+        setEditingCell({ userId, userName, day, type, currentValue });
+    };
+
+    const handleSaveOverride = async (newValue: string | number) => {
+        if (!editingCell) return;
+
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(editingCell.day).padStart(2, '0')}`;
+
+        try {
+            const res = await fetch('/api/admin/overrides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: dateStr,
+                    userId: editingCell.userId,
+                    type: editingCell.type,
+                    value: newValue
+                })
+            });
+
+            if (res.ok) {
+                setEditingCell(null);
+                router.refresh(); // Refresh data to show new value
+            } else {
+                alert('Failed to save edit.');
+            }
+        } catch (error) {
+            console.error('Error saving:', error);
+            alert('Error saving edit.');
+        }
+    };
 
     return (
         <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh' }}>
@@ -112,10 +159,18 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
 
                                     return (
                                         <>
-                                            <td key={`${user.userId}-45`} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', color: val45 ? 'var(--accent-45)' : '#444' }}>
+                                            <td
+                                                key={`${user.userId}-45`}
+                                                onClick={() => handleCellClick(user.userId, user.userName, day, '45', dayStat.display45 ?? dayStat.count45)}
+                                                style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', color: val45 ? 'var(--accent-45)' : '#444', cursor: 'pointer' }}
+                                            >
                                                 {val45}
                                             </td>
-                                            <td key={`${user.userId}-75`} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', color: val75 ? 'var(--accent-75)' : '#444' }}>
+                                            <td
+                                                key={`${user.userId}-75`}
+                                                onClick={() => handleCellClick(user.userId, user.userName, day, '75', dayStat.display75 ?? dayStat.count75)}
+                                                style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', color: val75 ? 'var(--accent-75)' : '#444', cursor: 'pointer' }}
+                                            >
                                                 {val75}
                                             </td>
                                         </>
@@ -137,6 +192,15 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                     </tr>
                 </tbody>
             </table>
+
+            {/* Edit Modal */}
+            <EditRecordModal
+                isOpen={!!editingCell}
+                onClose={() => setEditingCell(null)}
+                onSave={handleSaveOverride}
+                initialValue={editingCell?.currentValue || 0}
+                title={editingCell ? `${editingCell.userName} - ${editingCell.day}일 (${editingCell.type}L)` : ''}
+            />
         </div>
     );
 }
