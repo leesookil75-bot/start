@@ -40,11 +40,25 @@ async function seedUsageRecords(client) {
   `;
 }
 
+async function seedDailyOverrides(client) {
+  await client.sql`
+    CREATE TABLE IF NOT EXISTS daily_overrides (
+      date TEXT NOT NULL,
+      user_id UUID NOT NULL,
+      type TEXT NOT NULL,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP DEFAULT NOW(),
+      CONSTRAINT unique_override UNIQUE (date, user_id, type)
+    );
+  `;
+}
+
 async function main() {
   const client = await db.connect();
 
   await seedUsers(client);
   await seedUsageRecords(client);
+  await seedDailyOverrides(client);
 
   await client.end();
   console.log('Database seeded successfully');
