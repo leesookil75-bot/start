@@ -237,6 +237,7 @@ export async function createNoticeAction(title: string, content: string, imageDa
         revalidatePath('/'); // For homepage widget
         return { success: true };
     } catch (e: any) {
+        console.error('Create Notice Error:', e);
         return { success: false, error: e.message || 'Failed to create notice' };
     }
 }

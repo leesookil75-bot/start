@@ -51,7 +51,14 @@ export function NoticeForm({
         }
 
         try {
+            console.log(`Original file size: ${(file.size / 1024).toFixed(2)} KB`);
             const compressed = await compressImage(file);
+            console.log(`Compressed image length: ${compressed.length} chars (~${(compressed.length / 1024).toFixed(2)} KB)`);
+
+            if (compressed.length > 1024 * 1024 * 2) { // 2MB limit warning
+                alert('Warning: Compressed image is still large (> 2MB). It might fail to upload.');
+            }
+
             setImagePreview(compressed);
         } catch (err) {
             console.error('Image compression failed', err);

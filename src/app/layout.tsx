@@ -26,6 +26,22 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Clean Track",
   },
+  openGraph: {
+    title: "Clean Track - 쓰레기 봉투 사용량 기록",
+    description: "간편하게 사용량을 기록하고 통계를 확인하세요.",
+    url: "https://clean-track-leesookils-projects.vercel.app",
+    siteName: "Clean Track",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "Clean Track Icon",
+      },
+    ],
+    locale: "ko_KR",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {

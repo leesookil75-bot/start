@@ -57,6 +57,11 @@ export default function InstallPrompt() {
     }, []);
 
     const handleInstallClick = async () => {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        const isKakao = /kakaotalk/i.test(userAgent);
+        const isAndroid = /android/i.test(userAgent);
+        const isIOSDevice = /iphone|ipad|ipod/i.test(userAgent);
+
         if (deferredPrompt) {
             // Android / Chrome: Use native prompt
             deferredPrompt.prompt();
@@ -64,20 +69,17 @@ export default function InstallPrompt() {
             setDeferredPrompt(null);
             if (outcome === 'accepted') setIsVisible(false);
         } else {
-            // Fallback Logic
-            const userAgent = window.navigator.userAgent.toLowerCase();
-            const isAndroid = /android/.test(userAgent);
+            // Fallback Logic for In-App Browsers or iOS
 
-            if (isAndroid) {
-                // If on Android but no deferredPrompt, we are likely in an In-App Browser (Kakao, Naver, etc.)
-                // Force open in Chrome without blocking alert (preserves user gesture)
+            if (isAndroid && isKakao) {
+                // Force open in Chrome for Android KakaoTalk
                 setRedirecting(true);
                 location.href = 'intent://' + location.href.replace(/https?:\/\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
                 return;
             }
 
-            if (isIOS) {
-                alert("아이폰/아이패드 설치 방법:\n하단 '공유' 버튼 → '홈 화면에 추가'를 선택해주세요.");
+            if (isIOSDevice) {
+                alert("아이폰/아이패드 설치 방법:\n1. 하단 '공유' 버튼(네모 화살표)을 눌러주세요.\n2. '홈 화면에 추가'를 선택해주세요.\n(카카오톡에서는 'Safari로 열기' 후 진행해주세요)");
             } else {
                 alert("앱 설치 방법:\n브라우저 우측 상단/하단 메뉴(⋮ 또는 N)에서 '앱 설치' 또는 '홈 화면에 추가'를 선택해주세요.");
             }

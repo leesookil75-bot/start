@@ -8,8 +8,8 @@ import { User, UsageRecord, Notice, DailyOverride } from '../src/lib/types';
 // Load environment variables from .env.local
 dotenv.config({ path: '.env.local' });
 
-const USERS_FILE_PATH = path.join(process.cwd(), 'users.json');
-const DATA_FILE_PATH = path.join(process.cwd(), 'data.json');
+const USERS_FILE_PATH = path.join(process.cwd(), 'users_final.json');
+const DATA_FILE_PATH = path.join(process.cwd(), 'data_final.json');
 const NOTICES_FILE_PATH = path.join(process.cwd(), 'notices.json');
 const OVERRIDES_FILE_PATH = path.join(process.cwd(), 'daily_overrides.json');
 
