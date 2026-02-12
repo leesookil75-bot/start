@@ -4,7 +4,6 @@ import { DailyUserStat } from '@/lib/types';
 import styles from '../admin.module.css';
 import * as XLSX from 'xlsx';
 import { useState } from 'react';
-import EditRecordModal from './EditRecordModal';
 import { useRouter } from 'next/navigation';
 
 interface DailyReportTableProps {
@@ -18,45 +17,78 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
     const daysInMonth = data.length > 0 ? data[0].daily.length : new Date(year, month, 0).getDate();
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    // State for modal
-    const [editingCell, setEditingCell] = useState<{
+    // State for inline selection
+    const [selectedCell, setSelectedCell] = useState<{
         userId: string;
         userName: string;
         day: number;
         type: '45' | '75';
-        currentValue: string | number;
+        initialValue: string | number;
     } | null>(null);
+    const [inputValue, setInputValue] = useState<string>('');
 
-    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
-        setEditingCell({ userId, userName, day, type, currentValue });
-    };
+    const handleSave = async (cell: typeof selectedCell, value: string | number) => {
+        if (!cell) return;
 
-    const handleSaveOverride = async (newValue: string | number) => {
-        if (!editingCell) return;
+        // If value hasn't changed, don't save
+        if (String(cell.initialValue) === String(value)) return;
 
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(editingCell.day).padStart(2, '0')}`;
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
 
         try {
-            const res = await fetch('/api/admin/overrides', {
+            await fetch('/api/admin/overrides', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     date: dateStr,
-                    userId: editingCell.userId,
-                    type: editingCell.type,
-                    value: newValue
+                    userId: cell.userId,
+                    type: cell.type,
+                    value: value
                 })
             });
-
-            if (res.ok) {
-                setEditingCell(null);
-                router.refresh(); // Refresh data to show new value
-            } else {
-                alert('Failed to save edit.');
-            }
+            router.refresh();
         } catch (error) {
             console.error('Error saving:', error);
-            alert('Error saving edit.');
+        }
+    };
+
+    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
+        // If clicking the currently selected cell, do nothing (keep editing)
+        if (selectedCell?.userId === userId && selectedCell?.day === day && selectedCell?.type === type) {
+            return;
+        }
+
+        // Save previous cell if it exists
+        if (selectedCell) {
+            let valToSave: string | number = inputValue;
+            const numVal = Number(inputValue);
+            if (!isNaN(numVal) && inputValue.trim() !== '') {
+                valToSave = numVal;
+            }
+            handleSave(selectedCell, valToSave);
+        }
+
+        // Select new cell
+        const val = currentValue !== undefined && currentValue !== null ? String(currentValue) : '';
+        setSelectedCell({ userId, userName, day, type, initialValue: currentValue });
+        setInputValue(val);
+    };
+
+    const handleInputBlur = () => {
+        if (selectedCell) {
+            let valToSave: string | number = inputValue;
+            const numVal = Number(inputValue);
+            if (!isNaN(numVal) && inputValue.trim() !== '') {
+                valToSave = numVal;
+            }
+            handleSave(selectedCell, valToSave);
+            setSelectedCell(null);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            (e.currentTarget as HTMLInputElement).blur(); // Triggers handleInputBlur
         }
     };
 
@@ -205,19 +237,35 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                     {user.daily.map((d, i) => {
                                         const displayVal = d.display45 !== undefined ? d.display45 : (d.count45 || '-');
                                         const isString = typeof d.display45 === 'string';
+                                        const isSelected = selectedCell?.userId === user.userId && selectedCell?.day === i + 1 && selectedCell?.type === '45';
 
                                         return (
                                             <td key={i}
                                                 onClick={() => handleCellClick(user.userId, user.userName, i + 1, '45', d.display45 ?? d.count45)}
+                                                className={isSelected ? styles.selectedCell : ''}
                                                 style={{
                                                     textAlign: 'center',
-                                                    padding: '0.5rem 0',
+                                                    padding: isSelected ? 0 : '0.5rem 0',
                                                     cursor: 'pointer',
                                                     color: d.count45 || isString ? 'inherit' : '#444',
-                                                    backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent',
-                                                    fontSize: isString ? '0.7rem' : 'inherit'
+                                                    backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
+                                                    fontSize: isString ? '0.7rem' : 'inherit',
+                                                    height: '40px',
+                                                    minWidth: '40px'
                                                 }}>
-                                                {displayVal}
+                                                {isSelected ? (
+                                                    <input
+                                                        type="text"
+                                                        value={inputValue}
+                                                        onChange={(e) => setInputValue(e.target.value)}
+                                                        onBlur={handleInputBlur}
+                                                        onKeyDown={handleKeyDown}
+                                                        className={styles.cellInput}
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    displayVal
+                                                )}
                                             </td>
                                         )
                                     })}
@@ -238,19 +286,35 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                     {user.daily.map((d, i) => {
                                         const displayVal = d.display75 !== undefined ? d.display75 : (d.count75 || '-');
                                         const isString = typeof d.display75 === 'string';
+                                        const isSelected = selectedCell?.userId === user.userId && selectedCell?.day === i + 1 && selectedCell?.type === '75';
 
                                         return (
                                             <td key={i}
                                                 onClick={() => handleCellClick(user.userId, user.userName, i + 1, '75', d.display75 ?? d.count75)}
+                                                className={isSelected ? styles.selectedCell : ''}
                                                 style={{
                                                     textAlign: 'center',
-                                                    padding: '0.5rem 0',
+                                                    padding: isSelected ? 0 : '0.5rem 0',
                                                     cursor: 'pointer',
                                                     color: d.count75 || isString ? 'inherit' : '#444',
-                                                    backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent',
-                                                    fontSize: isString ? '0.7rem' : 'inherit'
+                                                    backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
+                                                    fontSize: isString ? '0.7rem' : 'inherit',
+                                                    height: '40px',
+                                                    minWidth: '40px'
                                                 }}>
-                                                {displayVal}
+                                                {isSelected ? (
+                                                    <input
+                                                        type="text"
+                                                        value={inputValue}
+                                                        onChange={(e) => setInputValue(e.target.value)}
+                                                        onBlur={handleInputBlur}
+                                                        onKeyDown={handleKeyDown}
+                                                        className={styles.cellInput}
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    displayVal
+                                                )}
                                             </td>
                                         )
                                     })}
@@ -315,14 +379,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                 </table>
             </div>
 
-            {/* Edit Modal */}
-            <EditRecordModal
-                isOpen={!!editingCell}
-                onClose={() => setEditingCell(null)}
-                onSave={handleSaveOverride}
-                initialValue={editingCell?.currentValue || 0}
-                title={editingCell ? `${editingCell.userName} - ${editingCell.day}일 (${editingCell.type}L)` : ''}
-            />
+
         </div>
     );
 }
