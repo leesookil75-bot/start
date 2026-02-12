@@ -104,8 +104,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#1a1a1a' }}>
                     {/* Row 1: Areas */}
                     <tr>
-                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 11, left: 0, position: 'sticky', background: '#1a1a1a' }}>Date</th>
-                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 11, left: '60px', position: 'sticky', background: '#1a1a1a' }}>Day</th>
+                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, left: 0, position: 'sticky', background: '#1a1a1a' }}>Date</th>
+                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50, left: '60px', position: 'sticky', background: '#1a1a1a' }}>Day</th>
                         {areaGroups.map((group, idx) => (
                             <th
                                 key={idx}
@@ -148,8 +148,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
 
                         return (
                             <tr key={day} style={rowStyle}>
-                                <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: 0, background: 'var(--card-bg)', zIndex: 5, color: dateColor }}>{day}</td>
-                                <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: '60px', background: 'var(--card-bg)', zIndex: 5, color: dateColor }}>{dayName}</td>
+                                <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: 0, background: '#1a1a1a', zIndex: 15, color: dateColor }}>{day}</td>
+                                <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: '60px', background: '#1a1a1a', zIndex: 15, color: dateColor }}>{dayName}</td>
                                 {data.map(user => {
                                     const dayStat = user.daily[dayIndex];
                                     // Use display value if available (for overrides), else count
