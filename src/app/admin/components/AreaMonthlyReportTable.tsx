@@ -91,14 +91,13 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
     };
 
     const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
-        // 1. If there's an existing selection, check if we need to save it
+        // If clicking the currently selected cell, do nothing (keep editing)
+        if (selectedCell?.userId === userId && selectedCell?.day === day && selectedCell?.type === type) {
+            return;
+        }
+
+        // Save previous cell if it exists
         if (selectedCell) {
-            // If clicking the same cell, do nothing (keep it selected)
-            if (selectedCell.userId === userId && selectedCell.day === day && selectedCell.type === type) {
-                return;
-            }
-            // Save previous cell if value changed
-            // Convert input value to number if possible for valid check
             let valToSave: string | number = inputValue;
             const numVal = Number(inputValue);
             if (!isNaN(numVal) && inputValue.trim() !== '') {
@@ -107,12 +106,13 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
             handleSave(selectedCell, valToSave);
         }
 
-        // 2. Select new cell
+        // Select new cell
+        const val = currentValue !== undefined && currentValue !== null ? String(currentValue) : '';
         setSelectedCell({ userId, userName, day, type, initialValue: currentValue });
-        setInputValue(String(currentValue !== undefined && currentValue !== null ? currentValue : ''));
+        setInputValue(val);
     };
 
-    const handleDone = () => {
+    const handleInputBlur = () => {
         if (selectedCell) {
             let valToSave: string | number = inputValue;
             const numVal = Number(inputValue);
@@ -124,13 +124,21 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            (e.currentTarget as HTMLInputElement).blur(); // Triggers handleInputBlur
+        }
+    };
+
+
+
     return (
-        <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh', paddingBottom: selectedCell ? '80px' : '0' }}>
+        <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh' }}>
             <table className={styles.table} style={{ borderCollapse: 'collapse', textAlign: 'center' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#1a1a1a' }}>
                     {/* Row 1: Areas */}
                     <tr>
-                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, left: 0, position: 'sticky', background: '#1a1a1a' }}>Date</th>
+                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, left: 0, position: 'sticky', background: '#1a1a1a' }}>Date (v2)</th>
                         <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50, left: '60px', position: 'sticky', background: '#1a1a1a' }}>Day</th>
                         {areaGroups.map((group, idx) => (
                             <th
@@ -193,13 +201,27 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                                 style={{
                                                     border: '1px solid #444',
                                                     textAlign: 'center',
-                                                    padding: '0.5rem',
+                                                    padding: isSelected45 ? 0 : '0.5rem',
                                                     color: val45 ? 'var(--accent-45)' : '#444',
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s'
+                                                    transition: 'all 0.2s',
+                                                    minWidth: '40px',
+                                                    height: '40px'
                                                 }}
                                             >
-                                                {val45}
+                                                {isSelected45 ? (
+                                                    <input
+                                                        type="text"
+                                                        value={inputValue}
+                                                        onChange={(e) => setInputValue(e.target.value)}
+                                                        onBlur={handleInputBlur}
+                                                        onKeyDown={handleKeyDown}
+                                                        className={styles.cellInput}
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    val45
+                                                )}
                                             </td>
                                             <td
                                                 key={`${user.userId}-75`}
@@ -208,13 +230,27 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                                 style={{
                                                     border: '1px solid #444',
                                                     textAlign: 'center',
-                                                    padding: '0.5rem',
+                                                    padding: isSelected75 ? 0 : '0.5rem',
                                                     color: val75 ? 'var(--accent-75)' : '#444',
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s'
+                                                    transition: 'all 0.2s',
+                                                    minWidth: '40px',
+                                                    height: '40px'
                                                 }}
                                             >
-                                                {val75}
+                                                {isSelected75 ? (
+                                                    <input
+                                                        type="text"
+                                                        value={inputValue}
+                                                        onChange={(e) => setInputValue(e.target.value)}
+                                                        onBlur={handleInputBlur}
+                                                        onKeyDown={handleKeyDown}
+                                                        className={styles.cellInput}
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    val75
+                                                )}
                                             </td>
                                         </>
                                     );
@@ -236,29 +272,6 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                 </tbody>
             </table>
 
-            {/* Bottom Input Panel */}
-            {selectedCell && (
-                <div className={styles.bottomPanel}>
-                    <div className={styles.bottomPanelInfo}>
-                        <span>{selectedCell.userName}</span>
-                        <span>{selectedCell.day}일 ({selectedCell.type}L)</span>
-                    </div>
-                    <div className={styles.bottomPanelInputGroup}>
-                        <input
-                            type="text"
-                            inputMode="decimal"
-                            className={styles.bottomPanelInput}
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="값 입력 (예: 1, 2, 휴가)"
-                            autoFocus
-                        />
-                        <button className={styles.bottomPanelButton} onClick={handleDone}>
-                            완료
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
