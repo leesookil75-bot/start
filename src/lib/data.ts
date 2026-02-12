@@ -1,4 +1,3 @@
-import fs from 'fs/promises';
 import path from 'path';
 import { User, UsageRecord, Notice, DailyOverride } from './types';
 export type { User, UsageRecord, Notice, DailyOverride };
@@ -28,9 +27,11 @@ const isPostgresEnabled = () => !!process.env.POSTGRES_URL;
 // --- Helper to ensure files exist ---
 async function ensureFile(filePath: string, defaultData: unknown) {
   try {
+    const fs = (await import('fs/promises')).default;
     await fs.access(filePath);
   } catch {
     try {
+      const fs = (await import('fs/promises')).default;
       await fs.writeFile(filePath, JSON.stringify(defaultData, null, 2), 'utf-8');
     } catch (error) {
       console.warn(`Could not create file ${filePath}. This is expected on Vercel if DB is not connected.`, error);
@@ -62,6 +63,7 @@ export async function getUsers(): Promise<User[]> {
   // Fallback to File System
   await ensureFile(USERS_FILE_PATH, []);
   try {
+    const fs = (await import('fs/promises')).default;
     const data = await fs.readFile(USERS_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch {
@@ -111,6 +113,7 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
   };
 
   users.push(newUser);
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
   return newUser;
 }
@@ -123,6 +126,7 @@ export async function deleteUser(userId: string): Promise<void> {
 
   const users = await getUsers();
   const filtered = users.filter(u => u.id !== userId);
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(USERS_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
 }
 
@@ -166,6 +170,7 @@ export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 
   if (index === -1) throw new Error('User not found');
 
   users[index] = { ...users[index], ...updates };
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
 }
 
@@ -190,6 +195,7 @@ export async function getRecords(): Promise<UsageRecord[]> {
   // Fallback to File System
   await ensureFile(DATA_FILE_PATH, []);
   try {
+    const fs = (await import('fs/promises')).default;
     const data = await fs.readFile(DATA_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch {
@@ -223,6 +229,7 @@ export async function addRecord(size: 45 | 75, userId?: string, userName?: strin
     userName,
   };
   records.push(newRecord);
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(DATA_FILE_PATH, JSON.stringify(records, null, 2), 'utf-8');
   return newRecord;
 }
@@ -337,6 +344,7 @@ export async function manageUsageDelta(
     }
   }
 
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(DATA_FILE_PATH, JSON.stringify(newRecordsList, null, 2), 'utf-8');
   return { success: true };
 }
@@ -351,6 +359,7 @@ export async function updateUserPassword(userId: string, newPassword: string): P
   const userIndex = users.findIndex(u => u.id === userId);
   if (userIndex !== -1) {
     users[userIndex].password = newPassword;
+    const fs = (await import('fs/promises')).default;
     await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
   }
 }
@@ -383,6 +392,7 @@ export async function getNotices(): Promise<Notice[]> {
 
   await ensureFile(NOTICES_FILE_PATH, []);
   try {
+    const fs = (await import('fs/promises')).default;
     const data = await fs.readFile(NOTICES_FILE_PATH, 'utf-8');
     const notices: Notice[] = JSON.parse(data);
     return notices.sort((a, b) => {
@@ -417,6 +427,7 @@ export async function addNotice(notice: Omit<Notice, 'id' | 'createdAt'>): Promi
     createdAt: new Date().toISOString()
   };
   notices.unshift(newNotice); // Add to beginning
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
   return newNotice;
 }
@@ -429,6 +440,7 @@ export async function deleteNotice(id: string): Promise<void> {
 
   const notices = await getNotices();
   const filtered = notices.filter(n => n.id !== id);
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
 }
 
@@ -477,6 +489,7 @@ export async function updateNotice(id: string, updates: Partial<Notice>): Promis
   if (index === -1) throw new Error('Notice not found');
 
   notices[index] = { ...notices[index], ...updates };
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
 }
 
@@ -505,6 +518,7 @@ export async function getDailyOverrides(): Promise<DailyOverride[]> {
 
   await ensureFile(DAILY_OVERRIDES_FILE_PATH, []);
   try {
+    const fs = (await import('fs/promises')).default;
     const data = await fs.readFile(DAILY_OVERRIDES_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch {
@@ -537,5 +551,6 @@ export async function saveDailyOverride(override: DailyOverride): Promise<void> 
     overrides.push(override);
   }
 
+  const fs = (await import('fs/promises')).default;
   await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(overrides, null, 2), 'utf-8');
 }
