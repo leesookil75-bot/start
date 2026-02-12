@@ -3,7 +3,6 @@
 import { DailyUserStat } from '@/lib/types';
 import styles from '../admin.module.css';
 import { useState } from 'react';
-import EditRecordModal from './EditRecordModal';
 import { useRouter } from 'next/navigation';
 
 interface AreaMonthlyReportTableProps {
@@ -54,52 +53,79 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
     const grandTotal45 = data.reduce((sum, user) => sum + user.total45, 0);
     const grandTotal75 = data.reduce((sum, user) => sum + user.total75, 0);
 
-    // State for modal
-    const [editingCell, setEditingCell] = useState<{
+    // State for inline selection
+    const [selectedCell, setSelectedCell] = useState<{
         userId: string;
         userName: string;
         day: number;
         type: '45' | '75';
-        currentValue: string | number;
+        initialValue: string | number;
     } | null>(null);
+    const [inputValue, setInputValue] = useState<string>('');
 
     const router = useRouter();
 
-    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
-        setEditingCell({ userId, userName, day, type, currentValue });
-    };
+    const handleSave = async (cell: typeof selectedCell, value: string | number) => {
+        if (!cell) return;
 
-    const handleSaveOverride = async (newValue: string | number) => {
-        if (!editingCell) return;
+        // If value hasn't changed, don't save
+        if (String(cell.initialValue) === String(value)) return;
 
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(editingCell.day).padStart(2, '0')}`;
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
 
         try {
-            const res = await fetch('/api/admin/overrides', {
+            await fetch('/api/admin/overrides', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     date: dateStr,
-                    userId: editingCell.userId,
-                    type: editingCell.type,
-                    value: newValue
+                    userId: cell.userId,
+                    type: cell.type,
+                    value: value
                 })
             });
-
-            if (res.ok) {
-                setEditingCell(null);
-                router.refresh(); // Refresh data to show new value
-            } else {
-                alert('Failed to save edit.');
-            }
+            router.refresh();
         } catch (error) {
             console.error('Error saving:', error);
-            alert('Error saving edit.');
+        }
+    };
+
+    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
+        // 1. If there's an existing selection, check if we need to save it
+        if (selectedCell) {
+            // If clicking the same cell, do nothing (keep it selected)
+            if (selectedCell.userId === userId && selectedCell.day === day && selectedCell.type === type) {
+                return;
+            }
+            // Save previous cell if value changed
+            // Convert input value to number if possible for valid check
+            let valToSave: string | number = inputValue;
+            const numVal = Number(inputValue);
+            if (!isNaN(numVal) && inputValue.trim() !== '') {
+                valToSave = numVal;
+            }
+            handleSave(selectedCell, valToSave);
+        }
+
+        // 2. Select new cell
+        setSelectedCell({ userId, userName, day, type, initialValue: currentValue });
+        setInputValue(String(currentValue !== undefined && currentValue !== null ? currentValue : ''));
+    };
+
+    const handleDone = () => {
+        if (selectedCell) {
+            let valToSave: string | number = inputValue;
+            const numVal = Number(inputValue);
+            if (!isNaN(numVal) && inputValue.trim() !== '') {
+                valToSave = numVal;
+            }
+            handleSave(selectedCell, valToSave);
+            setSelectedCell(null);
         }
     };
 
     return (
-        <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh' }}>
+        <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh', paddingBottom: selectedCell ? '80px' : '0' }}>
             <table className={styles.table} style={{ borderCollapse: 'collapse', textAlign: 'center' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#1a1a1a' }}>
                     {/* Row 1: Areas */}
@@ -152,24 +178,41 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                 <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: '60px', background: '#1a1a1a', zIndex: 15, color: dateColor }}>{dayName}</td>
                                 {data.map(user => {
                                     const dayStat = user.daily[dayIndex];
-                                    // Use display value if available (for overrides), else count
-                                    // Note: API returns display45/75 in daily stats.
                                     const val45 = dayStat.display45 !== undefined ? dayStat.display45 : (dayStat.count45 || '');
                                     const val75 = dayStat.display75 !== undefined ? dayStat.display75 : (dayStat.count75 || '');
+
+                                    const isSelected45 = selectedCell?.userId === user.userId && selectedCell?.day === day && selectedCell?.type === '45';
+                                    const isSelected75 = selectedCell?.userId === user.userId && selectedCell?.day === day && selectedCell?.type === '75';
 
                                     return (
                                         <>
                                             <td
                                                 key={`${user.userId}-45`}
                                                 onClick={() => handleCellClick(user.userId, user.userName, day, '45', dayStat.display45 ?? dayStat.count45)}
-                                                style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', color: val45 ? 'var(--accent-45)' : '#444', cursor: 'pointer' }}
+                                                className={isSelected45 ? styles.selectedCell : ''}
+                                                style={{
+                                                    border: '1px solid #444',
+                                                    textAlign: 'center',
+                                                    padding: '0.5rem',
+                                                    color: val45 ? 'var(--accent-45)' : '#444',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
                                             >
                                                 {val45}
                                             </td>
                                             <td
                                                 key={`${user.userId}-75`}
                                                 onClick={() => handleCellClick(user.userId, user.userName, day, '75', dayStat.display75 ?? dayStat.count75)}
-                                                style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', color: val75 ? 'var(--accent-75)' : '#444', cursor: 'pointer' }}
+                                                className={isSelected75 ? styles.selectedCell : ''}
+                                                style={{
+                                                    border: '1px solid #444',
+                                                    textAlign: 'center',
+                                                    padding: '0.5rem',
+                                                    color: val75 ? 'var(--accent-75)' : '#444',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
                                             >
                                                 {val75}
                                             </td>
@@ -193,14 +236,29 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                 </tbody>
             </table>
 
-            {/* Edit Modal */}
-            <EditRecordModal
-                isOpen={!!editingCell}
-                onClose={() => setEditingCell(null)}
-                onSave={handleSaveOverride}
-                initialValue={editingCell?.currentValue || 0}
-                title={editingCell ? `${editingCell.userName} - ${editingCell.day}일 (${editingCell.type}L)` : ''}
-            />
+            {/* Bottom Input Panel */}
+            {selectedCell && (
+                <div className={styles.bottomPanel}>
+                    <div className={styles.bottomPanelInfo}>
+                        <span>{selectedCell.userName}</span>
+                        <span>{selectedCell.day}일 ({selectedCell.type}L)</span>
+                    </div>
+                    <div className={styles.bottomPanelInputGroup}>
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            className={styles.bottomPanelInput}
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="값 입력 (예: 1, 2, 휴가)"
+                            autoFocus
+                        />
+                        <button className={styles.bottomPanelButton} onClick={handleDone}>
+                            완료
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
