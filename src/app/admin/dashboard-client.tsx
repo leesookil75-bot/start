@@ -12,8 +12,10 @@ import { useRouter } from 'next/navigation';
 import { MonthlyUserStat, DailyUserStat } from '@/lib/types';
 import MonthlyReportTable from './components/MonthlyReportTable';
 import DailyReportTable from './components/DailyReportTable';
+import AreaMonthlyReportTable from './components/AreaMonthlyReportTable';
+import AreaReportDownloadBtn from './components/AreaReportDownloadBtn';
 
-type Tab = 'daily-report' | 'user-report' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area';
+type Tab = 'daily-report' | 'user-report' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area' | 'area-monthly';
 
 interface DashboardClientProps {
     records: any[];
@@ -169,8 +171,8 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                         </div>
 
                         <div className={styles.contentArea}>
-                            {/* Date Selector for Daily Report */}
-                            {activeTab === 'daily-report' && (
+                            {/* Date Selector for Reports */}
+                            {(activeTab === 'daily-report' || activeTab === 'area-monthly') && (
                                 <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
                                     <label htmlFor="month-picker" style={{ fontWeight: 'bold' }}>Select Month: </label>
                                     <input
@@ -186,6 +188,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                             <div className={styles.tabBar}>
                                 <div className={styles.tabs}>
                                     <button className={`${styles.tab} ${activeTab === 'daily-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily-report')}>Daily Report</button>
+                                    <button className={`${styles.tab} ${activeTab === 'area-monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area-monthly')}>Area Report</button>
                                     <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
                                     <button className={`${styles.tab} ${activeTab === 'daily' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily')}>Daily Graph</button>
                                     <button className={`${styles.tab} ${activeTab === 'weekly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('weekly')}>Weekly</button>
@@ -194,13 +197,28 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                                     <button className={`${styles.tab} ${activeTab === 'area' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area')}>By Area</button>
                                 </div>
 
-                                {activeTab !== 'daily-report' && activeTab !== 'user-report' && <ExcelDownloadBtn data={excelData} />}
+                                {activeTab === 'area-monthly' ? (
+                                    <AreaReportDownloadBtn
+                                        data={stats.dailyUser}
+                                        year={currentDate.year}
+                                        month={currentDate.month}
+                                    />
+                                ) : activeTab !== 'daily-report' && activeTab !== 'user-report' ? (
+                                    <ExcelDownloadBtn data={excelData} />
+                                ) : null}
                             </div>
 
                             {/* Stop propagation for touch events on tables to prevent page swipe */}
                             <div onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                                 {activeTab === 'daily-report' && (
                                     <DailyReportTable
+                                        data={stats.dailyUser}
+                                        year={currentDate.year}
+                                        month={currentDate.month}
+                                    />
+                                )}
+                                {activeTab === 'area-monthly' && (
+                                    <AreaMonthlyReportTable
                                         data={stats.dailyUser}
                                         year={currentDate.year}
                                         month={currentDate.month}
