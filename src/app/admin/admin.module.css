@@ -449,3 +449,144 @@
         /* Helps with some flex bugs */
     }
 }
+/* Modal Styles */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modalContent {
+    background: var(--card-bg, #1a1a1a);
+    border: 1px solid var(--card-border, #333);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    color: var(--foreground);
+}
+
+.modalTitle {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.modalForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.label {
+    font-size: 0.9rem;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.input {
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.submitButton {
+    background: #3b82f6;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submitButton:hover {
+    background: #2563eb;
+}
+
+.cancelButton {
+    background: transparent;
+    color: #ccc;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #444;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancelButton:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border-color: #666;
+}
+
+
+/* Enhanced EditRecordModal Styles */
+.modalContent {
+    background: #2a2a2a; /* Slightly lighter dark bg for contrast */
+    border: 2px solid #3b82f6; /* Blue border for visibility */
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); /* Glow effect */
+}
+
+.modalTitle {
+    font-size: 1.5rem;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.label {
+    color: #fff; /* Brighter label */
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.input {
+    background: #000;
+    border: 1px solid #555;
+    font-size: 1.2rem; /* Larger font for easy mobile input */
+    padding: 1rem;
+    color: #fff;
+}
+
+.input:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
+.formGroup p {
+    color: #ccc !important; /* Brighter hint text */
+}
+
