@@ -1,0 +1,84 @@
+.grid {
+    width: 100%;
+    display: grid;
+    gap: 1rem;
+}
+
+.card {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #888;
+    text-align: center;
+}
+
+.statRow {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.bagItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bagIcon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 50L Color */
+.bag50 {
+    background-color: #3b82f6;
+}
+
+/* 75L Color */
+.bag75 {
+    background-color: #eab308;
+    color: #000;
+}
+
+.count {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    /* Default text color for dark mode */
+}
+
+/* Desktop White Theme Overrides */
+@media (min-width: 768px) {
+    .card {
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .cardTitle {
+        color: #6b7280;
+        /* Gray-500 */
+        font-weight: 600;
+    }
+
+    .count {
+        color: #1f2937;
+        /* Gray-800 */
+    }
+}
