@@ -178,6 +178,54 @@
     color: var(--accent-75);
 }
 
+/* Sticky Column Styles - Desktop Only (re-enabled for mobile request but handled via media query if needed, 
+   but user wants separate columns. To prevent screen cover, we disable sticky on mobile) */
+
+@media (min-width: 769px) {
+    .stickyLeft0 {
+        position: sticky;
+        left: 0;
+        z-index: 20;
+        background: var(--card-bg, #1a1a1a);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stickyLeft100 {
+        position: sticky;
+        left: 100px;
+        z-index: 20;
+        background: var(--card-bg, #1a1a1a);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stickyLeft250 {
+        position: sticky;
+        left: 250px;
+        z-index: 20;
+        background: var(--card-bg, #1a1a1a);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stickyBg {
+        background: var(--card-bg, #1a1a1a);
+    }
+}
+
+/* On mobile, we keep the classes but remove sticky behavior so user can scroll horizontally past them */
+@media (max-width: 768px) {
+
+    .stickyLeft0,
+    .stickyLeft100,
+    .stickyLeft250 {
+        position: static;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stickyBg {
+        background: transparent;
+    }
+}
+
 .time {
     color: #aaa;
     font-family: monospace;
@@ -390,7 +438,7 @@
 @media (min-width: 769px) {
     .mobileOnly {
         display: none;
-    }   
+    }
 }
 
 /* Slider / Swipe Styles */

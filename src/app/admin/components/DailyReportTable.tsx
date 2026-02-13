@@ -173,13 +173,9 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                 <table className={styles.table} style={{ fontSize: '0.75rem', width: 'max-content', minWidth: '100%', tableLayout: 'fixed' }}>
                     <thead>
                         <tr>
-                            {/* PC Columns */}
-                            <th className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}>Name</th>
-                            <th className={`${styles.stickyLeft100} ${styles.desktopOnly}`} style={{ width: '150px', minWidth: '150px', maxWidth: '150px' }}>Area</th>
-                            <th className={`${styles.stickyLeft250} ${styles.desktopOnly}`} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>Type</th>
-
-                            {/* Mobile Combined Column */}
-                            <th className={`${styles.mobileStickyHeader} ${styles.mobileOnly}`} style={{ zIndex: 65 }}>User</th>
+                            <th className={styles.stickyLeft0} style={{ width: '100px', minWidth: '100px', maxWidth: '100px' }}>Name</th>
+                            <th className={styles.stickyLeft100} style={{ width: '150px', minWidth: '150px', maxWidth: '150px' }}>Area</th>
+                            <th className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>Type</th>
 
                             {days.map(d => (
                                 <th key={d} style={{
@@ -394,16 +390,9 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                     </tbody>
                     <tfoot>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            {/* PC Footer Cols */}
-                            <td rowSpan={2} className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ verticalAlign: 'middle' }}>Total</td>
-                            <td rowSpan={2} className={`${styles.stickyLeft100} ${styles.desktopOnly}`}></td>
-                            <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`}>50L</td>
-
-                            {/* Mobile Footer Col */}
-                            <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                <div>Total</div>
-                                <div style={{ color: 'var(--accent-50)' }}>50L</div>
-                            </td>
+                            <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle' }}>Total</td>
+                            <td rowSpan={2} className={styles.stickyLeft100}></td>
+                            <td className={styles.stickyLeft250}>50L</td>
 
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
@@ -416,14 +405,8 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                         </tr>
                         {/* 75L footer row remains similar */}
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            {/* PC Footer Col */}
-                            <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`}>75L</td>
+                            <td className={styles.stickyLeft250}>75L</td>
 
-                            {/* Mobile Footer Col */}
-                            <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                <div style={{ visibility: 'hidden' }}>-</div>
-                                <div style={{ color: 'var(--accent-75)' }}>75L</div>
-                            </td>
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
                                     textAlign: 'center',

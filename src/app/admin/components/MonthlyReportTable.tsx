@@ -93,14 +93,9 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                 <table className={styles.table} style={{ fontSize: '0.9rem', width: 'max-content', minWidth: '100%' }}>
                     <thead>
                         <tr>
-                            {/* PC Columns */}
-                            <th className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ width: '100px', minWidth: '100px', maxWidth: '100px', position: 'sticky', top: 0, zIndex: 60 }}>Name</th>
-                            <th className={`${styles.stickyLeft100} ${styles.desktopOnly}`} style={{ width: '150px', minWidth: '150px', maxWidth: '150px', position: 'sticky', top: 0, zIndex: 60 }}>Area</th>
-                            <th className={`${styles.stickyLeft250} ${styles.desktopOnly}`} style={{ width: '60px', minWidth: '60px', maxWidth: '60px', position: 'sticky', top: 0, zIndex: 60 }}>Type</th>
-
-                            {/* Mobile Combined Column */}
-                            <th className={`${styles.mobileStickyHeader} ${styles.mobileOnly}`} style={{ zIndex: 65 }}>User</th>
-
+                            <th className={styles.stickyLeft0} style={{ width: '100px', minWidth: '100px', maxWidth: '100px', position: 'sticky', top: 0, zIndex: 60 }}>Name</th>
+                            <th className={styles.stickyLeft100} style={{ width: '150px', minWidth: '150px', maxWidth: '150px', position: 'sticky', top: 0, zIndex: 60 }}>Area</th>
+                            <th className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px', position: 'sticky', top: 0, zIndex: 60 }}>Type</th>
                             {Array(12).fill(0).map((_, i) => (
                                 <th key={i} style={{ position: 'sticky', top: 0, zIndex: 50, background: '#f9fafb', minWidth: '40px' }}>{i + 1}월</th>
                             ))}
@@ -111,23 +106,15 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                         {data.map((user) => (
                             <>
                                 <tr key={`${user.userId}-50`}>
-                                    {/* PC Columns */}
-                                    <td rowSpan={2} className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ verticalAlign: 'middle', width: '100px', minWidth: '100px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle', width: '100px', minWidth: '100px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {user.userName}
                                     </td>
-                                    <td rowSpan={2} className={`${styles.stickyLeft100} ${styles.desktopOnly}`} style={{ verticalAlign: 'middle', fontSize: '0.85rem', color: '#ccc', width: '150px', minWidth: '150px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <td rowSpan={2} className={styles.stickyLeft100} style={{ verticalAlign: 'middle', fontSize: '0.85rem', color: '#ccc', width: '150px', minWidth: '150px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {user.area}
                                     </td>
-                                    <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
+                                    <td className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
                                         <span className={`${styles.badge} ${styles.badge50}`}>50L</span>
                                     </td>
-
-                                    {/* Mobile Column */}
-                                    <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.userName}</div>
-                                        <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.6rem', padding: '0 0.2rem' }}>50L</span>
-                                    </td>
-
                                     {user.monthly.map((m, i) => (
                                         <td key={i} style={{ textAlign: 'center', color: m.count50 ? 'inherit' : '#444' }}>
                                             {m.count50 || '-'}
@@ -138,17 +125,9 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                                     </td>
                                 </tr>
                                 <tr key={`${user.userId}-75`}>
-                                    {/* PC Column */}
-                                    <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
+                                    <td className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
                                         <span className={`${styles.badge} ${styles.badge75}`}>75L</span>
                                     </td>
-
-                                    {/* Mobile Column */}
-                                    <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                        <div style={{ color: '#aaa', fontSize: '0.7rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.area}</div>
-                                        <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.6rem', padding: '0 0.2rem' }}>75L</span>
-                                    </td>
-
                                     {user.monthly.map((m, i) => (
                                         <td key={i} style={{ textAlign: 'center', color: m.count75 ? 'inherit' : '#444' }}>
                                             {m.count75 || '-'}
@@ -163,32 +142,16 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                     </tbody>
                     <tfoot>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            {/* PC Footer */}
-                            <td rowSpan={2} className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ verticalAlign: 'middle' }}>Total</td>
-                            <td rowSpan={2} className={`${styles.stickyLeft100} ${styles.desktopOnly}`}></td>
-                            <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`}>50L</td>
-
-                            {/* Mobile Footer */}
-                            <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                <div>Total</div>
-                                <div style={{ color: 'var(--accent-50)' }}>50L</div>
-                            </td>
-
+                            <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle' }}>Total</td>
+                            <td rowSpan={2} className={styles.stickyLeft100}></td>
+                            <td className={styles.stickyLeft250}>50L</td>
                             {monthlyTotals.map((m, i) => (
                                 <td key={i} style={{ textAlign: 'center' }}>{m.count50}</td>
                             ))}
                             <td style={{ textAlign: 'center', color: 'var(--accent-50)' }}>{grandTotal50}</td>
                         </tr>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            {/* PC Footer */}
-                            <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`}>75L</td>
-
-                            {/* Mobile Footer */}
-                            <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                <div style={{ visibility: 'hidden' }}>-</div>
-                                <div style={{ color: 'var(--accent-75)' }}>75L</div>
-                            </td>
-
+                            <td className={styles.stickyLeft250}>75L</td>
                             {monthlyTotals.map((m, i) => (
                                 <td key={i} style={{ textAlign: 'center' }}>{m.count75}</td>
                             ))}
