@@ -43,26 +43,23 @@ export default async function AdminPage({
         getDailyUserStats(queryYear, queryMonth)
     ]);
 
+    // Header moved to Client component for conditional page visibility
     return (
-        <div className={styles.container}>
-            {/* Header moved to Client component for conditional page visibility */}
-
-            <AdminDashboardClient
-                records={records}
-                stats={{
-                    daily: [],
-                    weekly: [],
-                    monthly: [],
-                    yearly: [],
-                    area: [],
-                    monthlyUser: monthlyUserStats,
-                    dailyUser: dailyUserStats
-                }}
-                currentDate={{ year: queryYear, month: queryMonth }}
-                summaryStats={stats}
-                excelData={excelData}
-                notices={notices}
-            />
-        </div>
+        <AdminDashboardClient
+            records={records}
+            stats={{
+                daily: [],
+                weekly: [],
+                monthly: [],
+                yearly: [],
+                area: [],
+                monthlyUser: monthlyUserStats,
+                dailyUser: dailyUserStats
+            }}
+            currentDate={{ year: queryYear, month: queryMonth }}
+            summaryStats={stats}
+            excelData={excelData}
+            notices={notices}
+        />
     );
 }
