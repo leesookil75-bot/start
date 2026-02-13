@@ -170,7 +170,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         <div className={styles.tableContainer}>
             {/* ... */}
             <div style={{ overflowX: 'auto' }}>
-                <table className={styles.table} style={{ fontSize: '0.75rem', width: '100%', tableLayout: 'fixed' }}>
+                <table className={styles.table} style={{ fontSize: '0.75rem', width: 'max-content', minWidth: '100%', tableLayout: 'fixed' }}>
                     <thead>
                         <tr>
                             {/* PC Columns */}
