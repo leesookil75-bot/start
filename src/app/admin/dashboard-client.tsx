@@ -154,20 +154,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                     {/* Slide 0: Dashboard */}
                     <div className={styles.slide} style={{ width: '33.333%' }}>
                         {/* Stats Grid */}
-                        <div className={styles.statsGrid}>
-                            <div className={styles.card}>
-                                <div className={styles.statLabel}>50L Bags</div>
-                                <div className={`${styles.statValue} ${styles.value50}`}>{summaryStats.count50}</div>
-                            </div>
-                            <div className={styles.card}>
-                                <div className={styles.statLabel}>75L Bags</div>
-                                <div className={`${styles.statValue} ${styles.value75}`}>{summaryStats.count75}</div>
-                            </div>
-                            <div className={styles.card}>
-                                <div className={styles.statLabel}>Total Usage</div>
-                                <div className={styles.statValue}>{summaryStats.total}</div>
-                            </div>
-                        </div>
+
 
                         <div className={styles.contentArea}>
                             {/* Date Selector for Reports */}

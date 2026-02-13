@@ -786,8 +786,9 @@
 
     .container {
         padding: 3rem;
-        max-width: 1200px;
+        max-width: 100%;
         /* Expand max width for admin tables */
+        width: 100%;
     }
 
     /* Hide Mobile Header on Desktop since we have sidebar */
