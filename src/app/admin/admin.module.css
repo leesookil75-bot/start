@@ -774,7 +774,7 @@
 @media (min-width: 768px) {
     .adminLayoutContainer {
         display: grid;
-        grid-template-columns: 280px 1fr;
+        grid-template-columns: 280px minmax(0, 1fr);
     }
 
     .desktopSidebarWrapper {
