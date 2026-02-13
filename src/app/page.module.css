@@ -461,12 +461,12 @@
   .sidebar {
     display: flex;
     flex-direction: column;
-    background: #1a1a1a;
-    /* Dark Sidebar */
-    color: #fff;
+    background: #ffffff;
+    /* White Sidebar */
+    color: #1a1a1a;
     padding: 2rem;
-    border-right: 1px solid #333;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
     z-index: 10;
   }
 
@@ -485,20 +485,22 @@
 
   .sidebarUserInfo {
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8f9fa;
+    /* Light grey for user info box */
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #e5e7eb;
   }
 
   .sidebarUserName {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 0.25rem;
+    color: #1a1a1a;
   }
 
   .sidebarUserArea {
     font-size: 0.9rem;
-    color: #aaa;
+    color: #6b7280;
   }
 
   .sidebarNav {
@@ -513,7 +515,8 @@
     align-items: center;
     padding: 0.75rem 1rem;
     border-radius: 10px;
-    color: #ccc;
+    color: #4b5563;
+    /* Darker grey text */
     text-decoration: none;
     font-size: 1rem;
     font-weight: 500;
@@ -525,25 +528,28 @@
   }
 
   .sidebarNavItem:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: #f3f4f6;
+    color: #111827;
     transform: translateX(4px);
   }
 
   .sidebarNavActive {
-    background: #3b82f6;
-    color: #fff;
+    background: #eff6ff;
+    /* Light blue bg */
+    color: #3b82f6;
+    /* Blue text */
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: none;
+    border: 1px solid #dbeafe;
   }
 
   .sidebarNavActive:hover {
-    background: #2563eb;
+    background: #dbeafe;
   }
 
   .sidebarDivider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #e5e7eb;
     margin: 1rem 0;
   }
 
@@ -551,9 +557,9 @@
     width: 100%;
     padding: 0.75rem;
     border-radius: 10px;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    background: rgba(239, 68, 68, 0.1);
-    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: #fef2f2;
+    color: #ef4444;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -562,8 +568,8 @@
   }
 
   .sidebarLogoutBtn:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    background: #fee2e2;
+    color: #dc2626;
   }
 
 
@@ -736,22 +742,25 @@
     color: #64748b;
   }
 }
+
 /* 
    Desktop Toggle Logic
    Depends on [data-active-index] being present on .sliderContainer 
 */
 @media (min-width: 768px) {
-    .sliderContainer[data-active-index='0'] .slide:nth-child(1) {
-        display: flex;
-    }
-    .sliderContainer[data-active-index='0'] .slide:nth-child(2) {
-        display: none;
-    }
+  .sliderContainer[data-active-index='0'] .slide:nth-child(1) {
+    display: flex;
+  }
 
-    .sliderContainer[data-active-index='1'] .slide:nth-child(1) {
-        display: none;
-    }
-    .sliderContainer[data-active-index='1'] .slide:nth-child(2) {
-        display: flex;
-    }
+  .sliderContainer[data-active-index='0'] .slide:nth-child(2) {
+    display: none;
+  }
+
+  .sliderContainer[data-active-index='1'] .slide:nth-child(1) {
+    display: none;
+  }
+
+  .sliderContainer[data-active-index='1'] .slide:nth-child(2) {
+    display: flex;
+  }
 }
