@@ -8,13 +8,20 @@ import InstallPrompt from '@/components/InstallPrompt';
 
 import Link from 'next/link';
 
+import { logout } from './actions';
+
 interface ClientHomeProps {
     initialUsage: { count50: number; count75: number };
     stats: any;
-    recentNotice?: any; // Avoiding strict type sharing for now to keep client component clean
+    recentNotice?: any;
+    user: {
+        name: string;
+        cleaningArea: string;
+        role: string;
+    };
 }
 
-export default function ClientHome({ initialUsage, stats, recentNotice }: ClientHomeProps) {
+export default function ClientHome({ initialUsage, stats, recentNotice, user }: ClientHomeProps) {
     // 0 = Usage, 1 = Stats
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -76,74 +83,157 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
     };
 
     return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* ... (Notice Widget) */}
-
-            {/* ... (Custom Tabs) */}
-
-            {/* Slider Window */}
-            <div
-                className={styles.sliderWindow}
-                onPointerDown={onPointerDown}
-                onPointerUp={onPointerUp}
-                onPointerLeave={onPointerLeave}
-            >
-                <div
-                    className={styles.sliderContainer}
-                    style={{ transform: `translateX(-${activeIndex * 50}%)` }}
-                >
-                    {/* Slide 1: Usage Input */}
-                    <div className={styles.slide}>
-                        <div className={styles.card}>
-                            <h1 className={styles.title}>오늘의 배출량 입력</h1>
-
-                            <div className={styles.inputRows}>
-                                <div className={`${styles.row} ${styles.row50}`}>
-                                    <div className={styles.bagInfo}>
-                                        <div className={styles.bagIcon}>50L</div>
-                                        <span className={styles.bagLabel}>일반 쓰레기</span>
-                                    </div>
-                                    <div className={styles.controls}>
-                                        <button className={styles.controlBtn} onClick={() => handleDelta(50, -1)} disabled={current50 <= 0 || isPending}>−</button>
-                                        <span className={styles.countValue}>{current50}</span>
-                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(50, 1)} disabled={isPending}>+</button>
-                                    </div>
-                                </div>
-
-
-                                <div className={`${styles.row} ${styles.row75}`}>
-                                    <div className={styles.bagInfo}>
-                                        <div className={styles.bagIcon}>75L</div>
-                                        <span className={styles.bagLabel}>대형 쓰레기</span>
-                                    </div>
-                                    <div className={styles.controls}>
-                                        <button className={styles.controlBtn} onClick={() => handleDelta(75, -1)} disabled={current75 <= 0 || isPending}>−</button>
-                                        <span className={styles.countValue}>{current75}</span>
-                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(75, 1)} disabled={isPending}>+</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {message && <p className={styles.message}>{message}</p>}
-
-                            <button
-                                className={styles.submitButton}
-                                onClick={handleSubmit}
-                                disabled={isPending || !hasChanges}
-                            >
-                                {isPending ? '전송 중...' : '오늘 배출량 전송'}
-                            </button>
-                        </div>
+        <div className={styles.responsiveContainer}>
+            {/* Sidebar (Desktop Only) */}
+            <aside className={styles.sidebar}>
+                <div className={styles.sidebarHeader}>
+                    <div className={styles.logo}>Clean Track</div>
+                    <div className={styles.sidebarUserInfo}>
+                        <div className={styles.sidebarUserName}>{user.name} 님</div>
+                        <div className={styles.sidebarUserArea}>{user.cleaningArea}</div>
                     </div>
+                </div>
 
-                    {/* Slide 2: Stats View */}
-                    <div className={styles.slide}>
-                        <MyStatsView stats={stats} />
+                <nav className={styles.sidebarNav}>
+                    <button
+                        onClick={() => setActiveIndex(0)}
+                        className={`${styles.sidebarNavItem} ${activeIndex === 0 ? styles.sidebarNavActive : ''}`}
+                    >
+                        📝 배출량 입력
+                    </button>
+                    <button
+                        onClick={() => setActiveIndex(1)}
+                        className={`${styles.sidebarNavItem} ${activeIndex === 1 ? styles.sidebarNavActive : ''}`}
+                    >
+                        📊 내 통계
+                    </button>
+                    <div className={styles.sidebarDivider} />
+                    <Link href="/notices" className={styles.sidebarNavItem}>
+                        📢 공지사항
+                    </Link>
+                    <Link href="/change-password" className={styles.sidebarNavItem}>
+                        🔒 비밀번호 변경
+                    </Link>
+                    <form action={logout}>
+                        <button className={styles.sidebarLogoutBtn}>로그아웃</button>
+                    </form>
+                </nav>
+            </aside>
+
+            {/* Main Content Area */}
+            <div className={styles.contentWrapper}>
+                {/* Header (Mobile Only) */}
+                <div className={styles.header}>
+                    <div className={styles.userInfo}>
+                        <span className={styles.userName}>{user.name} 님</span>
+                        <span className={styles.userArea}>({user.cleaningArea})</span>
+                    </div>
+                    <div className={styles.headerActions}>
+                        <Link href="/notices" className={styles.changePasswordLink} style={{ color: 'orange', marginRight: '0.5rem' }}>공지사항</Link>
+                        <Link href="/change-password" className={styles.changePasswordLink}>비밀번호 변경</Link>
+                        <form action={logout}>
+                            <button className={styles.logoutButton}>Logout</button>
+                        </form>
+                    </div>
+                </div>
+
+                {/* Mobile Tabs */}
+                <div className={styles.tabs}>
+                    <div
+                        className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
+                        onClick={() => setActiveIndex(0)}
+                    >
+                        배출량 입력
+                    </div>
+                    <div
+                        className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
+                        onClick={() => setActiveIndex(1)}
+                    >
+                        내 통계
+                    </div>
+                </div>
+
+                {/* Notice Widget (Mobile & Desktop) */}
+                {recentNotice && (
+                    <div className={styles.noticeContainer}>
+                        <Link href={`/notices/${recentNotice.id}`} style={{ textDecoration: 'none' }}>
+                            <div className={styles.noticeBanner}>
+                                <div className={styles.noticeIcon}>📢</div>
+                                <div className={styles.noticeContent}>
+                                    <h3 className={styles.noticeTitle}>{recentNotice.title}</h3>
+                                    <p className={styles.noticeText}>{recentNotice.content}</p>
+                                </div>
+                                <div className={styles.noticeArrow}>›</div>
+                            </div>
+                        </Link>
+                    </div>
+                )}
+
+                <InstallPrompt />
+
+                {/* Content Slider/Grid */}
+                <div
+                    className={styles.sliderWindow}
+                    onPointerDown={onPointerDown}
+                    onPointerUp={onPointerUp}
+                    onPointerLeave={onPointerLeave}
+                >
+                    <div
+                        className={styles.sliderContainer}
+                        style={{ transform: `translateX(-${activeIndex * 50}%)` }}
+                        data-active-index={activeIndex}
+                    >
+                        {/* Slide 1: Usage Input */}
+                        <div className={styles.slide}>
+                            <div className={styles.card}>
+                                <h1 className={styles.title}>오늘의 배출량 입력</h1>
+
+                                <div className={styles.inputRows}>
+                                    <div className={`${styles.row} ${styles.row50}`}>
+                                        <div className={styles.bagInfo}>
+                                            <div className={styles.bagIcon}>50L</div>
+                                            <span className={styles.bagLabel}>일반 쓰레기</span>
+                                        </div>
+                                        <div className={styles.controls}>
+                                            <button className={styles.controlBtn} onClick={() => handleDelta(50, -1)} disabled={current50 <= 0 || isPending}>−</button>
+                                            <span className={styles.countValue}>{current50}</span>
+                                            <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(50, 1)} disabled={isPending}>+</button>
+                                        </div>
+                                    </div>
+
+
+                                    <div className={`${styles.row} ${styles.row75}`}>
+                                        <div className={styles.bagInfo}>
+                                            <div className={styles.bagIcon}>75L</div>
+                                            <span className={styles.bagLabel}>대형 쓰레기</span>
+                                        </div>
+                                        <div className={styles.controls}>
+                                            <button className={styles.controlBtn} onClick={() => handleDelta(75, -1)} disabled={current75 <= 0 || isPending}>−</button>
+                                            <span className={styles.countValue}>{current75}</span>
+                                            <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(75, 1)} disabled={isPending}>+</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {message && <p className={styles.message}>{message}</p>}
+
+                                <button
+                                    className={styles.submitButton}
+                                    onClick={handleSubmit}
+                                    disabled={isPending || !hasChanges}
+                                >
+                                    {isPending ? '전송 중...' : '오늘 배출량 전송'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Slide 2: Stats View */}
+                        <div className={styles.slide}>
+                            <MyStatsView stats={stats} />
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {/* Global InstallPrompt is now in layout.tsx, removed from here */}
         </div>
     );
 }

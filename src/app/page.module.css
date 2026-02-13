@@ -1,16 +1,39 @@
-/* Main container with gradient background */
+/* Main container with gradient background on mobile */
+/* On desktop it will be white */
 .main {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 1.5rem;
-  background: radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.15), transparent 40%),
-    radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.1), transparent 40%);
+  /* background logic moved to media queries */
   color: #fff;
+  transition: background 0.3s;
 }
 
+/* 
+  Mobile Default Styles (Gradient BG)
+*/
+.main {
+  background: radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.15), transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.1), transparent 40%);
+  padding: 1.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Container: Mobile = Flex Column, Desktop = Grid */
+.responsiveContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Sidebar: Hidden on Mobile */
+.sidebar {
+  display: none;
+}
+
+/* Header (Mobile) */
 .header {
   display: flex;
   justify-content: space-between;
@@ -72,6 +95,7 @@
   text-decoration: underline;
 }
 
+/* Card */
 .card {
   width: 100%;
   max-width: 480px;
@@ -119,9 +143,7 @@
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-
-
-/* Bag Info Section (Left) */
+/* Bag Info Section */
 .bagInfo {
   display: flex;
   align-items: center;
@@ -158,7 +180,7 @@
   color: #e5e7eb;
 }
 
-/* Controls Section (Right) */
+/* Controls */
 .controls {
   display: flex;
   align-items: center;
@@ -262,17 +284,7 @@
   color: #666;
 }
 
-.footer a {
-  color: #666;
-  text-decoration: none;
-}
-
-.footer a:hover {
-  color: #888;
-}
-
-
-/* Tabs */
+/* Tabs (Mobile Selectors) */
 .tabs {
   display: flex;
   background: rgba(0, 0, 0, 0.2);
@@ -309,14 +321,11 @@
   overflow: hidden;
   position: relative;
   touch-action: pan-y;
-  /* Allow vertical scroll, capture horizontal swipes */
-  /* Optional: ensure min height or let content dictate */
 }
 
 .sliderContainer {
   display: flex;
   width: 200%;
-  /* For 2 slides */
   transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -327,7 +336,6 @@
   flex-direction: column;
   align-items: center;
   padding: 0 2px;
-  /* Slight padding if needed */
 }
 
 /* Notice Banner */
@@ -335,7 +343,6 @@
   width: 100%;
   max-width: 480px;
   padding: 0 0.5rem;
-  /* Less horizontal padding for container to allow banner to avail more width */
   margin-bottom: 1.5rem;
 }
 
@@ -343,9 +350,7 @@
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.2));
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 20px;
-  /* Rounder */
   padding: 1.25rem 1.5rem;
-  /* Bigger padding */
   display: flex;
   align-items: center;
   gap: 1.25rem;
@@ -360,7 +365,6 @@
 
 .noticeIcon {
   font-size: 2rem;
-  /* Bigger icon */
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
@@ -370,13 +374,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  /* Space between title and text */
 }
 
 .noticeTitle {
   margin: 0;
   font-size: 1.1rem;
-  /* Bigger title */
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -398,7 +400,6 @@
   font-size: 1.2rem;
   opacity: 0.8;
 }
-
 
 /* Install Prompt */
 .installContainer {
@@ -428,4 +429,329 @@
 .installButton:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
+}
+
+/* 
+ * ======================================================================
+ * DESKTOP STYLE OVERRIDES (Sidebar + White BG)
+ * ======================================================================
+ */
+@media (min-width: 768px) {
+
+  /* Main Layout */
+  .main {
+    padding: 0;
+    background: #f8f9fa;
+    /* Whiteish background */
+    color: #1a1a1a;
+    display: block;
+    /* Remove flex centering */
+  }
+
+  .responsiveContainer {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+    width: 100%;
+    max-width: 100%;
+    /* Full Width */
+  }
+
+  /* Sidebar Styling */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    /* Dark Sidebar */
+    color: #fff;
+    padding: 2rem;
+    border-right: 1px solid #333;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+
+  .sidebarHeader {
+    margin-bottom: 3rem;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .sidebarUserInfo {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .sidebarUserName {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .sidebarUserArea {
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+
+  .sidebarNav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .sidebarNavItem {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebarNavItem:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateX(4px);
+  }
+
+  .sidebarNavActive {
+    background: #3b82f6;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .sidebarNavActive:hover {
+    background: #2563eb;
+  }
+
+  .sidebarDivider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1rem 0;
+  }
+
+  .sidebarLogoutBtn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    padding-left: 1rem;
+  }
+
+  .sidebarLogoutBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+
+
+  /* Right Content Area */
+  .contentWrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    height: 100vh;
+    overflow-y: auto;
+    width: 100%;
+  }
+
+  /* Content Area Max Width */
+  .sliderWindow {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    padding: 3rem;
+  }
+
+  /* Disable Slider */
+  .sliderContainer {
+    width: 100%;
+    transform: none !important;
+    display: block;
+    /* Just block, show only active one */
+  }
+
+  /* Hide inactive slide */
+  .slide {
+    width: 100%;
+    display: none;
+    /* Default hide */
+    padding: 0;
+  }
+
+  /* Show only the ACTIVE slide (controlled by javascript activeIndex via Props or CSS?) 
+       Wait, the standard slider uses `transform`. If I disable transform, I see both side-by-side or stacked.
+       I need to hide the one not active.
+       But I can't select based on state in CSS easily without a class on parent.
+       
+       Actually, `transform` translates the container.
+       If activeIndex=0, transform=0%. Slide 1 is visible.
+       If activeIndex=1, transform=-50%. Slide 2 is visible (if width was 200%).
+       
+       On grid layout, I want to show the active one.
+       Implementation detail: The React component still applies transform style inline.
+       So I set `transform: none !important`.
+       Then I need to hide the `inactive` slide.
+       
+       Since I cannot easily know which is active in purely CSS without a class...
+       
+       Alternative: Layout both side-by-side if they want a dashboard?
+       User said: "Left menu, Right content". Meaning behave like tabs.
+       
+       So I need to Hide the inactive slide using CSS.
+       But the React code renders:
+       <div style={{ transform: ... }}>
+          <div slide>...</div>
+          <div slide>...</div>
+       </div>
+
+       Since React controls the transform, I can't use `activeIndex` in CSS unless I pass it as a class.
+       
+       Re-thinking: 
+       I should modify ClientHome to pass `activeIndex` as a data-attribute or class to `sliderContainer`.
+       OR
+       Just show the active one.
+       Since I can't change ClientHome again without another tool call (I just did), 
+       Wait, I CAN change ClientHome again if needed. 
+       But I can also use the fact that `activeIndex` effectively shifts the view. 
+       
+       If I set `width: 100%` on container and `transform: none !important`, both slides will stack vertically.
+       
+       I'll use a trick: `sliderContainer` has `transform` which I override.
+       The React component logic:
+       `transform: translateX(-${activeIndex * 50}%)`
+       
+       If I override transform, I see both. 
+       
+       Let's modify `client-home.tsx` to add `data-active-index={activeIndex}` to the container.
+       This is safer.
+       
+       Let's execute the CSS Update first, anticipating that I will add the data attribute in `client-home.tsx` in a subsequent step.
+       OR I can do `client-home` update first.
+       
+       Actually I'll update `client-home.tsx` to add `data-active-index` to `sliderContainer`.
+    */
+
+  /* 
+       For now, let's assume I will add `data-active={activeIndex}` to `responsiveContainer` or `sliderContainer`.
+       
+       .sliderContainer[data-active="0"] .slide:nth-child(2) { display: none; }
+       .sliderContainer[data-active="1"] .slide:nth-child(1) { display: none; }
+    */
+
+  /* Hide Mobile Header & Tabs */
+  .header,
+  .tabs,
+  .installContainer {
+    display: none;
+  }
+
+  /* Content Styling (White Theme) */
+  .card {
+    background: #fff;
+    color: #333;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    max-width: 800px;
+    margin: 0 auto;
+    /* Center content */
+    align-items: flex-start;
+    /* Left align text in card */
+  }
+
+  .title {
+    color: #1a1a1a;
+    font-size: 1.5rem;
+  }
+
+  .row {
+    background: #f8f9fa;
+    border: 1px solid #eee;
+  }
+
+  .row:hover {
+    background: #fff;
+    border-color: #ddd;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .bagLabel {
+    color: #333;
+    font-weight: 600;
+  }
+
+  .controls {
+    background: #fff;
+    border: 1px solid #eee;
+  }
+
+  .controlBtn {
+    background: #f1f5f9;
+    color: #333;
+  }
+
+  .controlBtn:hover:not(:disabled) {
+    background: #e2e8f0;
+  }
+
+  /* Notice Banner for Desktop */
+  .noticeContainer {
+    max-width: 800px;
+    margin: 0 auto 2rem auto;
+  }
+
+  .noticeBanner {
+    background: #fff;
+    border: 1px solid #dfe7f6;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.1);
+  }
+
+  .noticeTitle {
+    color: #1e3a8a;
+  }
+
+  .noticeText {
+    color: #64748b;
+  }
+}
+/* 
+   Desktop Toggle Logic
+   Depends on [data-active-index] being present on .sliderContainer 
+*/
+@media (min-width: 768px) {
+    .sliderContainer[data-active-index='0'] .slide:nth-child(1) {
+        display: flex;
+    }
+    .sliderContainer[data-active-index='0'] .slide:nth-child(2) {
+        display: none;
+    }
+
+    .sliderContainer[data-active-index='1'] .slide:nth-child(1) {
+        display: none;
+    }
+    .sliderContainer[data-active-index='1'] .slide:nth-child(2) {
+        display: flex;
+    }
 }

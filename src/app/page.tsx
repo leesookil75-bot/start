@@ -25,22 +25,16 @@ export default async function Home() {
 
   return (
     <main className={styles.main}>
-      <div className={styles.header}>
-        <div className={styles.userInfo}>
-          <span className={styles.userName}>{user.name} 님</span>
-          <span className={styles.userArea}>({user.cleaningArea})</span>
-        </div>
-        <div className={styles.headerActions}>
-          <a href="/notices" className={styles.changePasswordLink} style={{ color: 'orange', marginRight: '0.5rem' }}>공지사항</a>
-          <a href="/change-password" className={styles.changePasswordLink}>비밀번호 변경</a>
-          <form action={logout}>
-            <button className={styles.logoutButton}>Logout</button>
-          </form>
-        </div>
-      </div>
-
-      <ClientHome initialUsage={initialUsage} stats={stats} recentNotice={recentNotice} />
-
+      <ClientHome
+        initialUsage={initialUsage}
+        stats={stats}
+        recentNotice={recentNotice}
+        user={{
+          name: user.name,
+          cleaningArea: user.cleaningArea,
+          role: user.role
+        }}
+      />
     </main>
   );
 }
