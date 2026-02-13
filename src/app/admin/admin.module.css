@@ -854,7 +854,7 @@
     .stickyBg,
     .stickyLeft0,
     .stickyLeft100,
-    .stickyLeft220 {
+    .stickyLeft250 {
         background: #ffffff !important;
         border-right: 1px solid #e5e7eb !important;
         color: #111827;
@@ -864,7 +864,7 @@
     thead .stickyBg,
     thead .stickyLeft0,
     thead .stickyLeft100,
-    thead .stickyLeft220 {
+    thead .stickyLeft250 {
         background: #f9fafb !important;
         /* Slightly grey for header */
         color: #4b5563;
@@ -875,7 +875,7 @@
     tfoot .stickyBg,
     tfoot .stickyLeft0,
     tfoot .stickyLeft100,
-    tfoot .stickyLeft220 {
+    tfoot .stickyLeft250 {
         background: #f9fafb !important;
     }
 }
@@ -903,9 +903,9 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.stickyLeft220 {
+.stickyLeft250 {
     position: sticky;
-    left: 220px;
+    left: 250px;
     z-index: 10;
     background: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
