@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import styles from './admin.module.css';
-import StatsCharts from './components/StatsCharts';
 import ExcelDownloadBtn from './components/ExcelDownloadBtn';
 import { NoticeForm, NoticeList, Notice } from './notices/client';
 import Link from 'next/link';
@@ -190,7 +189,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                                     <button className={`${styles.tab} ${activeTab === 'daily-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily-report')}>Daily Report</button>
                                     <button className={`${styles.tab} ${activeTab === 'area-monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area-monthly')}>Area Report</button>
                                     <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
-                                    <button className={`${styles.tab} ${activeTab === 'daily' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily')}>Daily Graph</button>
+
                                 </div>
 
                                 {activeTab === 'area-monthly' ? (
@@ -223,7 +222,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                                 {activeTab === 'user-report' && <MonthlyReportTable data={stats.monthlyUser} year={new Date().getFullYear()} />}
                             </div>
 
-                            {activeTab === 'daily' && <StatsCharts data={stats.daily} type="bar" />}
+
                         </div>
                     </div>
 
