@@ -193,109 +193,17 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                         {data.map((user) => (
                             <>
                                 <tr key={`${user.userId}-50`}>
-                                    {/* PC Columns */}
-                                    <td rowSpan={2} className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ verticalAlign: 'middle', width: '100px', minWidth: '100px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {/* Name Column */}
+                                    <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle', width: '100px', minWidth: '100px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {user.userName}
                                     </td>
-                                    <td rowSpan={2} className={`${styles.stickyLeft100} ${styles.desktopOnly}`} style={{ verticalAlign: 'middle', color: '#ccc', width: '150px', minWidth: '150px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {/* Area Column */}
+                                    <td rowSpan={2} className={styles.stickyLeft100} style={{ verticalAlign: 'middle', color: '#ccc', width: '150px', minWidth: '150px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {user.area}
                                     </td>
-                                    <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
+                                    {/* Type Column (50L) */}
+                                    <td className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
                                         <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.3rem' }}>50L</span>
-                                    </td>
-
-                                    {/* Mobile Combined Column (RowSpan 2 for 50L/75L rows logic handled differently?) 
-                                        Actually, for mobile we might want to split or keep rowspan.
-                                        If we keep rowspan 2, we can show Name + Area.
-                                        But Type (50/75) changes per row.
-                                        So:
-                                        Row 1 (50L): [Name/Area (RowSpan 2)] [50L Icon] ...
-                                        Row 2 (75L): ... [75L Icon] ...
-                                        
-                                        Wait, if we assume 3 columns -> 1 column. 
-                                        The 1 column must contain EVERYTHING? 
-                                        Or can we have 1 fixed column (Name/Area) and the Type column scrolling?
-                                        No, user wants maximum space.
-                                        
-                                        Let's try:
-                                        Row 1 (50L): 
-                                          MobileStickyCol (RowSpan 1): 
-                                            Name
-                                            Area
-                                            Type: 50L (Green)
-                                        Row 2 (75L):
-                                          MobileStickyCol (RowSpan 1):
-                                              Type: 75L (Orange) -> This is confusing without Name.
-                                        
-                                        Better approach for Mobile:
-                                        RowSpan 2 for the Name/Area part, but how to show Type?
-                                        Maybe sticky column is just Name/Area.
-                                        And the first scrolling column is Type?
-                                        User said: "Name, Area, Type -> 1 User Info column".
-                                        
-                                        So:
-                                        Row 1: [Name, Area, 50L] -> combined in sticky?
-                                        Row 2: [Name, Area, 75L] -> combined?
-                                        
-                                        If we combine, we consume vertical space.
-                                        
-                                        Let's do this:
-                                        Row 1 (50L): 
-                                            Sticky: 
-                                                <b>Name</b><br/>
-                                                <small>Area</small><br/>
-                                                <span class="badge50">50L</span>
-                                        Row 2 (75L):
-                                            Sticky:
-                                                (Empty? Or just "75L"?)
-                                                If we RowSpan 2 the User Info (Name/Area), we can't easily put 50L/75L inside it effectively for 2 separate rows.
-                                                
-                                        Alternative:
-                                        Don't RowSpan in Mobile.
-                                        Row 1: Sticky [Name (small), 50L]
-                                        Row 2: Sticky [Name (small), 75L] - duplicated name?
-                                        
-                                        Or:
-                                        RowSpan 2 Sticky: 
-                                          Name
-                                          Area
-                                        And allow Type to SCROLL? No, Type is key identifier.
-                                        
-                                        Let's use the valid approach:
-                                        Row 1 (50L): Sticky Cell has Name + Area + "50L" label.
-                                        Row 2 (75L): Sticky Cell has "75L" label only? (If we RowSpan Name).
-                                        
-                                        Let's try NO RowSpan for Mobile to keep it simple and aligned.
-                                        Row 1: Sticky [ Name <br> 50L ]
-                                        Row 2: Sticky [ Area <br> 75L ] -> confusing.
-                                        
-                                        New Plan for Mobile:
-                                        Row 1: Sticky [ Name <br> Area <br> <span 50>50L</span> ]
-                                        Row 2: Sticky [ <br> <br> <span 75>75L</span> ] -> The Name/Area is visually associated with both.
-                                        
-                                        So, Stick Cell RowSpan 2.
-                                        Inside:
-                                          Name
-                                          Area
-                                          Div for 50L (top half)
-                                          Div for 75L (bottom half) -> alignment issues with rows.
-                                        
-                                        Refined Mobile Plan:
-                                        Row 1 (50L): 
-                                          Sticky Cell (RowSpan 1): 
-                                            <div style="font-weight:bold">Name</div>
-                                            <span class="badge50">50L</span>
-                                        Row 2 (75L): 
-                                          Sticky Cell (RowSpan 1):
-                                            <div style="color:#ccc; font-size:0.7em">Area</div>
-                                            <span class="badge75">75L</span>
-                                        
-                                        This makes use of both rows to show info.
-                                    */}
-
-                                    <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.userName}</div>
-                                        <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.6rem', padding: '0 0.2rem' }}>50L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
                                         const displayVal = d.display50 !== undefined ? d.display50 : (d.count50 || '-');
@@ -337,15 +245,9 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                 </tr>
                                 {/* 75L row remains mostly same but update check for 75 type */}
                                 <tr key={`${user.userId}-75`}>
-                                    {/* PC Column */}
-                                    <td className={`${styles.stickyLeft250} ${styles.desktopOnly}`} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
+                                    {/* Type Column (75L) */}
+                                    <td className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px' }}>
                                         <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.3rem' }}>75L</span>
-                                    </td>
-
-                                    {/* Mobile Column */}
-                                    <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`}>
-                                        <div style={{ color: '#aaa', fontSize: '0.7rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.area}</div>
-                                        <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.6rem', padding: '0 0.2rem' }}>75L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
                                         const displayVal = d.display75 !== undefined ? d.display75 : (d.count75 || '-');
