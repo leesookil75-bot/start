@@ -114,7 +114,6 @@
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 16px;
-    overflow: hidden;
     backdrop-filter: blur(10px);
 }
 
@@ -132,7 +131,6 @@
 }
 
 .table {
-    width: 100%;
     border-collapse: collapse;
 }
 
