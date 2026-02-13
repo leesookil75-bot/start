@@ -170,7 +170,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         <div className={styles.tableContainer}>
             {/* ... */}
             <div style={{ overflowX: 'auto' }}>
-                <table className={styles.table} style={{ fontSize: '0.85rem', width: 'max-content' }}>
+                <table className={styles.table} style={{ fontSize: '0.75rem', width: 'max-content' }}>
                     <thead>
                         <tr>
                             <th className={styles.stickyLeft0}>Name</th>
@@ -178,14 +178,14 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                             <th className={styles.stickyLeft140}>Type</th>
                             {days.map(d => (
                                 <th key={d} style={{
-                                    minWidth: '30px',
+                                    minWidth: '24px',
                                     textAlign: 'center',
-                                    padding: '0.5rem 0.2rem',
+                                    padding: '2px 0',
                                     color: isSunday(d) ? '#ff6b6b' : 'inherit',
                                     backgroundColor: isSunday(d) ? 'rgba(255, 107, 107, 0.1)' : 'transparent'
                                 }}>{d}</th>
                             ))}
-                            <th style={{ minWidth: '60px' }}>Total</th>
+                            <th style={{ minWidth: '50px' }}>Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -199,7 +199,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                         {user.area}
                                     </td>
                                     <td className={styles.stickyLeft140}>
-                                        <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>50L</span>
+                                        <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.3rem' }}>50L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
                                         const displayVal = d.display50 !== undefined ? d.display50 : (d.count50 || '-');
@@ -212,14 +212,14 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                                 className={isSelected ? styles.selectedCell : ''}
                                                 style={{
                                                     textAlign: 'center',
-                                                    padding: isSelected ? 0 : '0.5rem 0',
+                                                    padding: isSelected ? 0 : '0.2rem 0',
                                                     cursor: 'pointer',
                                                     color: d.count50 || isString ? 'inherit' : '#444',
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
-                                                    height: '40px',
-                                                    minWidth: '40px',
-                                                    maxWidth: '40px'
+                                                    height: '32px',
+                                                    minWidth: '28px',
+                                                    maxWidth: '28px'
                                                 }}>
                                                 {isSelected ? (
                                                     <input
@@ -244,7 +244,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                 {/* 75L row remains mostly same but update check for 75 type */}
                                 <tr key={`${user.userId}-75`}>
                                     <td className={styles.stickyLeft140}>
-                                        <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>75L</span>
+                                        <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.3rem' }}>75L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
                                         const displayVal = d.display75 !== undefined ? d.display75 : (d.count75 || '-');
@@ -257,14 +257,14 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                                 className={isSelected ? styles.selectedCell : ''}
                                                 style={{
                                                     textAlign: 'center',
-                                                    padding: isSelected ? 0 : '0.5rem 0',
+                                                    padding: isSelected ? 0 : '0.2rem 0',
                                                     cursor: 'pointer',
                                                     color: d.count75 || isString ? 'inherit' : '#444',
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
-                                                    height: '40px',
-                                                    minWidth: '40px',
-                                                    maxWidth: '40px'
+                                                    height: '32px',
+                                                    minWidth: '28px',
+                                                    maxWidth: '28px'
                                                 }}>
                                                 {isSelected ? (
                                                     <input
@@ -297,7 +297,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
                                     textAlign: 'center',
-                                    padding: '0.5rem 0',
+                                    padding: '0.2rem 0',
                                     backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
                                 }}>{d.count50}</td>
                             ))}
@@ -309,7 +309,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
                                     textAlign: 'center',
-                                    padding: '0.5rem 0',
+                                    padding: '0.2rem 0',
                                     backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
                                 }}>{d.count75}</td>
                             ))}

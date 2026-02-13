@@ -138,7 +138,7 @@
 
 .table th,
 .table td {
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 0.5rem;
     text-align: left;
     border-bottom: 1px solid var(--card-border);
     white-space: nowrap;
@@ -785,7 +785,7 @@
     }
 
     .container {
-        padding: 3rem;
+        padding: 0.5rem;
         max-width: 100%;
         /* Expand max width for admin tables */
         width: 100%;
