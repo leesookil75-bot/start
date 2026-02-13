@@ -853,6 +853,7 @@
     /* Sticky Headers/Cols on PC - White Background */
     .stickyBg,
     .stickyLeft0,
+    .stickyLeft60,
     .stickyLeft100,
     .stickyLeft250 {
         background: #ffffff !important;
@@ -863,6 +864,7 @@
     /* Header specific */
     thead .stickyBg,
     thead .stickyLeft0,
+    thead .stickyLeft60,
     thead .stickyLeft100,
     thead .stickyLeft250 {
         background: #f9fafb !important;
@@ -874,6 +876,7 @@
     /* Footer specific */
     tfoot .stickyBg,
     tfoot .stickyLeft0,
+    tfoot .stickyLeft60,
     tfoot .stickyLeft100,
     tfoot .stickyLeft250 {
         background: #f9fafb !important;
@@ -890,6 +893,14 @@
 .stickyLeft0 {
     position: sticky;
     left: 0;
+    z-index: 10;
+    background: #1a1a1a;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stickyLeft60 {
+    position: sticky;
+    left: 60px;
     z-index: 10;
     background: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);

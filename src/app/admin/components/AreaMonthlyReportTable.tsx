@@ -133,7 +133,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
 
 
     return (
-        <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh' }}>
+        <div className={styles.tableContainer} style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '80vh' }}>
             <table className={styles.table} style={{ borderCollapse: 'collapse', textAlign: 'center' }}>
                 <thead className={styles.stickyBg} style={{ top: 0, zIndex: 10, border: 'none' }}>
                     {/* Row 1: Areas */}
