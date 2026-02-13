@@ -138,8 +138,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                 <thead className={styles.stickyBg} style={{ top: 0, zIndex: 10, border: 'none' }}>
                     {/* Row 1: Areas */}
                     <tr>
-                        <th rowSpan={3} className={styles.stickyLeft0} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50 }}>Date</th>
-                        <th rowSpan={3} className={styles.stickyLeft60} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50 }}>Day</th>
+                        <th rowSpan={3} className={styles.stickyLeft0} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, top: 0 }}>Date</th>
+                        <th rowSpan={3} className={styles.stickyLeft60} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50, top: 0 }}>Day</th>
                         {areaGroups.map((group, idx) => (
                             <th
                                 key={idx}
