@@ -93,13 +93,13 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                 <table className={styles.table} style={{ fontSize: '0.9rem', width: 'max-content' }}>
                     <thead>
                         <tr>
-                            <th className={styles.stickyLeft0} style={{ width: '100px', minWidth: '100px', maxWidth: '100px', position: 'sticky', top: 0, zIndex: 20 }}>Name</th>
-                            <th className={styles.stickyLeft100} style={{ width: '150px', minWidth: '150px', maxWidth: '150px', position: 'sticky', top: 0, zIndex: 20 }}>Area</th>
-                            <th className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px', position: 'sticky', top: 0, zIndex: 20 }}>Type</th>
+                            <th className={styles.stickyLeft0} style={{ width: '100px', minWidth: '100px', maxWidth: '100px', position: 'sticky', top: 0, zIndex: 60 }}>Name</th>
+                            <th className={styles.stickyLeft100} style={{ width: '150px', minWidth: '150px', maxWidth: '150px', position: 'sticky', top: 0, zIndex: 60 }}>Area</th>
+                            <th className={styles.stickyLeft250} style={{ width: '60px', minWidth: '60px', maxWidth: '60px', position: 'sticky', top: 0, zIndex: 60 }}>Type</th>
                             {Array(12).fill(0).map((_, i) => (
-                                <th key={i} style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f9fafb' }}>{i + 1}월</th>
+                                <th key={i} style={{ position: 'sticky', top: 0, zIndex: 50, background: '#f9fafb' }}>{i + 1}월</th>
                             ))}
-                            <th style={{ minWidth: '60px', position: 'sticky', top: 0, zIndex: 10, background: '#f9fafb' }}>Total</th>
+                            <th style={{ minWidth: '60px', position: 'sticky', top: 0, zIndex: 50, background: '#f9fafb' }}>Total</th>
                         </tr>
                     </thead>
                     <tbody>
