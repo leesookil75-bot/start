@@ -170,7 +170,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         <div className={styles.tableContainer}>
             {/* ... */}
             <div style={{ overflowX: 'auto' }}>
-                <table className={styles.table} style={{ fontSize: '0.75rem', width: 'max-content' }}>
+                <table className={styles.table} style={{ fontSize: '0.75rem', width: '100%', tableLayout: 'fixed' }}>
                     <thead>
                         <tr>
                             <th className={styles.stickyLeft0}>Name</th>
@@ -178,7 +178,6 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                             <th className={styles.stickyLeft140}>Type</th>
                             {days.map(d => (
                                 <th key={d} style={{
-                                    minWidth: '24px',
                                     textAlign: 'center',
                                     padding: '2px 0',
                                     color: isSunday(d) ? '#ff6b6b' : 'inherit',
@@ -217,9 +216,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                                     color: d.count50 || isString ? 'inherit' : '#444',
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
-                                                    height: '32px',
-                                                    minWidth: '28px',
-                                                    maxWidth: '28px'
+                                                    height: '32px'
                                                 }}>
                                                 {isSelected ? (
                                                     <input
@@ -262,9 +259,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                                     color: d.count75 || isString ? 'inherit' : '#444',
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
-                                                    height: '32px',
-                                                    minWidth: '28px',
-                                                    maxWidth: '28px'
+                                                    height: '32px'
                                                 }}>
                                                 {isSelected ? (
                                                     <input
