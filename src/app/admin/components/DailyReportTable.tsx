@@ -173,9 +173,9 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                 <table className={styles.table} style={{ fontSize: '0.85rem', width: 'max-content' }}>
                     <thead>
                         <tr>
-                            <th style={{ position: 'sticky', left: 0, zIndex: 20, background: '#1a1a1a', minWidth: '60px' }}>Name</th>
-                            <th style={{ position: 'sticky', left: '60px', zIndex: 20, background: '#1a1a1a', minWidth: '80px' }}>Area</th>
-                            <th style={{ position: 'sticky', left: '140px', zIndex: 20, background: '#1a1a1a', minWidth: '60px' }}>Type</th>
+                            <th className={styles.stickyLeft0}>Name</th>
+                            <th className={styles.stickyLeft60}>Area</th>
+                            <th className={styles.stickyLeft140}>Type</th>
                             {days.map(d => (
                                 <th key={d} style={{
                                     minWidth: '30px',
@@ -192,34 +192,13 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                         {data.map((user) => (
                             <>
                                 <tr key={`${user.userId}-50`}>
-                                    <td rowSpan={2} style={{
-                                        verticalAlign: 'middle',
-                                        position: 'sticky',
-                                        left: 0,
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle' }}>
                                         {user.userName}
                                     </td>
-                                    <td rowSpan={2} style={{
-                                        verticalAlign: 'middle',
-                                        color: '#ccc',
-                                        position: 'sticky',
-                                        left: '60px',
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td rowSpan={2} className={styles.stickyLeft60} style={{ verticalAlign: 'middle', color: '#ccc' }}>
                                         {user.area}
                                     </td>
-                                    <td style={{
-                                        position: 'sticky',
-                                        left: '140px',
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td className={styles.stickyLeft140}>
                                         <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>50L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
@@ -264,13 +243,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                 </tr>
                                 {/* 75L row remains mostly same but update check for 75 type */}
                                 <tr key={`${user.userId}-75`}>
-                                    <td style={{
-                                        position: 'sticky',
-                                        left: '140px',
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td className={styles.stickyLeft140}>
                                         <span className={`${styles.badge} ${styles.badge75}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>75L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
@@ -318,28 +291,9 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                     </tbody>
                     <tfoot>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            <td rowSpan={2} style={{
-                                verticalAlign: 'middle',
-                                position: 'sticky',
-                                left: 0,
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>Total</td>
-                            <td rowSpan={2} style={{
-                                position: 'sticky',
-                                left: '60px',
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}></td>
-                            <td style={{
-                                position: 'sticky',
-                                left: '140px',
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>50L</td>
+                            <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle' }}>Total</td>
+                            <td rowSpan={2} className={styles.stickyLeft60}></td>
+                            <td className={styles.stickyLeft140}>50L</td>
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
                                     textAlign: 'center',
@@ -351,13 +305,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                         </tr>
                         {/* 75L footer row remains similar */}
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            <td style={{
-                                position: 'sticky',
-                                left: '140px',
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>75L</td>
+                            <td className={styles.stickyLeft140}>75L</td>
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
                                     textAlign: 'center',
@@ -370,8 +318,9 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                     </tfoot>
                 </table>
             </div>
-
-
         </div>
+
+
+
     );
 }

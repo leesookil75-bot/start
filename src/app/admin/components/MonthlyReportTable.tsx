@@ -93,9 +93,9 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                 <table className={styles.table} style={{ fontSize: '0.9rem', width: 'max-content' }}>
                     <thead>
                         <tr>
-                            <th style={{ position: 'sticky', left: 0, zIndex: 20, background: '#1a1a1a', minWidth: '60px' }}>Name</th>
-                            <th style={{ position: 'sticky', left: '60px', zIndex: 20, background: '#1a1a1a', minWidth: '80px' }}>Area</th>
-                            <th style={{ position: 'sticky', left: '140px', zIndex: 20, background: '#1a1a1a', minWidth: '60px' }}>Type</th>
+                            <th className={styles.stickyLeft0}>Name</th>
+                            <th className={styles.stickyLeft60}>Area</th>
+                            <th className={styles.stickyLeft140}>Type</th>
                             {Array(12).fill(0).map((_, i) => (
                                 <th key={i}>{i + 1}월</th>
                             ))}
@@ -106,35 +106,13 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                         {data.map((user) => (
                             <>
                                 <tr key={`${user.userId}-50`}>
-                                    <td rowSpan={2} style={{
-                                        verticalAlign: 'middle',
-                                        position: 'sticky',
-                                        left: 0,
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle' }}>
                                         {user.userName}
                                     </td>
-                                    <td rowSpan={2} style={{
-                                        verticalAlign: 'middle',
-                                        fontSize: '0.85rem',
-                                        color: '#ccc',
-                                        position: 'sticky',
-                                        left: '60px',
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td rowSpan={2} className={styles.stickyLeft60} style={{ verticalAlign: 'middle', fontSize: '0.85rem', color: '#ccc' }}>
                                         {user.area}
                                     </td>
-                                    <td style={{
-                                        position: 'sticky',
-                                        left: '140px',
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td className={styles.stickyLeft140}>
                                         <span className={`${styles.badge} ${styles.badge50}`}>50L</span>
                                     </td>
                                     {user.monthly.map((m, i) => (
@@ -147,13 +125,7 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                                     </td>
                                 </tr>
                                 <tr key={`${user.userId}-75`}>
-                                    <td style={{
-                                        position: 'sticky',
-                                        left: '140px',
-                                        zIndex: 10,
-                                        background: '#1a1a1a',
-                                        borderRight: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
+                                    <td className={styles.stickyLeft140}>
                                         <span className={`${styles.badge} ${styles.badge75}`}>75L</span>
                                     </td>
                                     {user.monthly.map((m, i) => (
@@ -170,41 +142,16 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                     </tbody>
                     <tfoot>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            <td rowSpan={2} style={{
-                                verticalAlign: 'middle',
-                                position: 'sticky',
-                                left: 0,
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>Total</td>
-                            <td rowSpan={2} style={{
-                                position: 'sticky',
-                                left: '60px',
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}></td>
-                            <td style={{
-                                position: 'sticky',
-                                left: '140px',
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>50L</td>
+                            <td rowSpan={2} className={styles.stickyLeft0} style={{ verticalAlign: 'middle' }}>Total</td>
+                            <td rowSpan={2} className={styles.stickyLeft60}></td>
+                            <td className={styles.stickyLeft140}>50L</td>
                             {monthlyTotals.map((m, i) => (
                                 <td key={i} style={{ textAlign: 'center' }}>{m.count50}</td>
                             ))}
                             <td style={{ textAlign: 'center', color: 'var(--accent-50)' }}>{grandTotal50}</td>
                         </tr>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                            <td style={{
-                                position: 'sticky',
-                                left: '140px',
-                                zIndex: 10,
-                                background: '#1a1a1a',
-                                borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>75L</td>
+                            <td className={styles.stickyLeft140}>75L</td>
                             {monthlyTotals.map((m, i) => (
                                 <td key={i} style={{ textAlign: 'center' }}>{m.count75}</td>
                             ))}

@@ -135,11 +135,11 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
     return (
         <div className={styles.tableContainer} style={{ overflowX: 'auto', maxHeight: '80vh' }}>
             <table className={styles.table} style={{ borderCollapse: 'collapse', textAlign: 'center' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#1a1a1a' }}>
+                <thead className={styles.stickyBg} style={{ top: 0, zIndex: 10, border: 'none' }}>
                     {/* Row 1: Areas */}
                     <tr>
-                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, left: 0, position: 'sticky', background: '#1a1a1a' }}>Date (v2)</th>
-                        <th rowSpan={3} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50, left: '60px', position: 'sticky', background: '#1a1a1a' }}>Day</th>
+                        <th rowSpan={3} className={styles.stickyLeft0} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50 }}>Date</th>
+                        <th rowSpan={3} className={styles.stickyLeft60} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50 }}>Day</th>
                         {areaGroups.map((group, idx) => (
                             <th
                                 key={idx}
@@ -182,8 +182,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
 
                         return (
                             <tr key={day} style={rowStyle}>
-                                <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: 0, background: '#1a1a1a', zIndex: 15, color: dateColor }}>{day}</td>
-                                <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: '60px', background: '#1a1a1a', zIndex: 15, color: dateColor }}>{dayName}</td>
+                                <td className={styles.stickyLeft0} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', zIndex: 15, color: dateColor }}>{day}</td>
+                                <td className={styles.stickyLeft60} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', zIndex: 15, color: dateColor }}>{dayName}</td>
                                 {data.map(user => {
                                     const dayStat = user.daily[dayIndex];
                                     const val50 = dayStat.display50 !== undefined ? dayStat.display50 : (dayStat.count50 || '');
@@ -262,8 +262,8 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                     })}
                     {/* Totals Row */}
                     <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                        <td style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', position: 'sticky', left: 0, background: '#2a2a2a', zIndex: 5 }}>Total</td>
-                        <td style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', position: 'sticky', left: '60px', background: '#2a2a2a', zIndex: 5 }}>-</td>
+                        <td className={styles.stickyLeft0} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', zIndex: 5 }}>Total</td>
+                        <td className={styles.stickyLeft60} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', zIndex: 5 }}>-</td>
                         {data.map(user => (
                             <>
                                 <td key={`total-${user.userId}-50`} style={{ border: '1px solid #444', textAlign: 'center', color: 'var(--accent-50)' }}>{user.total50}</td>

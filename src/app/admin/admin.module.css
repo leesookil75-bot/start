@@ -655,7 +655,8 @@
 }
 
 .desktopSidebarWrapper {
-    display: none; /* Hidden on mobile */
+    display: none;
+    /* Hidden on mobile */
 }
 
 .mainContentWrapper {
@@ -674,7 +675,7 @@
     height: 100vh;
     position: sticky;
     top: 0;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
     z-index: 50;
 }
 
@@ -782,50 +783,129 @@
         display: block;
         height: 100vh;
     }
-    
+
     .container {
         padding: 3rem;
-        max-width: 1200px; /* Expand max width for admin tables */
+        max-width: 1200px;
+        /* Expand max width for admin tables */
     }
 
     /* Hide Mobile Header on Desktop since we have sidebar */
     .header {
         display: none;
     }
-    
+
     /* White Theme Overrides for Admin Content */
-    .card, .tableContainer {
+    .adminLayoutContainer {
+        background: #f8f9fa;
+        /* Light Grey Background for whole Admin area on PC */
+    }
+
+    .card,
+    .tableContainer {
         background: #ffffff;
         border: 1px solid #e5e7eb;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         color: #1f2937;
     }
-    
+
     .table th {
         background: #f9fafb;
         color: #4b5563;
         border-bottom: 2px solid #e5e7eb;
     }
-    
+
     .table td {
         border-bottom: 1px solid #e5e7eb;
         color: #374151;
     }
-    
+
     .table tr:hover td {
         background: #f9fafb;
     }
-    
+
     .title {
         color: #111827;
     }
-    
+
     /* Stats Colors */
     .statValue {
         color: #111827;
     }
-    
+
     .statLabel {
         color: #6b7280;
     }
+
+    /* Tabs on PC */
+    .pageTab {
+        background: #e5e7eb;
+        color: #4b5563;
+    }
+
+    .activePageTab {
+        background: #2563eb;
+        /* Blue */
+        color: #ffffff;
+    }
+
+    /* Sticky Headers/Cols on PC - White Background */
+    .stickyBg,
+    .stickyLeft0,
+    .stickyLeft60,
+    .stickyLeft140 {
+        background: #ffffff !important;
+        border-right: 1px solid #e5e7eb !important;
+        color: #111827;
+    }
+
+    /* Header specific */
+    thead .stickyBg,
+    thead .stickyLeft0,
+    thead .stickyLeft60,
+    thead .stickyLeft140 {
+        background: #f9fafb !important;
+        /* Slightly grey for header */
+        color: #4b5563;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    /* Footer specific */
+    tfoot .stickyBg,
+    tfoot .stickyLeft0,
+    tfoot .stickyLeft60,
+    tfoot .stickyLeft140 {
+        background: #f9fafb !important;
+    }
+}
+
+/* Default Sticky Classes (Mobile/Dark) */
+.stickyBg {
+    background: #1a1a1a;
+    position: sticky;
+    z-index: 10;
+}
+
+.stickyLeft0 {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: #1a1a1a;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stickyLeft60 {
+    position: sticky;
+    left: 60px;
+    z-index: 10;
+    background: #1a1a1a;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stickyLeft140 {
+    position: sticky;
+    left: 140px;
+    z-index: 10;
+    background: #1a1a1a;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
