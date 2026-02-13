@@ -853,8 +853,8 @@
     /* Sticky Headers/Cols on PC - White Background */
     .stickyBg,
     .stickyLeft0,
-    .stickyLeft60,
-    .stickyLeft140 {
+    .stickyLeft80,
+    .stickyLeft180 {
         background: #ffffff !important;
         border-right: 1px solid #e5e7eb !important;
         color: #111827;
@@ -863,8 +863,8 @@
     /* Header specific */
     thead .stickyBg,
     thead .stickyLeft0,
-    thead .stickyLeft60,
-    thead .stickyLeft140 {
+    thead .stickyLeft80,
+    thead .stickyLeft180 {
         background: #f9fafb !important;
         /* Slightly grey for header */
         color: #4b5563;
@@ -874,8 +874,8 @@
     /* Footer specific */
     tfoot .stickyBg,
     tfoot .stickyLeft0,
-    tfoot .stickyLeft60,
-    tfoot .stickyLeft140 {
+    tfoot .stickyLeft80,
+    tfoot .stickyLeft180 {
         background: #f9fafb !important;
     }
 }
@@ -895,17 +895,17 @@
     border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.stickyLeft60 {
+.stickyLeft80 {
     position: sticky;
-    left: 60px;
+    left: 80px;
     z-index: 10;
     background: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.stickyLeft140 {
+.stickyLeft180 {
     position: sticky;
-    left: 140px;
+    left: 180px;
     z-index: 10;
     background: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
