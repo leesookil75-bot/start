@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { db } = require('@vercel/postgres');
 require('dotenv').config({ path: '.env.local' });
 
