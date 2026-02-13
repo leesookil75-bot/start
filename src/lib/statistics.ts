@@ -11,11 +11,15 @@ function getWeekNumber(d: Date): number {
     return weekNo;
 }
 
+// ... (imports)
+
+// ... (getWeekNumber)
+
 export async function getStatsByPeriod(
     period: PeriodType
 ): Promise<StatEntry[]> {
     const records = await getRecords();
-    const rawData: Record<string, { count45: number; count75: number }> = {};
+    const rawData: Record<string, { count50: number; count75: number }> = {};
 
     records.forEach((record) => {
         const date = new Date(record.timestamp);
@@ -32,8 +36,8 @@ export async function getStatsByPeriod(
             key = date.getFullYear().toString();
         }
 
-        if (!rawData[key]) rawData[key] = { count45: 0, count75: 0 };
-        if (record.size === 45) rawData[key].count45++;
+        if (!rawData[key]) rawData[key] = { count50: 0, count75: 0 };
+        if (record.size === 45 || record.size === 50) rawData[key].count50++;
         else if (record.size === 75) rawData[key].count75++;
     });
 
@@ -46,9 +50,9 @@ export async function getStatsByPeriod(
 
     return sortedKeys.map((key) => ({
         key,
-        count45: rawData[key].count45,
+        count50: rawData[key].count50,
         count75: rawData[key].count75,
-        total: rawData[key].count45 + rawData[key].count75,
+        total: rawData[key].count50 + rawData[key].count75,
     }));
 }
 
@@ -57,7 +61,7 @@ export async function getStatsByArea(): Promise<AreaStatEntry[]> {
     const users = await getUsers();
     const userMap = new Map(users.map(u => [u.id, u.cleaningArea]));
 
-    const rawData: Record<string, { count45: number; count75: number }> = {};
+    const rawData: Record<string, { count50: number; count75: number }> = {};
 
     records.forEach((record) => {
         let area = 'Unknown';
@@ -67,16 +71,16 @@ export async function getStatsByArea(): Promise<AreaStatEntry[]> {
             area = '관리실';
         }
 
-        if (!rawData[area]) rawData[area] = { count45: 0, count75: 0 };
-        if (record.size === 45) rawData[area].count45++;
+        if (!rawData[area]) rawData[area] = { count50: 0, count75: 0 };
+        if (record.size === 45 || record.size === 50) rawData[area].count50++;
         else if (record.size === 75) rawData[area].count75++;
     });
 
     return Object.keys(rawData).map((key) => ({
         key,
-        count45: rawData[key].count45,
+        count50: rawData[key].count50,
         count75: rawData[key].count75,
-        total: rawData[key].count45 + rawData[key].count75,
+        total: rawData[key].count50 + rawData[key].count75,
     })).sort((a, b) => b.total - a.total); // Sort by total usage descending
 }
 
@@ -90,7 +94,7 @@ export async function getExcelData() {
         const user = r.userId ? userMap.get(r.userId) : null;
         return {
             Time: new Date(r.timestamp).toLocaleString('ko-KR'),
-            Size: r.size,
+            Size: r.size, // This will show 45 or 50 as stored
             Name: r.userName || user?.name || 'Unknown',
             Area: user?.cleaningArea || (r.userName === '관리자' ? '관리실' : '-'),
             Phone: user?.phoneNumber || '-',
@@ -114,8 +118,8 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
             userId: user.id,
             userName: user.name,
             area: user.cleaningArea || '-',
-            monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
-            total45: 0,
+            monthly: Array(12).fill(0).map(() => ({ count50: 0, count75: 0 })),
+            total50: 0,
             total75: 0
         });
     });
@@ -136,16 +140,16 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
                 userId: userId,
                 userName: record.userName || 'Unknown',
                 area: userId === 'admin-user' || record.userName === '관리자' ? '관리실' : '-', // Fallback area logic
-                monthly: Array(12).fill(0).map(() => ({ count45: 0, count75: 0 })),
-                total45: 0,
+                monthly: Array(12).fill(0).map(() => ({ count50: 0, count75: 0 })),
+                total50: 0,
                 total75: 0
             };
             statsMap.set(userId, stat);
         }
 
-        if (record.size === 45) {
-            stat.monthly[month].count45++;
-            stat.total45++;
+        if (record.size === 45 || record.size === 50) {
+            stat.monthly[month].count50++;
+            stat.total50++;
         } else if (record.size === 75) {
             stat.monthly[month].count75++;
             stat.total75++;
@@ -180,8 +184,8 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
             userId: user.id,
             userName: user.name,
             area: user.cleaningArea || '-',
-            daily: Array(daysInMonth).fill(0).map(() => ({ count45: 0, count75: 0 })),
-            total45: 0,
+            daily: Array(daysInMonth).fill(0).map(() => ({ count50: 0, count75: 0 })),
+            total50: 0,
             total75: 0
         });
     });
@@ -207,15 +211,15 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
                 userId: userId,
                 userName: record.userName || 'Unknown',
                 area: userId === 'admin-user' || record.userName === '관리자' ? '관리실' : '-',
-                daily: Array(daysInMonth).fill(0).map(() => ({ count45: 0, count75: 0 })),
-                total45: 0,
+                daily: Array(daysInMonth).fill(0).map(() => ({ count50: 0, count75: 0 })),
+                total50: 0,
                 total75: 0
             };
             statsMap.set(userId, stat);
         }
 
-        if (record.size === 45) {
-            stat.daily[dayIndex].count45++;
+        if (record.size === 45 || record.size === 50) {
+            stat.daily[dayIndex].count50++;
         } else if (record.size === 75) {
             stat.daily[dayIndex].count75++;
         }
@@ -225,7 +229,7 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
     const stats = Array.from(statsMap.values());
 
     stats.forEach(stat => {
-        let total45 = 0;
+        let total50 = 0;
         let total75 = 0;
 
         stat.daily = stat.daily.map((dayStat, dayIndex) => {
@@ -233,16 +237,27 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
             // Check for overrides
+            // We check for both 45 and 50 overrides. Use 50 if present, else 45? Or sum?
+            // Safer to check 50 first, then 45. Or just 50 as per new convention.
+            // But we didn't migrate DB. So old overrides are '45'.
+            // If user sets new override, it will be '50' (if we update UI to set 50).
+            // Let's look for both.
+
             const override45 = overrides.find(o => o.date === dateStr && o.userId === stat.userId && o.type === '45');
+            const override50 = overrides.find(o => o.date === dateStr && o.userId === stat.userId && o.type === '50');
             const override75 = overrides.find(o => o.date === dateStr && o.userId === stat.userId && o.type === '75');
 
-            // 45L Logic
-            let display45: string | number = dayStat.count45;
-            let effective45 = dayStat.count45;
+            // 50L Logic (Aggregation of 45 and 50)
+            let display50: string | number = dayStat.count50;
+            let effective50 = dayStat.count50;
 
-            if (override45) {
-                display45 = override45.value;
-                effective45 = typeof override45.value === 'number' ? override45.value : 0;
+            if (override50) {
+                display50 = override50.value;
+                effective50 = typeof override50.value === 'number' ? override50.value : 0;
+            } else if (override45) {
+                // Fallback to 45 override if 50 not present
+                display50 = override45.value;
+                effective50 = typeof override45.value === 'number' ? override45.value : 0;
             }
 
             // 75L Logic
@@ -254,18 +269,18 @@ export async function getDailyUserStats(year: number, month: number): Promise<Da
                 effective75 = typeof override75.value === 'number' ? override75.value : 0;
             }
 
-            total45 += effective45;
+            total50 += effective50;
             total75 += effective75;
 
             return {
-                count45: effective45,
+                count50: effective50,
                 count75: effective75,
-                display45,
+                display50,
                 display75
             };
         });
 
-        stat.total45 = total45;
+        stat.total50 = total50;
         stat.total75 = total75;
     });
 

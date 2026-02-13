@@ -45,12 +45,12 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
     // user.total45 and user.total75 are already provided.
 
     // Calculate Grand Totals (Row-wise, i.e., Total for Date X across all users)
-    const getDayTotal = (dayIndex: number, size: 45 | 75) => {
-        return data.reduce((sum, user) => sum + (size === 45 ? user.daily[dayIndex].count45 : user.daily[dayIndex].count75), 0);
+    const getDayTotal = (dayIndex: number, size: 50 | 75) => {
+        return data.reduce((sum, user) => sum + (size === 50 ? user.daily[dayIndex].count50 : user.daily[dayIndex].count75), 0);
     };
 
     // Calculate Grand Total of Totals
-    const grandTotal45 = data.reduce((sum, user) => sum + user.total45, 0);
+    const grandTotal50 = data.reduce((sum, user) => sum + user.total50, 0);
     const grandTotal75 = data.reduce((sum, user) => sum + user.total75, 0);
 
     // State for inline selection
@@ -58,7 +58,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
         userId: string;
         userName: string;
         day: number;
-        type: '45' | '75';
+        type: '50' | '75';
         initialValue: string | number;
     } | null>(null);
     const [inputValue, setInputValue] = useState<string>('');
@@ -90,7 +90,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
         }
     };
 
-    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
+    const handleCellClick = (userId: string, userName: string, day: number, type: '50' | '75', currentValue: string | number) => {
         // If clicking the currently selected cell, do nothing (keep editing)
         if (selectedCell?.userId === userId && selectedCell?.day === day && selectedCell?.type === type) {
             return;
@@ -166,7 +166,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                     <tr>
                         {data.map(user => (
                             <>
-                                <th key={`${user.userId}-45`} style={{ border: '1px solid #444', color: 'var(--accent-45)', fontSize: '0.8rem', minWidth: '40px' }}>45L</th>
+                                <th key={`${user.userId}-50`} style={{ border: '1px solid #444', color: 'var(--accent-50)', fontSize: '0.8rem', minWidth: '40px' }}>50L</th>
                                 <th key={`${user.userId}-75`} style={{ border: '1px solid #444', color: 'var(--accent-75)', fontSize: '0.8rem', minWidth: '40px' }}>75L</th>
                             </>
                         ))}
@@ -186,23 +186,23 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                 <td style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', position: 'sticky', left: '60px', background: '#1a1a1a', zIndex: 15, color: dateColor }}>{dayName}</td>
                                 {data.map(user => {
                                     const dayStat = user.daily[dayIndex];
-                                    const val45 = dayStat.display45 !== undefined ? dayStat.display45 : (dayStat.count45 || '');
+                                    const val50 = dayStat.display50 !== undefined ? dayStat.display50 : (dayStat.count50 || '');
                                     const val75 = dayStat.display75 !== undefined ? dayStat.display75 : (dayStat.count75 || '');
 
-                                    const isSelected45 = selectedCell?.userId === user.userId && selectedCell?.day === day && selectedCell?.type === '45';
+                                    const isSelected50 = selectedCell?.userId === user.userId && selectedCell?.day === day && selectedCell?.type === '50';
                                     const isSelected75 = selectedCell?.userId === user.userId && selectedCell?.day === day && selectedCell?.type === '75';
 
                                     return (
                                         <>
                                             <td
-                                                key={`${user.userId}-45`}
-                                                onClick={() => handleCellClick(user.userId, user.userName, day, '45', dayStat.display45 ?? dayStat.count45)}
-                                                className={isSelected45 ? styles.selectedCell : ''}
+                                                key={`${user.userId}-50`}
+                                                onClick={() => handleCellClick(user.userId, user.userName, day, '50', dayStat.display50 ?? dayStat.count50)}
+                                                className={isSelected50 ? styles.selectedCell : ''}
                                                 style={{
                                                     border: '1px solid #444',
                                                     textAlign: 'center',
-                                                    padding: isSelected45 ? 0 : '0.5rem',
-                                                    color: val45 ? 'var(--accent-45)' : '#444',
+                                                    padding: isSelected50 ? 0 : '0.5rem',
+                                                    color: val50 ? 'var(--accent-50)' : '#444',
                                                     cursor: 'pointer',
                                                     transition: 'all 0.2s',
                                                     minWidth: '40px',
@@ -210,7 +210,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                                     maxWidth: '40px'
                                                 }}
                                             >
-                                                {isSelected45 ? (
+                                                {isSelected50 ? (
                                                     <input
                                                         type="text"
                                                         value={inputValue}
@@ -221,7 +221,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                                                         autoFocus
                                                     />
                                                 ) : (
-                                                    val45
+                                                    val50
                                                 )}
                                             </td>
                                             <td
@@ -266,7 +266,7 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                         <td style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', position: 'sticky', left: '60px', background: '#2a2a2a', zIndex: 5 }}>-</td>
                         {data.map(user => (
                             <>
-                                <td key={`total-${user.userId}-45`} style={{ border: '1px solid #444', textAlign: 'center', color: 'var(--accent-45)' }}>{user.total45}</td>
+                                <td key={`total-${user.userId}-50`} style={{ border: '1px solid #444', textAlign: 'center', color: 'var(--accent-50)' }}>{user.total50}</td>
                                 <td key={`total-${user.userId}-75`} style={{ border: '1px solid #444', textAlign: 'center', color: 'var(--accent-75)' }}>{user.total75}</td>
                             </>
                         ))}

@@ -203,7 +203,7 @@ export async function getRecords(): Promise<UsageRecord[]> {
   }
 }
 
-export async function addRecord(size: 45 | 75, userId?: string, userName?: string): Promise<UsageRecord> {
+export async function addRecord(size: 45 | 50 | 75, userId?: string, userName?: string): Promise<UsageRecord> {
   if (isPostgresEnabled()) {
     const id = crypto.randomUUID();
     await sql`
@@ -237,30 +237,54 @@ export async function addRecord(size: 45 | 75, userId?: string, userName?: strin
 export async function manageUsageDelta(
   userId: string,
   userName: string,
-  delta45: number,
+  delta50: number, // Renamed from delta45
   delta75: number
 ): Promise<{ success: boolean; message?: string }> {
   if (isPostgresEnabled()) {
     // Postgres Transaction Logic
-    // Since @vercel/postgres doesn't support transactions easily in the lightweight client without pooling manually in complex ways sometimes,
-    // we'll just run queries. Real transaction would be better but let's keep it simple for now.
 
-    if (delta45 > 0) {
-      for (let i = 0; i < delta45; i++) {
-        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 45, ${userId}, ${userName}, NOW())`;
+    if (delta50 > 0) {
+      for (let i = 0; i < delta50; i++) {
+        // Insert new 50L records
+        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 50, ${userId}, ${userName}, NOW())`;
       }
-    } else if (delta45 < 0) {
-      const limit = Math.abs(delta45);
-      // Delete latest 'limit' records for this user today
-      await sql`
+    } else if (delta50 < 0) {
+      const limit = Math.abs(delta50);
+      // Remove 50L first, then 45L if needed
+      // Since SQL deletion with priority is complex in one go, we can do two steps or a complex subquery.
+      // Simple approach: Delete 50L records first.
+
+      let deletedCount = 0;
+
+      // 1. Try to delete up to 'limit' of 50L records
+      const result50 = await sql`
+            WITH deleted AS (
+                DELETE FROM usage_records
+                WHERE id IN (
+                    SELECT id FROM usage_records
+                    WHERE user_id = ${userId} AND size = 50 AND timestamp::date = CURRENT_DATE
+                    ORDER BY timestamp DESC
+                    LIMIT ${limit}
+                )
+                RETURNING id
+            )
+            SELECT COUNT(*) FROM deleted
+      `;
+      deletedCount += Number(result50.rows[0].count);
+
+      // 2. If needed more, delete 45L records
+      if (deletedCount < limit) {
+        const remaining = limit - deletedCount;
+        await sql`
             DELETE FROM usage_records
             WHERE id IN (
                 SELECT id FROM usage_records
                 WHERE user_id = ${userId} AND size = 45 AND timestamp::date = CURRENT_DATE
                 ORDER BY timestamp DESC
-                LIMIT ${limit}
+                LIMIT ${remaining}
             )
           `;
+      }
     }
 
     if (delta75 > 0) {
@@ -287,21 +311,31 @@ export async function manageUsageDelta(
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
 
-
-
   // We can just construct the new list.
   const newRecordsList = [...records];
 
-  // Removal Logic 45L
-  if (delta45 < 0) {
-    const countToRemove = Math.abs(delta45);
+  // Removal Logic 50L (and 45L)
+  if (delta50 < 0) {
+    let countToRemove = Math.abs(delta50);
     let removed = 0;
-    // Iterate backwards to find user's today records
+
+    // First pass: remove 50L
     for (let i = newRecordsList.length - 1; i >= 0 && removed < countToRemove; i--) {
       const r = newRecordsList[i];
-      if (r.userId === userId && r.size === 45 && r.timestamp.startsWith(todayStr)) {
+      if (r.userId === userId && r.size === 50 && r.timestamp.startsWith(todayStr)) {
         newRecordsList.splice(i, 1);
         removed++;
+      }
+    }
+
+    // Second pass: remove 45L if needed
+    if (removed < countToRemove) {
+      for (let i = newRecordsList.length - 1; i >= 0 && removed < countToRemove; i--) {
+        const r = newRecordsList[i];
+        if (r.userId === userId && r.size === 45 && r.timestamp.startsWith(todayStr)) {
+          newRecordsList.splice(i, 1);
+          removed++;
+        }
       }
     }
   }
@@ -320,11 +354,11 @@ export async function manageUsageDelta(
   }
 
   // Addition Logic
-  if (delta45 > 0) {
-    for (let i = 0; i < delta45; i++) {
+  if (delta50 > 0) {
+    for (let i = 0; i < delta50; i++) {
       newRecordsList.push({
         id: crypto.randomUUID(),
-        size: 45,
+        size: 50,
         timestamp: new Date().toISOString(),
         userId,
         userName

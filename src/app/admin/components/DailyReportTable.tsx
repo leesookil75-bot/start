@@ -22,15 +22,20 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         userId: string;
         userName: string;
         day: number;
-        type: '45' | '75';
+        type: '50' | '75';
         initialValue: string | number;
     } | null>(null);
     const [inputValue, setInputValue] = useState<string>('');
 
+    // ...
+
+    const isSunday = (day: number) => {
+        const date = new Date(year, month - 1, day);
+        return date.getDay() === 0;
+    };
+
     const handleSave = async (cell: typeof selectedCell, value: string | number) => {
         if (!cell) return;
-
-        // If value hasn't changed, don't save
         if (String(cell.initialValue) === String(value)) return;
 
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
@@ -52,23 +57,16 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         }
     };
 
-    const handleCellClick = (userId: string, userName: string, day: number, type: '45' | '75', currentValue: string | number) => {
-        // If clicking the currently selected cell, do nothing (keep editing)
-        if (selectedCell?.userId === userId && selectedCell?.day === day && selectedCell?.type === type) {
-            return;
-        }
+    const handleCellClick = (userId: string, userName: string, day: number, type: '50' | '75', currentValue: string | number) => {
+        if (selectedCell?.userId === userId && selectedCell?.day === day && selectedCell?.type === type) return;
 
-        // Save previous cell if it exists
         if (selectedCell) {
             let valToSave: string | number = inputValue;
             const numVal = Number(inputValue);
-            if (!isNaN(numVal) && inputValue.trim() !== '') {
-                valToSave = numVal;
-            }
+            if (!isNaN(numVal) && inputValue.trim() !== '') valToSave = numVal;
             handleSave(selectedCell, valToSave);
         }
 
-        // Select new cell
         const val = currentValue !== undefined && currentValue !== null ? String(currentValue) : '';
         setSelectedCell({ userId, userName, day, type, initialValue: currentValue });
         setInputValue(val);
@@ -78,9 +76,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         if (selectedCell) {
             let valToSave: string | number = inputValue;
             const numVal = Number(inputValue);
-            if (!isNaN(numVal) && inputValue.trim() !== '') {
-                valToSave = numVal;
-            }
+            if (!isNaN(numVal) && inputValue.trim() !== '') valToSave = numVal;
             handleSave(selectedCell, valToSave);
             setSelectedCell(null);
         }
@@ -88,23 +84,23 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            (e.currentTarget as HTMLInputElement).blur(); // Triggers handleInputBlur
+            (e.currentTarget as HTMLInputElement).blur();
         }
     };
 
     // Calculate Totals per Day for Footer
-    const dailyTotals = days.map(() => ({ count45: 0, count75: 0 }));
-    let grandTotal45 = 0;
+    const dailyTotals = days.map(() => ({ count50: 0, count75: 0 }));
+    let grandTotal50 = 0;
     let grandTotal75 = 0;
 
     data.forEach(user => {
         user.daily.forEach((d, idx) => {
             if (idx < dailyTotals.length) {
-                dailyTotals[idx].count45 += d.count45;
+                dailyTotals[idx].count50 += d.count50;
                 dailyTotals[idx].count75 += d.count75;
             }
         });
-        grandTotal45 += user.total45;
+        grandTotal50 += user.total50;
         grandTotal75 += user.total75;
     });
 
@@ -117,12 +113,12 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         let rowIndex = 1; // 0 is header
 
         data.forEach(user => {
-            const row45 = [
+            const row50 = [
                 user.userName,
                 user.area,
-                '45L',
-                ...user.daily.map(d => d.display45 !== undefined ? d.display45 : (d.count45 || '')),
-                user.total45
+                '50L',
+                ...user.daily.map(d => d.display50 !== undefined ? d.display50 : (d.count50 || '')),
+                user.total50
             ];
             const row75 = [
                 user.userName,
@@ -132,7 +128,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                 user.total75
             ];
 
-            rows.push(row45);
+            rows.push(row50);
             rows.push(row75);
 
             // Merge Name (col 0)
@@ -144,10 +140,10 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         });
 
         // Footer
-        const footer45 = ['Total', '', '45L', ...dailyTotals.map(d => d.count45), grandTotal45];
+        const footer50 = ['Total', '', '50L', ...dailyTotals.map(d => d.count50), grandTotal50];
         const footer75 = ['Total', '', '75L', ...dailyTotals.map(d => d.count75), grandTotal75];
 
-        rows.push(footer45);
+        rows.push(footer50);
         rows.push(footer75);
 
         merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex + 1, c: 0 } });
@@ -168,19 +164,11 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
         XLSX.writeFile(wb, `daily_report_${year}_${month}.xlsx`);
     };
 
-    const isSunday = (day: number) => {
-        const date = new Date(year, month - 1, day);
-        return date.getDay() === 0;
-    };
+    // ...
 
     return (
         <div className={styles.tableContainer}>
-            <div className={styles.tableHeader}>
-                <span className={styles.tableTitle}>{year}년 {month}월 일별 리포트</span>
-                <button onClick={handleDownload} className={styles.downloadButton}>
-                    📥 Download Excel
-                </button>
-            </div>
+            {/* ... */}
             <div style={{ overflowX: 'auto' }}>
                 <table className={styles.table} style={{ fontSize: '0.85rem', width: 'max-content' }}>
                     <thead>
@@ -203,7 +191,7 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                     <tbody>
                         {data.map((user) => (
                             <>
-                                <tr key={`${user.userId}-45`}>
+                                <tr key={`${user.userId}-50`}>
                                     <td rowSpan={2} style={{
                                         verticalAlign: 'middle',
                                         position: 'sticky',
@@ -232,22 +220,22 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                         background: '#1a1a1a',
                                         borderRight: '1px solid rgba(255,255,255,0.1)'
                                     }}>
-                                        <span className={`${styles.badge} ${styles.badge45}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>45L</span>
+                                        <span className={`${styles.badge} ${styles.badge50}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>50L</span>
                                     </td>
                                     {user.daily.map((d, i) => {
-                                        const displayVal = d.display45 !== undefined ? d.display45 : (d.count45 || '-');
-                                        const isString = typeof d.display45 === 'string';
-                                        const isSelected = selectedCell?.userId === user.userId && selectedCell?.day === i + 1 && selectedCell?.type === '45';
+                                        const displayVal = d.display50 !== undefined ? d.display50 : (d.count50 || '-');
+                                        const isString = typeof d.display50 === 'string';
+                                        const isSelected = selectedCell?.userId === user.userId && selectedCell?.day === i + 1 && selectedCell?.type === '50';
 
                                         return (
                                             <td key={i}
-                                                onClick={() => handleCellClick(user.userId, user.userName, i + 1, '45', d.display45 ?? d.count45)}
+                                                onClick={() => handleCellClick(user.userId, user.userName, i + 1, '50', d.display50 ?? d.count50)}
                                                 className={isSelected ? styles.selectedCell : ''}
                                                 style={{
                                                     textAlign: 'center',
                                                     padding: isSelected ? 0 : '0.5rem 0',
                                                     cursor: 'pointer',
-                                                    color: d.count45 || isString ? 'inherit' : '#444',
+                                                    color: d.count50 || isString ? 'inherit' : '#444',
                                                     backgroundColor: isSelected ? undefined : (isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'),
                                                     fontSize: isString ? '0.7rem' : 'inherit',
                                                     height: '40px',
@@ -271,9 +259,10 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                         )
                                     })}
                                     <td style={{ fontWeight: 'bold', textAlign: 'center' }}>
-                                        <span className={styles.value45}>{user.total45}</span>
+                                        <span className={styles.value50}>{user.total50}</span>
                                     </td>
                                 </tr>
+                                {/* 75L row remains mostly same but update check for 75 type */}
                                 <tr key={`${user.userId}-75`}>
                                     <td style={{
                                         position: 'sticky',
@@ -350,16 +339,17 @@ export default function DailyReportTable({ data, year, month }: DailyReportTable
                                 zIndex: 10,
                                 background: '#1a1a1a',
                                 borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>45L</td>
+                            }}>50L</td>
                             {dailyTotals.map((d, i) => (
                                 <td key={i} style={{
                                     textAlign: 'center',
                                     padding: '0.5rem 0',
                                     backgroundColor: isSunday(i + 1) ? 'rgba(255, 107, 107, 0.05)' : 'transparent'
-                                }}>{d.count45}</td>
+                                }}>{d.count50}</td>
                             ))}
-                            <td style={{ textAlign: 'center', color: 'var(--accent-45)' }}>{grandTotal45}</td>
+                            <td style={{ textAlign: 'center', color: 'var(--accent-50)' }}>{grandTotal50}</td>
                         </tr>
+                        {/* 75L footer row remains similar */}
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
                             <td style={{
                                 position: 'sticky',

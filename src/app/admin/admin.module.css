@@ -102,8 +102,8 @@
     letter-spacing: 0.05em;
 }
 
-.value45 {
-    color: var(--accent-45);
+.value50 {
+    color: var(--accent-50);
 }
 
 .value75 {
@@ -170,9 +170,9 @@
     font-weight: 600;
 }
 
-.badge45 {
+.badge50 {
     background: rgba(16, 185, 129, 0.2);
-    color: var(--accent-45);
+    color: var(--accent-50);
 }
 
 .badge75 {

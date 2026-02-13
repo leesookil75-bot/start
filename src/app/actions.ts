@@ -283,7 +283,9 @@ export async function updateNoticeAction(id: string, title: string, content: str
 
 // --- Usage Actions ---
 
-export async function recordUsage(size: 45 | 75): Promise<{ success: boolean; data?: UsageRecord; error?: string }> {
+// ... imports
+
+export async function recordUsage(size: 45 | 50 | 75): Promise<{ success: boolean; data?: UsageRecord; error?: string }> {
     try {
         const user = await getCurrentUser();
 
@@ -304,7 +306,7 @@ export async function recordUsage(size: 45 | 75): Promise<{ success: boolean; da
 // New Actions for Batched Input
 import { manageUsageDelta } from '@/lib/data';
 
-export async function submitUsage(delta45: number, delta75: number): Promise<{ success: boolean; error?: string }> {
+export async function submitUsage(delta50: number, delta75: number): Promise<{ success: boolean; error?: string }> {
     try {
         const user = await getCurrentUser();
         if (!user) {
@@ -312,11 +314,11 @@ export async function submitUsage(delta45: number, delta75: number): Promise<{ s
         }
 
         // Only process if there are actual changes
-        if (delta45 === 0 && delta75 === 0) {
+        if (delta50 === 0 && delta75 === 0) {
             return { success: true };
         }
 
-        await manageUsageDelta(user.id, user.name, delta45, delta75);
+        await manageUsageDelta(user.id, user.name, delta50, delta75);
 
         revalidatePath('/admin');
         revalidatePath('/');
@@ -340,9 +342,9 @@ function getStartOfTodayKST() {
     return new Date(nowKst.getTime() - kstOffset);
 }
 
-export async function getTodayUserUsage(): Promise<{ count45: number; count75: number }> {
+export async function getTodayUserUsage(): Promise<{ count50: number; count75: number }> {
     const user = await getCurrentUser();
-    if (!user) return { count45: 0, count75: 0 };
+    if (!user) return { count50: 0, count75: 0 };
 
     const records = await getRecords();
     const startOfToday = getStartOfTodayKST();
@@ -353,7 +355,7 @@ export async function getTodayUserUsage(): Promise<{ count45: number; count75: n
     );
 
     return {
-        count45: todayRecords.filter(r => r.size === 45).length,
+        count50: todayRecords.filter(r => r.size === 45 || r.size === 50).length,
         count75: todayRecords.filter(r => r.size === 75).length
     };
 }
@@ -363,11 +365,11 @@ export async function getUsageStats() {
 
     const stats = records.reduce(
         (acc, record) => {
-            if (record.size === 45) acc.count45++;
+            if (record.size === 45 || record.size === 50) acc.count50++;
             else if (record.size === 75) acc.count75++;
             return acc;
         },
-        { count45: 0, count75: 0, total: records.length }
+        { count50: 0, count75: 0, total: records.length }
     );
 
     return { stats, records };
@@ -394,26 +396,26 @@ export async function getMyStats() {
     monthStart.setHours(monthStart.getHours() - 9); // Shift back to real UTC
 
     const stats = {
-        daily: { count45: 0, count75: 0 },
-        weekly: { count45: 0, count75: 0 },
-        monthly: { count45: 0, count75: 0 }
+        daily: { count50: 0, count75: 0 },
+        weekly: { count50: 0, count75: 0 },
+        monthly: { count50: 0, count75: 0 }
     };
 
     userRecords.forEach(r => {
         const rDate = new Date(r.timestamp);
 
         if (rDate >= todayStart) {
-            if (r.size === 45) stats.daily.count45++;
+            if (r.size === 45 || r.size === 50) stats.daily.count50++;
             else if (r.size === 75) stats.daily.count75++;
         }
 
         if (rDate >= weekStart) {
-            if (r.size === 45) stats.weekly.count45++;
+            if (r.size === 45 || r.size === 50) stats.weekly.count50++;
             else if (r.size === 75) stats.weekly.count75++;
         }
 
         if (rDate >= monthStart) {
-            if (r.size === 45) stats.monthly.count45++;
+            if (r.size === 45 || r.size === 50) stats.monthly.count50++;
             else if (r.size === 75) stats.monthly.count75++;
         }
     });

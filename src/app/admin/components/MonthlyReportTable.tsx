@@ -11,16 +11,16 @@ interface MonthlyReportTableProps {
 
 export default function MonthlyReportTable({ data, year }: MonthlyReportTableProps) {
     // Calculate Monthly Totals for Footer
-    const monthlyTotals = Array(12).fill(0).map(() => ({ count45: 0, count75: 0 }));
-    let grandTotal45 = 0;
+    const monthlyTotals = Array(12).fill(0).map(() => ({ count50: 0, count75: 0 }));
+    let grandTotal50 = 0;
     let grandTotal75 = 0;
 
     data.forEach(user => {
         user.monthly.forEach((m, idx) => {
-            monthlyTotals[idx].count45 += m.count45;
+            monthlyTotals[idx].count50 += m.count50;
             monthlyTotals[idx].count75 += m.count75;
         });
-        grandTotal45 += user.total45;
+        grandTotal50 += user.total50;
         grandTotal75 += user.total75;
     });
 
@@ -34,12 +34,12 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
         // Data Rows
         let rowIndex = 1; // Start after header
         data.forEach(user => {
-            // Row for 45L
-            const row45 = [user.userName, user.area, '45L', ...user.monthly.map(m => m.count45 || ''), user.total45];
+            // Row for 50L
+            const row50 = [user.userName, user.area, '50L', ...user.monthly.map(m => m.count50 || ''), user.total50];
             // Row for 75L
             const row75 = [user.userName, user.area, '75L', ...user.monthly.map(m => m.count75 || ''), user.total75];
 
-            rows.push(row45);
+            rows.push(row50);
             rows.push(row75);
 
             // Merge Name column (Column A, index 0) for these 2 rows
@@ -51,10 +51,10 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
         });
 
         // Footer Row
-        const footer45 = ['Total', '', '45L', ...monthlyTotals.map(m => m.count45), grandTotal45];
+        const footer50 = ['Total', '', '50L', ...monthlyTotals.map(m => m.count50), grandTotal50];
         const footer75 = ['Total', '', '75L', ...monthlyTotals.map(m => m.count75), grandTotal75];
 
-        rows.push(footer45);
+        rows.push(footer50);
         rows.push(footer75);
 
         // Merge "Total" label in footer (Name col)
@@ -105,7 +105,7 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                     <tbody>
                         {data.map((user) => (
                             <>
-                                <tr key={`${user.userId}-45`}>
+                                <tr key={`${user.userId}-50`}>
                                     <td rowSpan={2} style={{
                                         verticalAlign: 'middle',
                                         position: 'sticky',
@@ -135,15 +135,15 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                                         background: '#1a1a1a',
                                         borderRight: '1px solid rgba(255,255,255,0.1)'
                                     }}>
-                                        <span className={`${styles.badge} ${styles.badge45}`}>45L</span>
+                                        <span className={`${styles.badge} ${styles.badge50}`}>50L</span>
                                     </td>
                                     {user.monthly.map((m, i) => (
-                                        <td key={i} style={{ textAlign: 'center', color: m.count45 ? 'inherit' : '#444' }}>
-                                            {m.count45 || '-'}
+                                        <td key={i} style={{ textAlign: 'center', color: m.count50 ? 'inherit' : '#444' }}>
+                                            {m.count50 || '-'}
                                         </td>
                                     ))}
                                     <td style={{ fontWeight: 'bold', textAlign: 'center' }}>
-                                        <span className={styles.value45}>{user.total45}</span>
+                                        <span className={styles.value50}>{user.total50}</span>
                                     </td>
                                 </tr>
                                 <tr key={`${user.userId}-75`}>
@@ -191,11 +191,11 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                                 zIndex: 10,
                                 background: '#1a1a1a',
                                 borderRight: '1px solid rgba(255,255,255,0.1)'
-                            }}>45L</td>
+                            }}>50L</td>
                             {monthlyTotals.map((m, i) => (
-                                <td key={i} style={{ textAlign: 'center' }}>{m.count45}</td>
+                                <td key={i} style={{ textAlign: 'center' }}>{m.count50}</td>
                             ))}
-                            <td style={{ textAlign: 'center', color: 'var(--accent-45)' }}>{grandTotal45}</td>
+                            <td style={{ textAlign: 'center', color: 'var(--accent-50)' }}>{grandTotal50}</td>
                         </tr>
                         <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
                             <td style={{

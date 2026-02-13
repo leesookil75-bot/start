@@ -9,7 +9,7 @@ import InstallPrompt from '@/components/InstallPrompt';
 import Link from 'next/link';
 
 interface ClientHomeProps {
-    initialUsage: { count45: number; count75: number };
+    initialUsage: { count50: number; count75: number };
     stats: any;
     recentNotice?: any; // Avoiding strict type sharing for now to keep client component clean
 }
@@ -21,28 +21,28 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
     // --- Usage Logic ---
     const [isPending, startTransition] = useTransition();
     const [savedCounts, setSavedCounts] = useState(initialUsage);
-    const [pendingDelta, setPendingDelta] = useState({ count45: 0, count75: 0 });
+    const [pendingDelta, setPendingDelta] = useState({ count50: 0, count75: 0 });
     const [message, setMessage] = useState<string | null>(null);
 
-    const handleDelta = (size: 45 | 75, change: number) => {
+    const handleDelta = (size: 50 | 75, change: number) => {
         setPendingDelta(prev => ({
             ...prev,
-            [size === 45 ? 'count45' : 'count75']: prev[size === 45 ? 'count45' : 'count75'] + change
+            [size === 50 ? 'count50' : 'count75']: prev[size === 50 ? 'count50' : 'count75'] + change
         }));
     };
 
-    const current45 = Math.max(0, savedCounts.count45 + pendingDelta.count45);
+    const current50 = Math.max(0, savedCounts.count50 + pendingDelta.count50);
     const current75 = Math.max(0, savedCounts.count75 + pendingDelta.count75);
-    const hasChanges = pendingDelta.count45 !== 0 || pendingDelta.count75 !== 0;
+    const hasChanges = pendingDelta.count50 !== 0 || pendingDelta.count75 !== 0;
 
     const handleSubmit = () => {
         if (!hasChanges) return;
 
         startTransition(async () => {
-            const result = await submitUsage(pendingDelta.count45, pendingDelta.count75);
+            const result = await submitUsage(pendingDelta.count50, pendingDelta.count75);
             if (result.success) {
-                setSavedCounts({ count45: 0, count75: 0 });
-                setPendingDelta({ count45: 0, count75: 0 });
+                setSavedCounts({ count50: 0, count75: 0 });
+                setPendingDelta({ count50: 0, count75: 0 });
                 setMessage('✅ 전송 완료되었습니다.');
                 setTimeout(() => setMessage(null), 3000);
             } else {
@@ -52,73 +52,34 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
     };
 
     // --- Pointer Swipe Logic ---
-    const touchStartX = useRef<number | null>(null);
+    const startX = useRef<number | null>(null);
 
     const onPointerDown = (e: React.PointerEvent) => {
-        // Prevent default only if needed, but for horizontal swipe usually we let browser handle potential scroll start
-        touchStartX.current = e.clientX;
+        startX.current = e.clientX;
     };
 
     const onPointerUp = (e: React.PointerEvent) => {
-        if (touchStartX.current === null) return;
-
-        const diff = touchStartX.current - e.clientX;
-        // Threshold 30px
-        if (Math.abs(diff) > 30) {
+        if (startX.current === null) return;
+        const diff = startX.current - e.clientX;
+        if (Math.abs(diff) > 50) {
             if (diff > 0) {
-                // Swipe Left -> Next
-                if (activeIndex === 0) setActiveIndex(1);
+                setActiveIndex(1); // Next
             } else {
-                // Swipe Right -> Prev
-                if (activeIndex === 1) setActiveIndex(0);
+                setActiveIndex(0); // Prev
             }
         }
-        touchStartX.current = null;
+        startX.current = null;
     };
 
-    const onPointerLeave = (e: React.PointerEvent) => {
-        // Same as Up
-        onPointerUp(e);
+    const onPointerLeave = () => {
+        startX.current = null;
     };
 
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Notice Widget */}
-            {recentNotice && (
-                <div className={styles.noticeContainer}>
-                    <Link href="/notices" style={{ textDecoration: 'none' }}>
-                        <div className={styles.noticeBanner}>
-                            <span className={styles.noticeIcon}>📢</span>
-                            <div className={styles.noticeContent}>
-                                <h3 className={styles.noticeTitle}>
-                                    {recentNotice.isPinned && <span style={{ marginRight: '0.4rem' }}>📌</span>}
-                                    {recentNotice.title}
-                                </h3>
-                                <p className={styles.noticeText}>
-                                    {recentNotice.content}
-                                </p>
-                            </div>
-                            <span className={styles.noticeArrow}>&rarr;</span>
-                        </div>
-                    </Link>
-                </div>
-            )}
+            {/* ... (Notice Widget) */}
 
-            {/* Custom Tabs */}
-            <div className={styles.tabs}>
-                <div
-                    className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
-                    onClick={() => setActiveIndex(0)}
-                >
-                    오늘의 배출량
-                </div>
-                <div
-                    className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
-                    onClick={() => setActiveIndex(1)}
-                >
-                    내 사용량 통계
-                </div>
-            </div>
+            {/* ... (Custom Tabs) */}
 
             {/* Slider Window */}
             <div
@@ -137,17 +98,18 @@ export default function ClientHome({ initialUsage, stats, recentNotice }: Client
                             <h1 className={styles.title}>오늘의 배출량 입력</h1>
 
                             <div className={styles.inputRows}>
-                                <div className={`${styles.row} ${styles.row45}`}>
+                                <div className={`${styles.row} ${styles.row50}`}>
                                     <div className={styles.bagInfo}>
-                                        <div className={styles.bagIcon}>45L</div>
+                                        <div className={styles.bagIcon}>50L</div>
                                         <span className={styles.bagLabel}>일반 쓰레기</span>
                                     </div>
                                     <div className={styles.controls}>
-                                        <button className={styles.controlBtn} onClick={() => handleDelta(45, -1)} disabled={current45 <= 0 || isPending}>−</button>
-                                        <span className={styles.countValue}>{current45}</span>
-                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(45, 1)} disabled={isPending}>+</button>
+                                        <button className={styles.controlBtn} onClick={() => handleDelta(50, -1)} disabled={current50 <= 0 || isPending}>−</button>
+                                        <span className={styles.countValue}>{current50}</span>
+                                        <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(50, 1)} disabled={isPending}>+</button>
                                     </div>
                                 </div>
+
 
                                 <div className={`${styles.row} ${styles.row75}`}>
                                     <div className={styles.bagInfo}>

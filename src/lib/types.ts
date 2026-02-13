@@ -11,7 +11,7 @@ export type User = {
 
 export type UsageRecord = {
     id: string;
-    size: 45 | 75;
+    size: 45 | 50 | 75;
     timestamp: string;
     userId?: string;
     userName?: string;
@@ -30,7 +30,7 @@ export type Notice = {
 export type DailyOverride = {
     date: string; // YYYY-MM-DD
     userId: string;
-    type: '45' | '75';
+    type: '45' | '50' | '75';
     value: string | number;
 };
 
@@ -38,7 +38,7 @@ export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export type StatEntry = {
     key: string;       // "2024-01-01" or "Week 10" or "Jan 2024" or "A Area"
-    count45: number;
+    count50: number;
     count75: number;
     total: number;
 };
@@ -49,8 +49,8 @@ export interface MonthlyUserStat {
     userId: string;
     userName: string;
     area: string;
-    monthly: { count45: number; count75: number }[]; // Index 0 = Jan, 11 = Dec
-    total45: number;
+    monthly: { count50: number; count75: number }[]; // Index 0 = Jan, 11 = Dec
+    total50: number;
     total75: number;
 }
 
@@ -59,11 +59,11 @@ export interface DailyUserStat {
     userName: string;
     area: string;
     daily: {
-        count45: number;
+        count50: number;
         count75: number;
-        display45?: string | number;
+        display50?: string | number;
         display75?: string | number;
     }[]; // Index 0 = 1st
-    total45: number;
+    total50: number;
     total75: number;
 }

@@ -8,8 +8,8 @@ export default function MyStatsView({ stats }: { stats: any }) {
                 <h2 style={cardTitleStyle}>📅 오늘 (Daily)</h2>
                 <div style={statRowStyle}>
                     <div style={bagItemStyle}>
-                        <div style={{ ...bagIconStyle, backgroundColor: '#3b82f6' }}>45L</div>
-                        <span style={countStyle}>{stats.daily.count45}</span>
+                        <div style={{ ...bagIconStyle, backgroundColor: '#3b82f6' }}>50L</div>
+                        <span style={countStyle}>{stats.daily.count50}</span>
                     </div>
                     <div style={bagItemStyle}>
                         <div style={{ ...bagIconStyle, backgroundColor: '#eab308', color: '#000' }}>75L</div>
@@ -23,8 +23,8 @@ export default function MyStatsView({ stats }: { stats: any }) {
                 <h2 style={cardTitleStyle}>🗓️ 이번 주 (Weekly)</h2>
                 <div style={statRowStyle}>
                     <div style={bagItemStyle}>
-                        <div style={{ ...bagIconStyle, backgroundColor: '#3b82f6' }}>45L</div>
-                        <span style={countStyle}>{stats.weekly.count45}</span>
+                        <div style={{ ...bagIconStyle, backgroundColor: '#3b82f6' }}>50L</div>
+                        <span style={countStyle}>{stats.weekly.count50}</span>
                     </div>
                     <div style={bagItemStyle}>
                         <div style={{ ...bagIconStyle, backgroundColor: '#eab308', color: '#000' }}>75L</div>
@@ -38,8 +38,8 @@ export default function MyStatsView({ stats }: { stats: any }) {
                 <h2 style={cardTitleStyle}>📊 이번 달 (Monthly)</h2>
                 <div style={statRowStyle}>
                     <div style={bagItemStyle}>
-                        <div style={{ ...bagIconStyle, backgroundColor: '#3b82f6' }}>45L</div>
-                        <span style={countStyle}>{stats.monthly.count45}</span>
+                        <div style={{ ...bagIconStyle, backgroundColor: '#3b82f6' }}>50L</div>
+                        <span style={countStyle}>{stats.monthly.count50}</span>
                     </div>
                     <div style={bagItemStyle}>
                         <div style={{ ...bagIconStyle, backgroundColor: '#eab308', color: '#000' }}>75L</div>
