@@ -345,6 +345,52 @@
     */
 
 
+    /* Hide element on mobile */
+    .desktopOnly {
+        display: none;
+    }
+
+    /* Show element on mobile */
+    .mobileOnly {
+        display: table-cell;
+    }
+
+    /* Mobile Sticky Column: Combined User Info */
+    .mobileStickyUser {
+        position: sticky;
+        left: 0;
+        z-index: 20;
+        background: var(--card-bg, #1a1a1a);
+        /* Ensure background is solid so data scrolls under it */
+        border-right: 2px solid rgba(255, 255, 255, 0.1);
+        width: 100px;
+        min-width: 100px;
+        max-width: 100px;
+        padding: 0.25rem !important;
+        vertical-align: middle !important;
+        font-size: 0.75rem !important;
+        line-height: 1.2;
+    }
+
+    /* Adjust the main sticky header on mobile to match */
+    .mobileStickyHeader {
+        position: sticky;
+        left: 0;
+        top: 0;
+        z-index: 60;
+        background: var(--card-bg, #1a1a1a);
+        border-right: 2px solid rgba(255, 255, 255, 0.1);
+        width: 100px;
+        min-width: 100px;
+        max-width: 100px;
+    }
+}
+
+/* PC Only Styles (Hide mobile elements on desktop) */
+@media (min-width: 769px) {
+    .mobileOnly {
+        display: none;
+    }   
 }
 
 /* Slider / Swipe Styles */

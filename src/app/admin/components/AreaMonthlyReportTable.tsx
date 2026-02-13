@@ -138,8 +138,13 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                 <thead className={styles.stickyBg} style={{ top: 0, zIndex: 60, border: 'none' }}>
                     {/* Row 1: Areas */}
                     <tr>
-                        <th rowSpan={3} className={styles.stickyLeft0} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, top: 0 }}>Date</th>
-                        <th rowSpan={3} className={styles.stickyLeft60} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50, top: 0 }}>Day</th>
+                        {/* PC Columns */}
+                        <th rowSpan={3} className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ border: '1px solid #444', minWidth: '60px', zIndex: 50, top: 0 }}>Date</th>
+                        <th rowSpan={3} className={`${styles.stickyLeft60} ${styles.desktopOnly}`} style={{ border: '1px solid #444', minWidth: '40px', zIndex: 50, top: 0 }}>Day</th>
+
+                        {/* Mobile Combined Column */}
+                        <th rowSpan={3} className={`${styles.mobileStickyHeader} ${styles.mobileOnly}`} style={{ border: '1px solid #444', minWidth: '50px', maxWidth: '50px', zIndex: 65, top: 0 }}>Date</th>
+
                         {areaGroups.map((group, idx) => (
                             <th
                                 key={idx}
@@ -182,8 +187,16 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
 
                         return (
                             <tr key={day} style={rowStyle}>
-                                <td className={styles.stickyLeft0} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', zIndex: 15, color: dateColor }}>{day}</td>
-                                <td className={styles.stickyLeft60} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', zIndex: 15, color: dateColor }}>{dayName}</td>
+                                {/* PC Columns */}
+                                <td className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', zIndex: 15, color: dateColor }}>{day}</td>
+                                <td className={`${styles.stickyLeft60} ${styles.desktopOnly}`} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.5rem', zIndex: 15, color: dateColor }}>{dayName}</td>
+
+                                {/* Mobile Column */}
+                                <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`} style={{ border: '1px solid #444', textAlign: 'center', padding: '0.2rem', zIndex: 25, color: dateColor, minWidth: '50px', maxWidth: '50px' }}>
+                                    <div style={{ fontWeight: 'bold' }}>{day}</div>
+                                    <div style={{ fontSize: '0.7em', opacity: 0.8 }}>{dayName}</div>
+                                </td>
+
                                 {data.map(user => {
                                     const dayStat = user.daily[dayIndex];
                                     const val50 = dayStat.display50 !== undefined ? dayStat.display50 : (dayStat.count50 || '');
@@ -262,8 +275,12 @@ export default function AreaMonthlyReportTable({ data, year, month }: AreaMonthl
                     })}
                     {/* Totals Row */}
                     <tr style={{ background: 'rgba(255,255,255,0.05)', fontWeight: 'bold' }}>
-                        <td className={styles.stickyLeft0} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', zIndex: 5 }}>Total</td>
-                        <td className={styles.stickyLeft60} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', zIndex: 5 }}>-</td>
+                        {/* PC Footer */}
+                        <td className={`${styles.stickyLeft0} ${styles.desktopOnly}`} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', zIndex: 5 }}>Total</td>
+                        <td className={`${styles.stickyLeft60} ${styles.desktopOnly}`} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.5rem', zIndex: 5 }}>-</td>
+
+                        {/* Mobile Footer */}
+                        <td className={`${styles.mobileStickyUser} ${styles.mobileOnly}`} style={{ border: '1px solid #444', textAlign: 'center', padding: '1rem 0.2rem', zIndex: 5, minWidth: '50px', maxWidth: '50px' }}>Total</td>
                         {data.map(user => (
                             <>
                                 <td key={`total-${user.userId}-50`} style={{ border: '1px solid #444', textAlign: 'center', color: 'var(--accent-50)' }}>{user.total50}</td>
