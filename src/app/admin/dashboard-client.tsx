@@ -32,7 +32,7 @@ interface DashboardClientProps {
         month: number;
     };
     summaryStats: {
-        count45: number;
+        count50: number;
         count75: number;
         total: number;
     };
@@ -156,8 +156,8 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                         {/* Stats Grid */}
                         <div className={styles.statsGrid}>
                             <div className={styles.card}>
-                                <div className={styles.statLabel}>45L Bags</div>
-                                <div className={`${styles.statValue} ${styles.value45}`}>{summaryStats.count45}</div>
+                                <div className={styles.statLabel}>50L Bags</div>
+                                <div className={`${styles.statValue} ${styles.value50}`}>{summaryStats.count50}</div>
                             </div>
                             <div className={styles.card}>
                                 <div className={styles.statLabel}>75L Bags</div>

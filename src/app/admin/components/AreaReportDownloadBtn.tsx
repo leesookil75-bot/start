@@ -77,7 +77,7 @@ export default function AreaReportDownloadBtn({ data, year, month, fileName = 'm
         // Row 2: 45L / 75L
         const row2 = ['', ''];
         data.forEach(_ => {
-            row2.push('45L');
+            row2.push('50L');
             row2.push('75L');
         });
 
@@ -95,9 +95,9 @@ export default function AreaReportDownloadBtn({ data, year, month, fileName = 'm
             data.forEach(user => {
                 const dayStat = user.daily[day - 1]; // day is 1-based, index 0-based
                 // Use display value or count.
-                const val45 = dayStat.display45 !== undefined ? dayStat.display45 : (dayStat.count45 || '');
+                const val50 = dayStat.display50 !== undefined ? dayStat.display50 : (dayStat.count50 || '');
                 const val75 = dayStat.display75 !== undefined ? dayStat.display75 : (dayStat.count75 || '');
-                row.push(val45);
+                row.push(val50);
                 row.push(val75);
             });
             ws_data.push(row);
@@ -106,7 +106,7 @@ export default function AreaReportDownloadBtn({ data, year, month, fileName = 'm
         // --- Totals ---
         const totalRow: (string | number)[] = ['Total', ''];
         data.forEach(user => {
-            totalRow.push(user.total45);
+            totalRow.push(user.total50);
             totalRow.push(user.total75);
         });
         ws_data.push(totalRow);

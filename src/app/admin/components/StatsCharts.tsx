@@ -7,7 +7,7 @@ import {
 import { StatEntry, AreaStatEntry } from '@/lib/types';
 import styles from './stats.module.css';
 
-const COLORS_45 = '#3b82f6'; // blue-500
+const COLORS_50 = '#3b82f6'; // blue-500
 const COLORS_75 = '#eab308'; // yellow-500
 
 interface StatsChartsProps {
@@ -36,7 +36,7 @@ export default function StatsCharts({ data, type }: StatsChartsProps) {
                                 labelStyle={{ color: '#fff' }}
                             />
                             <Legend />
-                            <Bar dataKey="count45" name="45L Bag" fill={COLORS_45} stackId="a" />
+                            <Bar dataKey="count50" name="50L Bag" fill={COLORS_50} stackId="a" />
                             <Bar dataKey="count75" name="75L Bag" fill={COLORS_75} stackId="a" />
                         </BarChart>
                     </ResponsiveContainer>
@@ -77,7 +77,7 @@ export default function StatsCharts({ data, type }: StatsChartsProps) {
                             itemStyle={{ color: '#fff' }}
                             formatter={(value: any, name: any, props: any) => {
                                 const { payload } = props;
-                                return [`${value} (45L: ${payload.count45}, 75L: ${payload.count75})`, name];
+                                return [`${value} (50L: ${payload.count50}, 75L: ${payload.count75})`, name];
                             }}
                         />
                         <Legend />
