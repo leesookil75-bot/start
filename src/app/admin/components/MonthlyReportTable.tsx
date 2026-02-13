@@ -90,7 +90,7 @@ export default function MonthlyReportTable({ data, year }: MonthlyReportTablePro
                 </button>
             </div>
             <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '80vh' }}>
-                <table className={styles.table} style={{ fontSize: '0.9rem', minWidth: '100%' }}>
+                <table className={styles.table} style={{ fontSize: '0.9rem', width: 'max-content', minWidth: '100%' }}>
                     <thead>
                         <tr>
                             <th className={styles.stickyLeft0} style={{ width: '100px', minWidth: '100px', maxWidth: '100px', position: 'sticky', top: 0, zIndex: 60 }}>Name</th>
