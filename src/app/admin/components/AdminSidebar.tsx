@@ -46,6 +46,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                 >
                     📢 공지사항 관리
                 </Link>
+                <Link
+                    href="/admin/attendance"
+                    className={`${styles.sidebarNavItem} ${isActive('/admin/attendance') ? styles.sidebarNavActive : ''}`}
+                >
+                    🕒 출퇴근 기록
+                </Link>
 
                 <div className={styles.sidebarDivider} />
 

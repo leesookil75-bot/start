@@ -109,6 +109,9 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                         📊 내 통계
                     </button>
                     <div className={styles.sidebarDivider} />
+                    <Link href="/attendance" className={styles.sidebarNavItem}>
+                        📅 출퇴근 기록
+                    </Link>
                     <Link href="/notices" className={styles.sidebarNavItem}>
                         📢 공지사항
                     </Link>
@@ -130,6 +133,9 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                         <span className={styles.userArea}>({user.cleaningArea})</span>
                     </div>
                     <div className={styles.headerActions}>
+                        <Link href="/attendance" className={styles.iconLink} aria-label="출퇴근">
+                            <span style={{ fontSize: '1.2rem' }}>🕒</span>
+                        </Link>
                         <Link href="/notices" className={styles.iconLink} aria-label="공지사항">
                             <BellIcon />
                         </Link>

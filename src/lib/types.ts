@@ -17,6 +17,13 @@ export type UsageRecord = {
     userName?: string;
 };
 
+export type AttendanceRecord = {
+    id: string;
+    userId: string;
+    type: 'CHECK_IN' | 'CHECK_OUT';
+    timestamp: string;
+};
+
 export type Notice = {
     id: string;
     title: string;

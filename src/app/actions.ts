@@ -485,6 +485,15 @@ export async function initializeDB() {
             );
         `;
 
+        await sql`
+            CREATE TABLE IF NOT EXISTS attendance_records (
+                id UUID PRIMARY KEY,
+                user_id UUID REFERENCES users(id),
+                type VARCHAR(20) NOT NULL,
+                timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
 
         await sql`ALTER TABLE notices ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;`;
 
@@ -536,4 +545,91 @@ export async function debugConnection() {
     } catch (e: any) {
         return { success: false, error: 'CONNECTION_FAILED: ' + e.message };
     }
+}
+
+// --- Attendance Actions ---
+import { addAttendanceRecord, getAttendanceRecords, getLatestAttendance } from '@/lib/data';
+
+export async function checkInAction(): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const latest = await getLatestAttendance(user.id);
+    // Optional: Prevent double check-in if needed, but for now we allow it to be robust
+
+    try {
+        await addAttendanceRecord(user.id, 'CHECK_IN');
+        revalidatePath('/attendance');
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to check in' };
+    }
+}
+
+export async function checkOutAction(): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    try {
+        await addAttendanceRecord(user.id, 'CHECK_OUT');
+        revalidatePath('/attendance');
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to check out' };
+    }
+}
+
+export async function getMyAttendanceAction() {
+    const user = await getCurrentUser();
+    if (!user) return [];
+    return await getAttendanceRecords(user.id);
+}
+
+export async function getAllAttendanceStatusAction() {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') return [];
+
+    const users = await getUsers();
+    const records = await getAttendanceRecords();
+
+    // Calculate status for each user
+    // We want: User, Status (Working/Off), Latest Check-in, Latest Check-out
+
+    // Group records by user
+    const userRecordsMap = new Map();
+    records.forEach(r => {
+        if (!userRecordsMap.has(r.userId)) {
+            userRecordsMap.set(r.userId, []);
+        }
+        userRecordsMap.get(r.userId).push(r);
+    });
+
+    const result = users.map(u => {
+        const uRecords = userRecordsMap.get(u.id) || [];
+        // Sort DESC
+        uRecords.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        const latest = uRecords[0];
+        const isWorking = latest?.type === 'CHECK_IN';
+
+        // Find today's check-in
+        // This requires date parsing. 
+        // Let's return raw strings and let frontend format
+
+        return {
+            user: u,
+            latestRecord: latest,
+            isWorking,
+            todayRecords: uRecords.filter((r: any) => {
+                // Simple today check (UTC vs Local issue again, but let's approximate or just send recent)
+                const rDate = new Date(r.timestamp);
+                const now = new Date();
+                return rDate.getDate() === now.getDate() && rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
+            })
+        };
+    });
+
+    return result;
 }

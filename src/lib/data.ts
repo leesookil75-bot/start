@@ -1,6 +1,6 @@
 import path from 'path';
-import { User, UsageRecord, Notice, DailyOverride } from './types';
-export type { User, UsageRecord, Notice, DailyOverride };
+import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord } from './types';
+export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord };
 
 import { sql } from '@vercel/postgres';
 
@@ -525,6 +525,91 @@ export async function updateNotice(id: string, updates: Partial<Notice>): Promis
   notices[index] = { ...notices[index], ...updates };
   const fs = (await import('fs/promises')).default;
   await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
+}
+
+// --- Attendance ---
+const ATTENDANCE_FILE_PATH = path.join(process.cwd(), 'attendance.json');
+
+export async function getAttendanceRecords(userId?: string): Promise<AttendanceRecord[]> {
+  if (isPostgresEnabled()) {
+    try {
+      let query = sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+      // If filtering by userId is needed strictly in SQL
+      if (userId) {
+        const { rows } = await sql`SELECT * FROM attendance_records WHERE user_id = ${userId} ORDER BY timestamp DESC`;
+        return rows.map(r => ({
+          id: r.id,
+          userId: r.user_id,
+          type: r.type,
+          timestamp: r.timestamp.toString()
+        }));
+      }
+
+      const { rows } = await sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+      return rows.map(r => ({
+        id: r.id,
+        userId: r.user_id,
+        type: r.type,
+        timestamp: r.timestamp.toString()
+      }));
+    } catch (e) {
+      console.warn('DB Error getting attendance (ignoring):', e);
+      return [];
+    }
+  }
+
+  await ensureFile(ATTENDANCE_FILE_PATH, []);
+  try {
+    const fs = (await import('fs/promises')).default;
+    const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+    const all: AttendanceRecord[] = JSON.parse(data);
+    if (userId) {
+      return all.filter(r => r.userId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+    return all.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  } catch {
+    return [];
+  }
+}
+
+export async function addAttendanceRecord(userId: string, type: 'CHECK_IN' | 'CHECK_OUT'): Promise<AttendanceRecord> {
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
+      INSERT INTO attendance_records (id, user_id, type, timestamp)
+      VALUES (${id}, ${userId}, ${type}, NOW())
+    `;
+    return {
+      id,
+      userId,
+      type,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  const records = await getAttendanceRecords(); // This actually loads all if we don't pass userId, which is fine for appending
+  // Actually getAttendanceRecords might return filtered list if I updated it to take args.
+  // Let's reuse ensureFile logic for simplicity to get raw array
+  await ensureFile(ATTENDANCE_FILE_PATH, []);
+  const fs = (await import('fs/promises')).default;
+  const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+  let allRecords: AttendanceRecord[] = JSON.parse(data);
+
+  const newRecord: AttendanceRecord = {
+    id: crypto.randomUUID(),
+    userId,
+    type,
+    timestamp: new Date().toISOString()
+  };
+
+  allRecords.push(newRecord);
+  await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(allRecords, null, 2), 'utf-8');
+  return newRecord;
+}
+
+export async function getLatestAttendance(userId: string): Promise<AttendanceRecord | null> {
+  const records = await getAttendanceRecords(userId);
+  return records.length > 0 ? records[0] : null;
 }
 
 // --- Daily Overrides ---
