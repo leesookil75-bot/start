@@ -168,7 +168,6 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                                 <div className={styles.noticeIcon}>📢</div>
                                 <div className={styles.noticeContent}>
                                     <h3 className={styles.noticeTitle}>{recentNotice.title}</h3>
-                                    <p className={styles.noticeText}>{recentNotice.content}</p>
                                 </div>
                                 <div className={styles.noticeArrow}>›</div>
                             </div>
