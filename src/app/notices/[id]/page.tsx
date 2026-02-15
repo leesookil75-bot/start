@@ -6,12 +6,13 @@ import { notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 interface Props {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }
 
 export default async function NoticeDetailPage({ params }: Props) {
+    const { id } = await params;
     const notices = await getNotices();
-    const notice = notices.find(n => n.id === params.id);
+    const notice = notices.find(n => n.id === id);
 
     if (!notice) {
         notFound();
