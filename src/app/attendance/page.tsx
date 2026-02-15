@@ -19,15 +19,15 @@ export default async function AttendancePage() {
 
     const latest = records[0];
     const isWorking = latest?.type === 'CHECK_IN';
-    const todayDate = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' });
+    const todayDate = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' });
 
     // Grouping Logic for Table
     const groupedByDate: Record<string, { checkIns: string[], checkOuts: string[] }> = {};
 
     records.forEach(r => {
         const d = new Date(r.timestamp);
-        const dateStr = d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', weekday: 'short' });
-        const timeStr = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const dateStr = d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', weekday: 'short', timeZone: 'Asia/Seoul' });
+        const timeStr = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
 
         if (!groupedByDate[dateStr]) {
             groupedByDate[dateStr] = { checkIns: [], checkOuts: [] };

@@ -24,7 +24,7 @@ export default async function AdminAttendancePage() {
             <div className={styles.header}>
                 <h1 className={styles.title}>출퇴근 현황</h1>
                 <div style={{ color: '#888', fontSize: '0.9rem' }}>
-                    {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })} 기준
+                    {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' })} 기준
                 </div>
             </div>
 
@@ -63,7 +63,7 @@ export default async function AdminAttendancePage() {
                             const firstCheckIn = checkIns.length > 0 ? checkIns[checkIns.length - 1] : null; // Oldest Check In
                             const lastCheckOut = checkOuts.length > 0 ? checkOuts[0] : null; // Newest Check Out
 
-                            const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                            const formatTime = (iso: string) => new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
 
                             return (
                                 <tr key={status.user.id}>
