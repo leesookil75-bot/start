@@ -2,7 +2,7 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
-    color: var(--foreground);
+    color: #1a1a1a;
 }
 
 
@@ -96,10 +96,11 @@
 }
 
 .statLabel {
-    color: #888;
+    color: #4b5563;
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    font-weight: 600;
 }
 
 .value50 {
@@ -151,9 +152,9 @@
 }
 
 .table th {
-    color: #888;
-    font-weight: 500;
-    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.95rem;
 }
 
 .table tr:last-child td {
@@ -592,8 +593,8 @@
 
 .label {
     font-size: 0.9rem;
-    color: #aaa;
-    font-weight: 500;
+    color: #4b5563;
+    font-weight: 600;
 }
 
 .input {
