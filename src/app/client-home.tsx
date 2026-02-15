@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react';
 import styles from './page.module.css';
+import { BellIcon, KeyIcon, LogOutIcon } from '@/components/icons';
 import { submitUsage } from './actions';
 import MyStatsView from './components/MyStatsView';
 import InstallPrompt from '@/components/InstallPrompt';
@@ -129,10 +130,16 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                         <span className={styles.userArea}>({user.cleaningArea})</span>
                     </div>
                     <div className={styles.headerActions}>
-                        <Link href="/notices" className={styles.changePasswordLink} style={{ color: 'orange', marginRight: '0.5rem' }}>공지사항</Link>
-                        <Link href="/change-password" className={styles.changePasswordLink}>비밀번호 변경</Link>
+                        <Link href="/notices" className={styles.iconLink} aria-label="공지사항">
+                            <BellIcon />
+                        </Link>
+                        <Link href="/change-password" className={styles.iconLink} aria-label="비밀번호 변경">
+                            <KeyIcon />
+                        </Link>
                         <form action={logout}>
-                            <button className={styles.logoutButton}>Logout</button>
+                            <button className={styles.iconButton} aria-label="로그아웃">
+                                <LogOutIcon />
+                            </button>
                         </form>
                     </div>
                 </div>
