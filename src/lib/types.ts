@@ -7,6 +7,7 @@ export type User = {
     role: 'admin' | 'cleaner';
     createdAt: string;
     password?: string;
+    workAddress?: string;
     workLat?: number;
     workLng?: number;
     allowedRadius?: number; // meters

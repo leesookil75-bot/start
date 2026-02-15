@@ -13,6 +13,7 @@ type UserRow = {
   role: string;
   created_at: Date;
   password?: string;
+  work_address?: string;
   work_lat?: number;
   work_lng?: number;
   allowed_radius?: number;
@@ -55,6 +56,7 @@ export async function getUsers(): Promise<User[]> {
         role: r.role as 'admin' | 'cleaner',
         createdAt: r.created_at.toString(),
         password: r.password,
+        workAddress: r.work_address,
         workLat: r.work_lat,
         workLng: r.work_lng,
         allowedRadius: r.allowed_radius
@@ -103,6 +105,7 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         role: user.role,
         createdAt: new Date().toISOString(),
         password,
+        workAddress: user.workAddress,
         workLat: user.workLat,
         workLng: user.workLng,
         allowedRadius: user.allowedRadius
@@ -169,6 +172,7 @@ export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 
                 cleaning_area = ${newArea},
                 role = ${newRole},
                 password = ${newPassword},
+                work_address = ${updates.workAddress ?? user.work_address},
                 work_lat = ${updates.workLat ?? user.work_lat},
                 work_lng = ${updates.workLng ?? user.work_lng},
                 allowed_radius = ${updates.allowedRadius ?? user.allowed_radius}

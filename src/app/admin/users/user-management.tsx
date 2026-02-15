@@ -11,6 +11,7 @@ type User = {
     cleaningArea: string;
     role: 'admin' | 'cleaner';
     createdAt: string;
+    workAddress?: string;
     workLat?: number;
     workLng?: number;
     allowedRadius?: number;
@@ -200,6 +201,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 phoneNumber: formData.get('phoneNumber') as string,
                                 cleaningArea: formData.get('cleaningArea') as string,
                                 role: formData.get('role') as 'admin' | 'cleaner',
+                                workAddress: formData.get('workAddress') as string,
                                 workLat: formData.get('workLat') ? parseFloat(formData.get('workLat') as string) : undefined,
                                 workLng: formData.get('workLng') ? parseFloat(formData.get('workLng') as string) : undefined,
                                 allowedRadius: formData.get('allowedRadius') ? parseInt(formData.get('allowedRadius') as string) : 100
@@ -257,28 +259,11 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                             <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
                             <h4 style={{ margin: '0 0 1rem 0', color: '#ccc' }}>근무지 설정 (위치 기반 출퇴근)</h4>
 
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>위도 (Latitude)</label>
-                                <input
-                                    name="workLat"
-                                    type="number"
-                                    step="any"
-                                    defaultValue={editingUser.workLat}
-                                    placeholder="예: 37.5665"
-                                    className={styles.input}
-                                />
-                            </div>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>경도 (Longitude)</label>
-                                <input
-                                    name="workLng"
-                                    type="number"
-                                    step="any"
-                                    defaultValue={editingUser.workLng}
-                                    placeholder="예: 126.9780"
-                                    className={styles.input}
-                                />
-                            </div>
+                            <AddressSearch
+                                initialAddress={editingUser.workAddress}
+                                initialLat={editingUser.workLat}
+                                initialLng={editingUser.workLng}
+                            />
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>반경 (미터)</label>
                                 <input
@@ -290,39 +275,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 />
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (!navigator.geolocation) {
-                                        alert('Geolocation is not supported by your browser');
-                                        return;
-                                    }
-                                    navigator.geolocation.getCurrentPosition(
-                                        (position) => {
-                                            const latInput = document.querySelector('input[name="workLat"]') as HTMLInputElement;
-                                            const lngInput = document.querySelector('input[name="workLng"]') as HTMLInputElement;
-                                            if (latInput) latInput.value = position.coords.latitude.toString();
-                                            if (lngInput) lngInput.value = position.coords.longitude.toString();
-                                        },
-                                        (error) => {
-                                            alert('위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.');
-                                            console.error(error);
-                                        }
-                                    );
-                                }}
-                                style={{
-                                    marginTop: '1rem',
-                                    padding: '0.5rem',
-                                    background: '#2563eb',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    width: '100%'
-                                }}
-                            >
-                                📍 현재 위치로 설정하기
-                            </button>
+
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button
@@ -344,6 +297,111 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function AddressSearch({ initialAddress, initialLat, initialLng }: { initialAddress?: string, initialLat?: number, initialLng?: number }) {
+    const [address, setAddress] = useState(initialAddress || '');
+    const [lat, setLat] = useState(initialLat);
+    const [lng, setLng] = useState(initialLng);
+    const [results, setResults] = useState<any[]>([]);
+    const [searching, setSearching] = useState(false);
+
+    const handleSearch = async () => {
+        if (!address) return;
+        setSearching(true);
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+            const data = await response.json();
+            setResults(data);
+        } catch (e) {
+            alert('주소 검색 실패');
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleSelect = (result: any) => {
+        setAddress(result.display_name);
+        setLat(parseFloat(result.lat));
+        setLng(parseFloat(result.lon));
+        setResults([]);
+    };
+
+    return (
+        <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#ccc' }}>주소 검색</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input
+                    type="text"
+                    name="workAddress"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="예: 서울특별시 중구 세종대로 110"
+                    style={{ flex: 1, padding: '0.5rem', background: '#333', border: '1px solid #444', color: 'white', borderRadius: '4px' }}
+                />
+                <button
+                    type="button"
+                    onClick={handleSearch}
+                    disabled={searching}
+                    style={{ padding: '0.5rem 1rem', background: '#555', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                    {searching ? '...' : '검색'}
+                </button>
+            </div>
+
+            {results.length > 0 && (
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem 0', maxHeight: '150px', overflowY: 'auto', background: '#222', border: '1px solid #444', borderRadius: '4px' }}>
+                    {results.map((r, i) => (
+                        <li
+                            key={i}
+                            onClick={() => handleSelect(r)}
+                            style={{ padding: '0.5rem', borderBottom: '1px solid #333', cursor: 'pointer', fontSize: '0.85rem' }}
+                        >
+                            {r.display_name}
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#888' }}>
+                <div>위도: {lat ?? '-'}</div>
+                <div>경도: {lng ?? '-'}</div>
+            </div>
+            <input type="hidden" name="workLat" value={lat ?? ''} />
+            <input type="hidden" name="workLng" value={lng ?? ''} />
+
+            <button
+                type="button"
+                onClick={() => {
+                    if (!navigator.geolocation) {
+                        alert('Geolocation is not supported by your browser');
+                        return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            setLat(position.coords.latitude);
+                            setLng(position.coords.longitude);
+                            setAddress('📍 현위치 좌표 설정됨');
+                        },
+                        (error) => {
+                            alert('위치 정보를 가져올 수 없습니다.');
+                        }
+                    );
+                }}
+                style={{
+                    marginTop: '0.5rem',
+                    fontSize: '0.8rem',
+                    background: 'none',
+                    border: 'none',
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                }}
+            >
+                📍 현재 위치 좌표로 설정
+            </button>
         </div>
     );
 }
