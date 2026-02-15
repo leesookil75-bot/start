@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import styles from './attendance.module.css';
-import { checkInAction, checkOutAction } from '../actions';
+import { checkInAction, checkOutAction, initializeDB } from '../actions';
 
 interface AttendanceClientProps {
     isWorking: boolean;
@@ -11,13 +11,6 @@ interface AttendanceClientProps {
 
 export default function AttendanceClient({ isWorking: initialIsWorking, todayDate }: AttendanceClientProps) {
     const [isPending, startTransition] = useTransition();
-    // Optimistic UI could be used, but for now we rely on revalidatePath refreshing the page prop
-    // However, the page prop won't update instantly unless the parent refreshes.
-    // Server actions with revalidatePath usually trigger a router refresh.
-    // So `initialIsWorking` should update after the action completes and page reloads.
-
-    // To be safe, we can track local state too, but let's trust Next.js
-
     const [message, setMessage] = useState<string | null>(null);
 
     const handleAction = async (action: 'checkIn' | 'checkOut') => {
@@ -31,6 +24,19 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
             }
         });
     };
+
+    const handleFixDB = () => {
+        startTransition(async () => {
+            const result = await initializeDB();
+            if (result.success) {
+                setMessage('✅ 데이터베이스가 초기화되었습니다. 다시 시도해주세요.');
+            } else {
+                setMessage('❌ 초기화 실패: ' + result.error);
+            }
+        });
+    };
+
+    const showFixButton = message && (message.includes('relation') || message.includes('does not exist') || message.includes('table'));
 
     return (
         <>
@@ -62,7 +68,28 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
                     <span className={styles.btnLabel}>퇴근하기</span>
                 </button>
             </div>
-            {message && <p style={{ textAlign: 'center', color: 'red', marginBottom: '1rem' }}>{message}</p>}
+
+            {message && (
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    <p style={{ color: 'red', marginBottom: '0.5rem' }}>{message}</p>
+                    {showFixButton && (
+                        <button
+                            onClick={handleFixDB}
+                            disabled={isPending}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                background: '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            🛠️ 문제 해결 (데이터베이스 초기화)
+                        </button>
+                    )}
+                </div>
+            )}
         </>
     );
 }
