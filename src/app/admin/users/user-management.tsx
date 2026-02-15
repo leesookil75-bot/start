@@ -11,6 +11,9 @@ type User = {
     cleaningArea: string;
     role: 'admin' | 'cleaner';
     createdAt: string;
+    workLat?: number;
+    workLng?: number;
+    allowedRadius?: number;
 };
 
 export default function UserManagement({ initialUsers }: { initialUsers: User[] }) {
@@ -196,7 +199,10 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 name: formData.get('name') as string,
                                 phoneNumber: formData.get('phoneNumber') as string,
                                 cleaningArea: formData.get('cleaningArea') as string,
-                                role: formData.get('role') as 'admin' | 'cleaner'
+                                role: formData.get('role') as 'admin' | 'cleaner',
+                                workLat: formData.get('workLat') ? parseFloat(formData.get('workLat') as string) : undefined,
+                                workLng: formData.get('workLng') ? parseFloat(formData.get('workLng') as string) : undefined,
+                                allowedRadius: formData.get('allowedRadius') ? parseInt(formData.get('allowedRadius') as string) : 100
                             };
 
                             startTransition(async () => {
@@ -247,6 +253,76 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                     <option value="admin">관리자</option>
                                 </select>
                             </div>
+
+                            <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
+                            <h4 style={{ margin: '0 0 1rem 0', color: '#ccc' }}>근무지 설정 (위치 기반 출퇴근)</h4>
+
+                            <div className={styles.inputGroup}>
+                                <label className={styles.label}>위도 (Latitude)</label>
+                                <input
+                                    name="workLat"
+                                    type="number"
+                                    step="any"
+                                    defaultValue={editingUser.workLat}
+                                    placeholder="예: 37.5665"
+                                    className={styles.input}
+                                />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label className={styles.label}>경도 (Longitude)</label>
+                                <input
+                                    name="workLng"
+                                    type="number"
+                                    step="any"
+                                    defaultValue={editingUser.workLng}
+                                    placeholder="예: 126.9780"
+                                    className={styles.input}
+                                />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label className={styles.label}>반경 (미터)</label>
+                                <input
+                                    name="allowedRadius"
+                                    type="number"
+                                    defaultValue={editingUser.allowedRadius || 100}
+                                    placeholder="기본값: 100"
+                                    className={styles.input}
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!navigator.geolocation) {
+                                        alert('Geolocation is not supported by your browser');
+                                        return;
+                                    }
+                                    navigator.geolocation.getCurrentPosition(
+                                        (position) => {
+                                            const latInput = document.querySelector('input[name="workLat"]') as HTMLInputElement;
+                                            const lngInput = document.querySelector('input[name="workLng"]') as HTMLInputElement;
+                                            if (latInput) latInput.value = position.coords.latitude.toString();
+                                            if (lngInput) lngInput.value = position.coords.longitude.toString();
+                                        },
+                                        (error) => {
+                                            alert('위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.');
+                                            console.error(error);
+                                        }
+                                    );
+                                }}
+                                style={{
+                                    marginTop: '1rem',
+                                    padding: '0.5rem',
+                                    background: '#2563eb',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    width: '100%'
+                                }}
+                            >
+                                📍 현재 위치로 설정하기
+                            </button>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button

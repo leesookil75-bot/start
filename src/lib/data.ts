@@ -13,6 +13,9 @@ type UserRow = {
   role: string;
   created_at: Date;
   password?: string;
+  work_lat?: number;
+  work_lng?: number;
+  allowed_radius?: number;
 };
 
 
@@ -51,7 +54,10 @@ export async function getUsers(): Promise<User[]> {
         cleaningArea: r.cleaning_area,
         role: r.role as 'admin' | 'cleaner',
         createdAt: r.created_at.toString(),
-        password: r.password
+        password: r.password,
+        workLat: r.work_lat,
+        workLng: r.work_lng,
+        allowedRadius: r.allowed_radius
       }));
     } catch (error) {
       // Fallback or error if table doesn't exist?
@@ -96,7 +102,10 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         cleaningArea: user.cleaningArea,
         role: user.role,
         createdAt: new Date().toISOString(),
-        password
+        password,
+        workLat: user.workLat,
+        workLng: user.workLng,
+        allowedRadius: user.allowedRadius
       };
     } catch (e) {
       console.error('Database error adding user', e);
@@ -159,7 +168,10 @@ export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 
                 phone_number = ${newPhone},
                 cleaning_area = ${newArea},
                 role = ${newRole},
-                password = ${newPassword}
+                password = ${newPassword},
+                work_lat = ${updates.workLat ?? user.work_lat},
+                work_lng = ${updates.workLng ?? user.work_lng},
+                allowed_radius = ${updates.allowedRadius ?? user.allowed_radius}
             WHERE id = ${id}
         `;
     return;

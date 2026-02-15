@@ -7,6 +7,9 @@ export type User = {
     role: 'admin' | 'cleaner';
     createdAt: string;
     password?: string;
+    workLat?: number;
+    workLng?: number;
+    allowedRadius?: number; // meters
 };
 
 export type UsageRecord = {

@@ -58,7 +58,13 @@ export default async function AttendancePage() {
                 <div style={{ width: '80px' }}></div>
             </header>
 
-            <AttendanceClient isWorking={isWorking} todayDate={todayDate} />
+            <AttendanceClient
+                isWorking={isWorking}
+                todayDate={todayDate}
+                workLat={user.workLat}
+                workLng={user.workLng}
+                allowedRadius={user.allowedRadius}
+            />
 
             <div className={styles.recordSection}>
                 <h2 className={styles.sectionTitle}>이번 주 근무 기록</h2>

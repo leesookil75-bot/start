@@ -1,25 +1,91 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import styles from './attendance.module.css';
 import { checkInAction, checkOutAction, initializeDB } from '../actions';
 
 interface AttendanceClientProps {
     isWorking: boolean;
     todayDate: string;
+    workLat?: number;
+    workLng?: number;
+    allowedRadius?: number;
 }
 
-export default function AttendanceClient({ isWorking: initialIsWorking, todayDate }: AttendanceClientProps) {
+export default function AttendanceClient({ isWorking: initialIsWorking, todayDate, workLat, workLng, allowedRadius = 100 }: AttendanceClientProps) {
     const [isPending, startTransition] = useTransition();
     const [message, setMessage] = useState<string | null>(null);
+    const [locationStatus, setLocationStatus] = useState<'checking' | 'allowed' | 'denied' | 'error'>('checking');
+    const [distance, setDistance] = useState<number | null>(null);
+
+    useEffect(() => {
+        // If no work location is set, we allow attendance
+        if (!workLat || !workLng) {
+            setLocationStatus('allowed');
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            setMessage('이 브라우저는 위치 정보를 지원하지 않습니다.');
+            setLocationStatus('error');
+            return;
+        }
+
+        const checkLocation = () => {
+            setLocationStatus('checking');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    const dist = getDistanceFromLatLonInM(workLat, workLng, currentLat, currentLng);
+
+                    setDistance(Math.round(dist));
+
+                    if (dist <= (allowedRadius || 100)) {
+                        setLocationStatus('allowed');
+                        setMessage(null); // Clear any previous error
+                    } else {
+                        setLocationStatus('denied');
+                        setMessage(`근무지에서 너무 멉니다. (거리: ${Math.round(dist)}m, 허용: ${allowedRadius}m)`);
+                    }
+                },
+                (error) => {
+                    console.error(error);
+                    setLocationStatus('error');
+                    setMessage('위치 정보를 가져올 수 없습니다. 위치 권한을 허용해주세요.');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        };
+
+        checkLocation();
+        // Optional: Watch position or interval? For now, check on mount.
+        // User might move, so adding a "Retry Location" button might be good or auto-refresh.
+    }, [workLat, workLng, allowedRadius]);
+
 
     const handleAction = async (action: 'checkIn' | 'checkOut') => {
+        if (locationStatus !== 'allowed' && (workLat && workLng)) {
+            // Double check? Or rely on state.
+            // If checking, blocking.
+            if (locationStatus === 'checking') {
+                setMessage('위치 확인 중입니다...');
+                return;
+            }
+            if (locationStatus === 'denied') {
+                setMessage(`근무지 반경 내에서만 가능합니다. (현재 거리: ${distance}m)`);
+                return;
+            }
+            if (locationStatus === 'error') {
+                setMessage('위치 정보를 확인할 수 없어 출퇴근을 기록할 수 없습니다.');
+                return;
+            }
+        }
+
         setMessage(null);
         startTransition(async () => {
             const result = action === 'checkIn' ? await checkInAction() : await checkOutAction();
-            if (result.success) {
-                // Success
-            } else {
+            if (!result.success) {
                 setMessage(result.error || '작업 실패');
             }
         });
@@ -37,6 +103,7 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
     };
 
     const showFixButton = message && (message.includes('relation') || message.includes('does not exist') || message.includes('table'));
+    const isLocationRestricted = (workLat !== undefined && workLng !== undefined) && locationStatus !== 'allowed';
 
     return (
         <>
@@ -48,13 +115,24 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
                 <div className={styles.timeDisplay}>
                     {todayDate}
                 </div>
+                {distance !== null && locationStatus === 'denied' && (
+                    <div style={{ fontSize: '0.8rem', color: 'red', marginTop: '0.5rem' }}>
+                        🚫 근무지 이탈 ({distance}m)
+                    </div>
+                )}
+                {distance !== null && locationStatus === 'allowed' && workLat && (
+                    <div style={{ fontSize: '0.8rem', color: 'green', marginTop: '0.5rem' }}>
+                        ✅ 근무지 범위 내 ({distance}m)
+                    </div>
+                )}
             </div>
 
             <div className={styles.actionButtons}>
                 <button
                     onClick={() => handleAction('checkIn')}
                     className={`${styles.actionBtn} ${styles.checkInBtn}`}
-                    disabled={initialIsWorking || isPending}
+                    disabled={initialIsWorking || isPending || isLocationRestricted}
+                    style={isLocationRestricted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                 >
                     <span className={styles.btnIcon}>☀️</span>
                     <span className={styles.btnLabel}>출근하기</span>
@@ -62,7 +140,8 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
                 <button
                     onClick={() => handleAction('checkOut')}
                     className={`${styles.actionBtn} ${styles.checkOutBtn}`}
-                    disabled={!initialIsWorking || isPending}
+                    disabled={!initialIsWorking || isPending || isLocationRestricted}
+                    style={isLocationRestricted ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                 >
                     <span className={styles.btnIcon}>🌙</span>
                     <span className={styles.btnLabel}>퇴근하기</span>
@@ -92,4 +171,22 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
             )}
         </>
     );
+}
+
+function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        ;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d * 1000; // Distance in m
+}
+
+function deg2rad(deg: number) {
+    return deg * (Math.PI / 180);
 }

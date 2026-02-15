@@ -452,6 +452,10 @@ export async function initializeDB() {
             WHERE password IS NULL;
         `;
 
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS work_lat DOUBLE PRECISION;`;
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS work_lng DOUBLE PRECISION;`;
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_radius INTEGER DEFAULT 100;`;
+
         await sql`
             CREATE TABLE IF NOT EXISTS usage_records (
                 id UUID PRIMARY KEY,
