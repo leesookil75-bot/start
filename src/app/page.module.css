@@ -15,7 +15,7 @@
 .main {
   background: radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.15), transparent 40%),
     radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.1), transparent 40%);
-  padding: 1.5rem;
+  padding: 0.75rem;
   align-items: center;
   justify-content: center;
 }
@@ -100,7 +100,7 @@
 .card {
   width: 100%;
   max-width: 480px;
-  padding: 1.25rem;
+  padding: 1rem;
   border-radius: 24px;
   background: rgba(30, 30, 35, 0.6);
   backdrop-filter: blur(12px);
@@ -132,7 +132,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 0.5rem;
+  padding: 0.5rem;
   /* Reduced padding */
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
