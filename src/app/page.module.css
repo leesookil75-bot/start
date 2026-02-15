@@ -140,7 +140,8 @@
   transition: all 0.2s ease;
   flex-wrap: nowrap;
   /* Prevent wrapping */
-  gap: 0.5rem;
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .row:hover {
@@ -152,22 +153,21 @@
 .bagInfo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
   flex: 1;
   min-width: 0;
   /* Allow shrinking */
 }
 
 .bagIcon {
-  width: 40px;
-  /* Smaller icon on mobile */
-  height: 40px;
-  border-radius: 10px;
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-weight: 800;
+  font-size: 1.5rem;
   background: #333;
   color: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -202,13 +202,13 @@
 }
 
 .controlBtn {
-  width: 32px;
-  height: 32px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -237,7 +237,7 @@
 }
 
 .countValue {
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   font-weight: 700;
   min-width: 2ch;
   text-align: center;
@@ -261,7 +261,9 @@
 
 .submitButton {
   width: 100%;
-  padding: 1rem;
+  padding: 1.25rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   border: none;
   border-radius: 16px;
   background: linear-gradient(135deg, #3b82f6, #2563eb);

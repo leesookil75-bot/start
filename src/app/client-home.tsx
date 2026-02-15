@@ -193,13 +193,12 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                         {/* Slide 1: Usage Input */}
                         <div className={styles.slide}>
                             <div className={styles.card}>
-                                <h1 className={styles.title}>오늘의 배출량 입력</h1>
+                                <h1 className={styles.title}>배출량 입력</h1>
 
                                 <div className={styles.inputRows}>
                                     <div className={`${styles.row} ${styles.row50}`}>
                                         <div className={styles.bagInfo}>
                                             <div className={styles.bagIcon}>50L</div>
-                                            <span className={styles.bagLabel}>일반 쓰레기</span>
                                         </div>
                                         <div className={styles.controls}>
                                             <button className={styles.controlBtn} onClick={() => handleDelta(50, -1)} disabled={current50 <= 0 || isPending}>−</button>
@@ -212,7 +211,6 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                                     <div className={`${styles.row} ${styles.row75}`}>
                                         <div className={styles.bagInfo}>
                                             <div className={styles.bagIcon}>75L</div>
-                                            <span className={styles.bagLabel}>대형 쓰레기</span>
                                         </div>
                                         <div className={styles.controls}>
                                             <button className={styles.controlBtn} onClick={() => handleDelta(75, -1)} disabled={current75 <= 0 || isPending}>−</button>
@@ -229,7 +227,7 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                                     onClick={handleSubmit}
                                     disabled={isPending || !hasChanges}
                                 >
-                                    {isPending ? '전송 중...' : '오늘 배출량 전송'}
+                                    {isPending ? '전송 중...' : '전송'}
                                 </button>
                             </div>
                         </div>
