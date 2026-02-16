@@ -20,15 +20,23 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #aaa;
+    color: #fff;
     text-decoration: none;
+    font-weight: 600;
     font-size: 1rem;
-    padding: 0.5rem;
-    transition: color 0.2s;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 99px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .backLink:hover {
-    color: #fff;
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateX(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .title {

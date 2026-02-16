@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getMyAttendanceAction, getCurrentUser } from '../actions';
 import { redirect } from 'next/navigation';
 import AttendanceClient from './attendance-client';
+import { ArrowLeftIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,8 @@ export default async function AttendancePage() {
         <div className={styles.container}>
             <header className={styles.header}>
                 <Link href="/" className={styles.backLink}>
-                    <span>&larr;</span> 홈으로
+                    <ArrowLeftIcon />
+                    <span>홈으로</span>
                 </Link>
                 <h1 className={styles.title}>출퇴근 기록</h1>
                 <div style={{ width: '80px' }}></div>
