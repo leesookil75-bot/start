@@ -1,6 +1,7 @@
 import { getNotices } from '@/lib/data';
 import Link from 'next/link';
 import styles from './notices.module.css';
+import { HomeIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,8 @@ export default async function NoticesPage() {
         <div className={styles.container}>
             <header className={styles.header}>
                 <h1 className={styles.title}>공지사항</h1>
-                <Link href="/" className={styles.backLink}>
-                    홈으로
+                <Link href="/" className={styles.backLink} aria-label="홈으로">
+                    <HomeIcon />
                 </Link>
             </header>
 

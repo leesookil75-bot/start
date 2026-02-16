@@ -21,12 +21,26 @@
 }
 
 .backLink {
-    color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
     text-decoration: none;
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0;
+}
+
+.backLink:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .noticeList {
@@ -86,6 +100,7 @@
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
 }
+
 /* Desktop White Theme Overrides */
 @media (min-width: 768px) {
     .container {
@@ -95,19 +110,22 @@
     .card {
         background: #ffffff;
         border: 1px solid #e5e7eb;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
 
     .cardTitle {
-        color: #111827; /* Gray-900 */
+        color: #111827;
+        /* Gray-900 */
     }
 
     .date {
-        color: #6b7280; /* Gray-500 */
+        color: #6b7280;
+        /* Gray-500 */
     }
 
     .cardBody {
-        color: #374151; /* Gray-700 */
+        color: #374151;
+        /* Gray-700 */
     }
 
     .empty {
@@ -115,18 +133,18 @@
         color: #6b7280;
         border: 1px solid #e5e7eb;
     }
-    
+
     .backLink {
         background: #f3f4f6;
         color: #4b5563;
         border: 1px solid #e5e7eb;
     }
-    
+
     .backLink:hover {
         background: #e5e7eb;
         color: #111827;
     }
-    
+
     .title {
         color: #111827;
     }
