@@ -140,7 +140,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         onClick={() => setActiveIndex(1)}
                         className={`${styles.sidebarNavItem} ${activeIndex === 1 ? styles.sidebarNavActive : ''}`}
                     >
-                        📊 내 통계
+                        📊 배출량 통계
                     </button>
                     <div className={styles.sidebarDivider} />
                     <Link href="/attendance" className={styles.sidebarNavItem}>
@@ -201,7 +201,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
                         onClick={() => setActiveIndex(1)}
                     >
-                        내 통계
+                        배출량 통계
                     </div>
                 </div>
 
