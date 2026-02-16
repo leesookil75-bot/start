@@ -600,7 +600,7 @@ export async function searchAddressAction(query: string): Promise<{ success: boo
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`, {
             headers: {
                 'User-Agent': 'CleanTrackApp/1.0',
-                'Referer': 'https://clean-track.vercel.app'
+                'Referer': 'https://start-rho-azure.vercel.app'
             }
         });
 
