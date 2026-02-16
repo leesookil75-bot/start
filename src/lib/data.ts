@@ -326,7 +326,8 @@ export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 
                 work_address = ${updates.workAddress ?? user.work_address},
                 work_lat = ${updates.workLat ?? user.work_lat},
                 work_lng = ${updates.workLng ?? user.work_lng},
-                allowed_radius = ${updates.allowedRadius ?? user.allowed_radius}
+                allowed_radius = ${updates.allowedRadius ?? user.allowed_radius},
+                workplace_id = ${updates.workplaceId ?? user.workplace_id}
             WHERE id = ${id}
         `;
     return;
