@@ -234,18 +234,26 @@ function AddressSearch({ address, lat, lng, onSelect }: { address: string, lat: 
     const [searching, setSearching] = useState(false);
 
     const handleSearch = async () => {
-        if (!query) return;
+        if (!query) {
+            alert('검색어를 입력해주세요.');
+            return;
+        }
         setSearching(true);
         try {
             // Use Server Action here
             const result = await searchAddressAction(query);
-            if (result.success && result.data) {
-                setResults(result.data);
+            if (result.success) {
+                if (result.data && result.data.length > 0) {
+                    setResults(result.data);
+                } else {
+                    alert('검색 결과가 없습니다.');
+                    setResults([]);
+                }
             } else {
-                alert('주소 검색 실패: ' + (result.error || 'Unknown error'));
+                alert('주소 검색 실패 (Server): ' + (result.error || 'Unknown error'));
             }
-        } catch (e) {
-            alert('주소 검색 중 오류가 발생했습니다.');
+        } catch (e: any) {
+            alert('주소 검색 에러 (Client): ' + e.message);
         } finally {
             setSearching(false);
         }

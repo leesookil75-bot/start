@@ -596,6 +596,8 @@ export async function deleteWorkplaceAction(id: string): Promise<{ success: bool
 export async function searchAddressAction(query: string): Promise<{ success: boolean; data?: any[]; error?: string }> {
     if (!query) return { success: false, error: 'Query is empty' };
 
+
+    console.log('Searching address:', query);
     try {
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`, {
             headers: {
@@ -605,10 +607,12 @@ export async function searchAddressAction(query: string): Promise<{ success: boo
         });
 
         if (!response.ok) {
+            console.error('Nominatim API error:', response.statusText);
             throw new Error(`Nominatim API failed: ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('Nominatim response length:', data.length);
         return { success: true, data };
     } catch (error: any) {
         console.error('Address Search Error:', error);
