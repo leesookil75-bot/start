@@ -71,7 +71,10 @@ import { useMapEvents } from 'react-leaflet';
 function MapEvents({ onClick }: { onClick?: (lat: number, lng: number) => void }) {
     useMapEvents({
         click(e) {
-            if (onClick) onClick(e.latlng.lat, e.latlng.lng);
+            if (onClick) {
+                // Leaflet returns latlng object. Ensure we pass lat, lng numbers.
+                onClick(e.latlng.lat, e.latlng.lng);
+            }
         },
     });
     return null;

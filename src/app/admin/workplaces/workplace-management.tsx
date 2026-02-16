@@ -351,6 +351,10 @@ function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address:
                         zoom={16}
                         markers={[{ lat, lng, popup: '근무지 위치', color: 'red' }]}
                         circle={{ lat, lng, radius: radius, color: 'red' }}
+                        onMapClick={(clickedLat, clickedLng) => {
+                            // User can fine-tune location by clicking map
+                            onSelect(address, clickedLat, clickedLng);
+                        }}
                         height="300px"
                     />
                     <div style={{ padding: '0.5rem', background: '#f9fafb', fontSize: '0.8rem', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
