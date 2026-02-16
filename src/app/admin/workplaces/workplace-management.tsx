@@ -296,39 +296,46 @@ function AddressSearch({ address, lat, lng, onSelect }: { address: string, lat: 
             </div>
 
             {results.length > 0 && (
-                <ul style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '0.5rem 0 0 0',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    background: '#fff',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}>
-                    {results.map((r, i) => (
-                        <li
-                            key={i}
-                            onClick={() => {
-                                setQuery(r.display_name);
-                                onSelect(r.display_name, parseFloat(r.lat), parseFloat(r.lon));
-                                setResults([]);
-                            }}
-                            style={{
-                                padding: '0.75rem',
-                                borderBottom: i === results.length - 1 ? 'none' : '1px solid #f3f4f6',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                color: '#374151'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.background = '#f9fafb'}
-                            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                        >
-                            {r.display_name}
-                        </li>
-                    ))}
-                </ul>
+                <div style={{ marginTop: '0.5rem' }}>
+                    <p style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 600, marginBottom: '0.25rem' }}>
+                        ⬇️ 검색 결과 중 하나를 클릭하여 선택해주세요:
+                    </p>
+                    <ul style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        background: '#fff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        {results.map((r, i) => (
+                            <li
+                                key={i}
+                                onClick={() => {
+                                    setQuery(r.display_name);
+                                    onSelect(r.display_name, parseFloat(r.lat), parseFloat(r.lon));
+                                    setResults([]);
+                                    setSearching(false); // Clear searching state
+                                }}
+                                style={{
+                                    padding: '0.75rem',
+                                    borderBottom: i === results.length - 1 ? 'none' : '1px solid #f3f4f6',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    color: '#374151',
+                                    transition: 'background-color 0.2s'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.background = '#eff6ff'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                                <span style={{ fontWeight: 'bold', color: '#111' }}>[선택]</span> {r.display_name}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>
