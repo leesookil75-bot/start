@@ -312,7 +312,12 @@ function AddressSearch({ initialAddress, initialLat, initialLng }: { initialAddr
         if (!address) return;
         setSearching(true);
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`, {
+                headers: {
+                    'Referer': 'https://clean-track.vercel.app', // Required by Nominatim usage policy
+                    'User-Agent': 'CleanTrackApp/1.0'
+                }
+            });
             const data = await response.json();
             setResults(data);
         } catch (e) {
