@@ -27,6 +27,27 @@ export default function MapClient({ user }: MapClientProps) {
     const [errorMsg, setErrorMsg] = useState('');
     const [isPending, startTransition] = useTransition();
 
+    // Haversine formula to calculate distance in meters
+    const getDistanceFromLatLonInM = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371e3; // Radius of the earth in m
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in m
+        return d;
+    };
+
+    const deg2rad = (deg: number) => {
+        return deg * (Math.PI / 180);
+    };
+
+    const [distance, setDistance] = useState<number | null>(null);
+    const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
+
     useEffect(() => {
         if (!navigator.geolocation) {
             setStatus('ERROR');
@@ -38,10 +59,30 @@ export default function MapClient({ user }: MapClientProps) {
             (position) => {
                 const { latitude, longitude } = position.coords;
                 setUserLoc([latitude, longitude]);
-                setCenter([latitude, longitude]); // Auto-pan to user? Or maybe just once? 
-                // Let's pan to user initially or if they move significantly?
-                // For now, simple keeping center on user is fine for "Check-in confirmation"
+                setCenter([latitude, longitude]);
                 setStatus('READY');
+
+                // Calculate distance if workplace location exists
+                if (user.workLat && user.workLng) {
+                    const dist = getDistanceFromLatLonInM(latitude, longitude, user.workLat, user.workLng);
+                    setDistance(dist);
+
+                    const radius = user.allowedRadius || 50; // Default to 50m if not set
+                    setIsWithinRadius(dist <= radius);
+                } else {
+                    // If no workplace set, allow? Or deny? 
+                    // Prompt implies existing workplace radius, so maybe fail if no workplace?
+                    // Let's assume valid if no workplace is set (legacy) or fail. 
+                    // "Check-in/out buttons should only work when within radius" implies radius exists.
+                    // But if user has no workplace assigned, they might be free roaming?
+                    // Let's assume strict checks: Fail if no workplace.
+                    // Actually, let's keep it safe: If no workplace defined, maybe we can't check radius.
+                    // But let's assume we allow check-in if no workplace is defined (fallback), 
+                    // OR better: Start with Strict if workplace exists.
+                    if (!user.workLat) {
+                        setIsWithinRadius(true); // No restriction if no workplace
+                    }
+                }
             },
             (err) => {
                 console.error(err);
@@ -54,9 +95,14 @@ export default function MapClient({ user }: MapClientProps) {
         );
 
         return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
+    }, [user.workLat, user.workLng, user.allowedRadius]);
 
     const handleConfirm = () => {
+        if (!isWithinRadius && user.workLat) {
+            alert('근무지 반경을 벗어났습니다. 근무지 근처에서 다시 시도해주세요.');
+            return;
+        }
+
         startTransition(async () => {
             const result = mode === 'CHECK_IN'
                 ? await checkInAction()
@@ -119,6 +165,28 @@ export default function MapClient({ user }: MapClientProps) {
                     circle={circle}
                     height="100%"
                 />
+
+                {/* Distance Info Overlay */}
+                {distance !== null && user.workLat && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(0,0,0,0.8)',
+                        color: isWithinRadius ? '#4ade80' : '#f87171',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        fontWeight: 'bold',
+                        zIndex: 1000,
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                    }}>
+                        근무지와의 거리: {Math.round(distance)}m
+                        {isWithinRadius ? ' (가능)' : ' (불가)'}
+                    </div>
+                )}
             </div>
 
             {status === 'ERROR' && (
@@ -130,21 +198,23 @@ export default function MapClient({ user }: MapClientProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <button
                     onClick={handleConfirm}
-                    disabled={status !== 'READY' || isPending}
+                    disabled={status !== 'READY' || isPending || (!isWithinRadius && !!user.workLat)}
                     style={{
                         padding: '1rem',
                         fontSize: '1.1rem',
                         fontWeight: 'bold',
-                        background: (status === 'READY' && !isPending) ? (mode === 'CHECK_IN' ? '#22c55e' : '#f59e0b') : '#4b5563',
-                        color: 'white',
+                        background: (status === 'READY' && !isPending && (isWithinRadius || !user.workLat))
+                            ? (mode === 'CHECK_IN' ? '#22c55e' : '#f59e0b')
+                            : '#4b5563',
+                        color: (status === 'READY' && !isPending && (isWithinRadius || !user.workLat)) ? 'white' : '#9ca3af',
                         border: 'none',
                         borderRadius: '12px',
-                        cursor: (status === 'READY' && !isPending) ? 'pointer' : 'not-allowed',
-                        opacity: (status === 'READY' && !isPending) ? 1 : 0.7,
+                        cursor: (status === 'READY' && !isPending && (isWithinRadius || !user.workLat)) ? 'pointer' : 'not-allowed',
+                        opacity: (status === 'READY' && !isPending && (isWithinRadius || !user.workLat)) ? 1 : 0.7,
                         transition: 'background 0.2s'
                     }}
                 >
-                    {isPending ? '처리 중...' : (mode === 'CHECK_IN' ? '현재 위치에서 출근하기' : '현재 위치에서 퇴근하기')}
+                    {isPending ? '처리 중...' : (!isWithinRadius && !!user.workLat ? '근무지 반경을 벗어났습니다' : (mode === 'CHECK_IN' ? '현재 위치에서 출근하기' : '현재 위치에서 퇴근하기'))}
                 </button>
 
                 <button
