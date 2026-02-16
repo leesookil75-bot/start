@@ -52,6 +52,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                 >
                     🕒 출퇴근 기록
                 </Link>
+                <Link
+                    href="/admin/workplaces"
+                    className={`${styles.sidebarNavItem} ${isActive('/admin/workplaces') ? styles.sidebarNavActive : ''}`}
+                >
+                    🏢 근무지 관리
+                </Link>
 
                 <div className={styles.sidebarDivider} />
 

@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react';
 import styles from './user-management.module.css';
 import { createUser, deleteUserAction, resetUserPassword, updateUserAction } from '../../actions';
 
+import { Workplace } from '@/lib/data';
+
 type User = {
     id: string;
     phoneNumber: string;
@@ -15,18 +17,14 @@ type User = {
     workLat?: number;
     workLng?: number;
     allowedRadius?: number;
+    workplaceId?: string; // Add workplaceId to User type locally
 };
 
-export default function UserManagement({ initialUsers }: { initialUsers: User[] }) {
+export default function UserManagement({ initialUsers, workplaces }: { initialUsers: User[], workplaces: Workplace[] }) {
     // Note: For a real app, we might want to use optimistic updates or re-fetch, 
-    // but since we revalidatePath in actions, the parent server component refreshes data on navigation/refresh.
-    // Actually, for instant feedback, we rely on the router refresh or just passing new props.
-    // However, since this is a client component receiving props from a server component, 
-    // updating the data requires a refresh of the server component.
-    // Server Actions + router.refresh() or specialized hooks are common.
-    // Here, we'll keep it simple and trust the revalidatePath to update the page if we trigger a refresh or let Next.js handle it.
+    // ... comments ...
 
-    const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner' as const });
+    const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner' as const, workplaceId: '' });
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
@@ -35,16 +33,20 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
         e.preventDefault();
         setError('');
         startTransition(async () => {
-            const result = await createUser(newUser);
+            // Filter out empty workplaceId
+            const submission = { ...newUser };
+            if (submission.workplaceId === '') delete (submission as any).workplaceId;
+
+            const result = await createUser(submission);
             if (result.success) {
-                setNewUser({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner' });
-                // Optional: Trigger a router refresh if needed, but revalidatePath usually handles it on next render
+                setNewUser({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner', workplaceId: '' });
             } else {
                 setError(result.error || 'Failed to add user');
             }
         });
     };
 
+    // ... handleDelete ... (keep as is)
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this user?')) return;
         startTransition(async () => {
@@ -90,6 +92,27 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                             placeholder="A동 1층"
                         />
                     </div>
+
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>근무지 선택 (선택 사항)</label>
+                        <select
+                            className={styles.input}
+                            value={newUser.workplaceId}
+                            onChange={e => setNewUser({ ...newUser, workplaceId: e.target.value })}
+                            style={{ background: '#333', color: 'white', border: '1px solid #444' }}
+                        >
+                            <option value="">- 근무지 미지정 (또는 개별 설정) -</option>
+                            {workplaces.map(wp => (
+                                <option key={wp.id} value={wp.id}>
+                                    {wp.name} ({wp.address})
+                                </option>
+                            ))}
+                        </select>
+                        <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.3rem' }}>
+                            * 근무지를 선택하면 해당 위치로 출퇴근 지역이 설정됩니다.
+                        </p>
+                    </div>
+
                     <button type="submit" className={styles.addButton} disabled={isPending}>
                         {isPending ? '추가 중...' : '사용자 추가'}
                     </button>
@@ -98,6 +121,7 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
             </div>
 
             <div className={styles.section}>
+                {/* ... existing table code ... */}
                 <h2 className={styles.sectionTitle}>등록된 사용자</h2>
                 <div className={styles.tableWrapper}>
                     <table className={styles.table}>
@@ -107,72 +131,78 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
                                 <th>전화번호</th>
                                 <th>담당 구역</th>
                                 <th>역할</th>
+                                <th>근무지</th>
                                 <th>관리</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {initialUsers.map(user => (
-                                <tr key={user.id}>
-                                    <td>{user.name}</td>
-                                    <td>{user.phoneNumber}</td>
-                                    <td>{user.cleaningArea}</td>
-                                    <td>
-                                        <span style={{
-                                            padding: '0.2rem 0.5rem',
-                                            borderRadius: '4px',
-                                            background: user.role === 'admin' ? '#7c4dff' : '#444',
-                                            fontSize: '0.8rem',
-                                            color: 'white'
-                                        }}>
-                                            {user.role === 'admin' ? '관리자' : '청소부'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button
-                                                className={styles.resetButton}
-                                                onClick={() => setEditingUser(user)}
-                                                style={{ background: '#2196F3', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem' }}
-                                            >
-                                                수정
-                                            </button>
-                                            {user.role !== 'admin' && (
-                                                <>
-                                                    <button
-                                                        className={styles.resetButton}
-                                                        onClick={() => {
-                                                            if (confirm(`비밀번호를 초기화하시겠습니까?\n(${user.phoneNumber.slice(-4)})`)) {
-                                                                startTransition(async () => {
-                                                                    const result = await resetUserPassword(user.id);
-                                                                    if (result.success) {
-                                                                        alert('비밀번호가 초기화되었습니다.');
-                                                                    } else {
-                                                                        setError(result.error || 'Failed to reset password');
-                                                                    }
-                                                                });
-                                                            }
-                                                        }}
-                                                        disabled={isPending}
-                                                        title="비밀번호를 전화번호 뒤 4자리로 초기화"
-                                                    >
-                                                        비번초기화
-                                                    </button>
-                                                    <button
-                                                        className={styles.deleteButton}
-                                                        onClick={() => handleDelete(user.id)}
-                                                        disabled={isPending}
-                                                    >
-                                                        삭제
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                            {initialUsers.map(user => {
+                                const userWorkplace = workplaces.find(wp => wp.id === user.workplaceId);
+                                return (
+                                    <tr key={user.id}>
+                                        <td>{user.name}</td>
+                                        <td>{user.phoneNumber}</td>
+                                        <td>{user.cleaningArea}</td>
+                                        <td>
+                                            <span style={{
+                                                padding: '0.2rem 0.5rem',
+                                                borderRadius: '4px',
+                                                background: user.role === 'admin' ? '#7c4dff' : '#444',
+                                                fontSize: '0.8rem',
+                                                color: 'white'
+                                            }}>
+                                                {user.role === 'admin' ? '관리자' : '청소부'}
+                                            </span>
+                                        </td>
+                                        <td>{userWorkplace ? userWorkplace.name : (user.workAddress ? '개별 설정' : '-')}</td>
+                                        <td>
+                                            {/* ... buttons ... */}
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button
+                                                    className={styles.resetButton}
+                                                    onClick={() => setEditingUser(user)}
+                                                    style={{ background: '#2196F3', color: 'white', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem' }}
+                                                >
+                                                    수정
+                                                </button>
+                                                {user.role !== 'admin' && (
+                                                    <>
+                                                        <button
+                                                            className={styles.resetButton}
+                                                            onClick={() => {
+                                                                if (confirm(`비밀번호를 초기화하시겠습니까?\n(${user.phoneNumber.slice(-4)})`)) {
+                                                                    startTransition(async () => {
+                                                                        const result = await resetUserPassword(user.id);
+                                                                        if (result.success) {
+                                                                            alert('비밀번호가 초기화되었습니다.');
+                                                                        } else {
+                                                                            setError(result.error || 'Failed to reset password');
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }}
+                                                            disabled={isPending}
+                                                            title="비밀번호를 전화번호 뒤 4자리로 초기화"
+                                                        >
+                                                            비번초기화
+                                                        </button>
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={() => handleDelete(user.id)}
+                                                            disabled={isPending}
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                             {initialUsers.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} style={{ textAlign: 'center', opacity: 0.5 }}>등록된 사용자가 없습니다.</td>
+                                    <td colSpan={6} style={{ textAlign: 'center', opacity: 0.5 }}>등록된 사용자가 없습니다.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -181,122 +211,176 @@ export default function UserManagement({ initialUsers }: { initialUsers: User[] 
             </div>
 
             {editingUser && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 1000
+                <EditModal
+                    user={editingUser}
+                    workplaces={workplaces}
+                    onClose={() => setEditingUser(null)}
+                    onSave={async (id, updates) => {
+                        startTransition(async () => {
+                            const result = await updateUserAction(id, updates);
+                            if (result.success) {
+                                setEditingUser(null);
+                            } else {
+                                setError(result.error || 'Failed to update user');
+                            }
+                        });
+                    }}
+                    isPending={isPending}
+                />
+            )}
+        </div>
+    );
+}
+
+function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: User, workplaces: Workplace[], onClose: () => void, onSave: (id: string, updates: any) => void, isPending: boolean }) {
+    const [selectedWorkplaceId, setSelectedWorkplaceId] = useState(user.workplaceId || '');
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000
+        }}>
+            <div style={{
+                background: '#1a1a1a', padding: '2rem', borderRadius: '8px',
+                width: '90%', maxWidth: '400px', border: '1px solid #333',
+                maxHeight: '90vh', overflowY: 'auto'
+            }}>
+                <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'white' }}>사용자 정보 수정</h3>
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    // Role is manually handled if needed, or excluded if readonly
+                    const formData = new FormData(e.currentTarget);
+                    const updates: any = {
+                        name: formData.get('name') as string,
+                        phoneNumber: formData.get('phoneNumber') as string,
+                        cleaningArea: formData.get('cleaningArea') as string,
+                        role: formData.get('role') as 'admin' | 'cleaner',
+                        workplaceId: formData.get('workplaceId') as string || null // Convert empty string to null for DB
+                    };
+
+                    // If workplaceId is NOT selected, we use the manual fields
+                    if (!updates.workplaceId) {
+                        updates.workAddress = formData.get('workAddress') as string;
+                        updates.workLat = formData.get('workLat') ? parseFloat(formData.get('workLat') as string) : undefined;
+                        updates.workLng = formData.get('workLng') ? parseFloat(formData.get('workLng') as string) : undefined;
+                        updates.allowedRadius = formData.get('allowedRadius') ? parseInt(formData.get('allowedRadius') as string) : 100;
+                    } else {
+                        // If workplace IS selected, we might want to clear manual overrides or just leave them as fallback?
+                        // Let's clear them to avoid confusion, or rely on logic that workplaceId takes precedence.
+                        // Logic in data.ts prioritizes workplaceId, but let's send null to be clean?
+                        // Actually data.ts update logic:
+                        // work_address = ${updates.workAddress ?? user.work_address}
+                        // If we don't include workAddress in updates, it keeps old value.
+                        // So we should explicitly set them to null if we want to clear them.
+                        // But maybe we don't need to clear them, just let workplaceId take effect.
+                        // Let's keep it simple: just update workplaceId.
+                    }
+
+                    onSave(user.id, updates);
                 }}>
-                    <div style={{
-                        background: '#1a1a1a', padding: '2rem', borderRadius: '8px',
-                        width: '90%', maxWidth: '400px', border: '1px solid #333'
-                    }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'white' }}>사용자 정보 수정</h3>
-                        <form onSubmit={(e) => {
-                            e.preventDefault();
-                            setError('');
-                            // Role is manually handled if needed, or excluded if readonly
-                            const formData = new FormData(e.currentTarget);
-                            const updates = {
-                                name: formData.get('name') as string,
-                                phoneNumber: formData.get('phoneNumber') as string,
-                                cleaningArea: formData.get('cleaningArea') as string,
-                                role: formData.get('role') as 'admin' | 'cleaner',
-                                workAddress: formData.get('workAddress') as string,
-                                workLat: formData.get('workLat') ? parseFloat(formData.get('workLat') as string) : undefined,
-                                workLng: formData.get('workLng') ? parseFloat(formData.get('workLng') as string) : undefined,
-                                allowedRadius: formData.get('allowedRadius') ? parseInt(formData.get('allowedRadius') as string) : 100
-                            };
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>이름</label>
+                        <input
+                            name="name"
+                            defaultValue={user.name}
+                            className={styles.input}
+                            required
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>전화번호</label>
+                        <input
+                            name="phoneNumber"
+                            defaultValue={user.phoneNumber}
+                            className={styles.input}
+                            required
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>담당 구역</label>
+                        <input
+                            name="cleaningArea"
+                            defaultValue={user.cleaningArea}
+                            className={styles.input}
+                            required
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>역할</label>
+                        <select
+                            name="role"
+                            defaultValue={user.role}
+                            className={styles.input}
+                            style={{ background: '#333', color: 'white', border: '1px solid #444' }}
+                        >
+                            <option value="cleaner">청소부</option>
+                            <option value="admin">관리자</option>
+                        </select>
+                    </div>
 
-                            startTransition(async () => {
-                                const result = await updateUserAction(editingUser.id, updates);
-                                if (result.success) {
-                                    setEditingUser(null);
-                                } else {
-                                    setError(result.error || 'Failed to update user');
-                                }
-                            });
-                        }}>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>이름</label>
-                                <input
-                                    name="name"
-                                    defaultValue={editingUser.name}
-                                    className={styles.input}
-                                    required
-                                />
-                            </div>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>전화번호</label>
-                                <input
-                                    name="phoneNumber"
-                                    defaultValue={editingUser.phoneNumber}
-                                    className={styles.input}
-                                    required
-                                />
-                            </div>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>담당 구역</label>
-                                <input
-                                    name="cleaningArea"
-                                    defaultValue={editingUser.cleaningArea}
-                                    className={styles.input}
-                                    required
-                                />
-                            </div>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>역할</label>
-                                <select
-                                    name="role"
-                                    defaultValue={editingUser.role}
-                                    className={styles.input}
-                                    style={{ background: '#333', color: 'white', border: '1px solid #444' }}
-                                >
-                                    <option value="cleaner">청소부</option>
-                                    <option value="admin">관리자</option>
-                                </select>
-                            </div>
+                    <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
+                    <h4 style={{ margin: '0 0 1rem 0', color: '#ccc' }}>근무지 설정</h4>
 
-                            <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
-                            <h4 style={{ margin: '0 0 1rem 0', color: '#ccc' }}>근무지 설정 (위치 기반 출퇴근)</h4>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>근무지 선택</label>
+                        <select
+                            name="workplaceId"
+                            value={selectedWorkplaceId}
+                            onChange={e => setSelectedWorkplaceId(e.target.value)}
+                            className={styles.input}
+                            style={{ background: '#333', color: 'white', border: '1px solid #444' }}
+                        >
+                            <option value="">- 개별 설정 (아래에서 직접 지정) -</option>
+                            {workplaces.map(wp => (
+                                <option key={wp.id} value={wp.id}>
+                                    {wp.name} ({wp.address})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
+                    {!selectedWorkplaceId && (
+                        <div style={{ border: '1px solid #444', padding: '1rem', borderRadius: '4px', background: '#222' }}>
+                            <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#ccc' }}>
+                                📍 개별 위치 지정
+                            </p>
                             <AddressSearch
-                                initialAddress={editingUser.workAddress}
-                                initialLat={editingUser.workLat}
-                                initialLng={editingUser.workLng}
+                                initialAddress={user.workAddress}
+                                initialLat={user.workLat}
+                                initialLng={user.workLng}
                             />
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>반경 (미터)</label>
                                 <input
                                     name="allowedRadius"
                                     type="number"
-                                    defaultValue={editingUser.allowedRadius || 100}
+                                    defaultValue={user.allowedRadius || 100}
                                     placeholder="기본값: 100"
                                     className={styles.input}
                                 />
                             </div>
+                        </div>
+                    )}
 
-
-
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditingUser(null)}
-                                    style={{ flex: 1, padding: '0.8rem', background: '#444', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    type="submit"
-                                    style={{ flex: 1, padding: '0.8rem', background: 'var(--accent-color)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
-                                    disabled={isPending}
-                                >
-                                    {isPending ? '저장 중...' : '저장'}
-                                </button>
-                            </div>
-                        </form>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            style={{ flex: 1, padding: '0.8rem', background: '#444', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
+                        >
+                            취소
+                        </button>
+                        <button
+                            type="submit"
+                            style={{ flex: 1, padding: '0.8rem', background: 'var(--accent-color)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
+                            disabled={isPending}
+                        >
+                            {isPending ? '저장 중...' : '저장'}
+                        </button>
                     </div>
-                </div>
-            )}
+                </form>
+            </div>
         </div>
     );
 }

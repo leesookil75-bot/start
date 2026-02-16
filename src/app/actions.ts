@@ -499,6 +499,20 @@ export async function initializeDB() {
             );
         `;
 
+        await sql`
+            CREATE TABLE IF NOT EXISTS workplaces (
+                id UUID PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                address VARCHAR(255),
+                lat DOUBLE PRECISION,
+                lng DOUBLE PRECISION,
+                radius INTEGER DEFAULT 100,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS workplace_id UUID REFERENCES workplaces(id);`;
+
 
         await sql`ALTER TABLE notices ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;`;
 
@@ -637,4 +651,64 @@ export async function getAllAttendanceStatusAction() {
     });
 
     return result;
+}
+
+// --- Workplace Actions ---
+import {
+    addWorkplace,
+    getWorkplaces,
+    updateWorkplace,
+    deleteWorkplace as removeWorkplace,
+    Workplace
+} from '@/lib/data';
+
+export async function getWorkplacesAction(): Promise<Workplace[]> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') return [];
+    return await getWorkplaces();
+}
+
+export async function addWorkplaceAction(data: Omit<Workplace, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+    try {
+        await addWorkplace(data);
+        revalidatePath('/admin/workplaces');
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to add workplace' };
+    }
+}
+
+export async function updateWorkplaceAction(id: string, updates: Partial<Workplace>): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+    try {
+        await updateWorkplace(id, updates);
+        revalidatePath('/admin/workplaces');
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to update workplace' };
+    }
+}
+
+export async function deleteWorkplaceAction(id: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+    try {
+        await removeWorkplace(id);
+        revalidatePath('/admin/workplaces');
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to delete workplace' };
+    }
 }

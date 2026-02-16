@@ -11,6 +11,17 @@ export type User = {
     workLat?: number;
     workLng?: number;
     allowedRadius?: number; // meters
+    workplaceId?: string;
+};
+
+export type Workplace = {
+    id: string;
+    name: string;
+    address: string;
+    lat: number;
+    lng: number;
+    radius: number;
+    createdAt: string;
 };
 
 export type UsageRecord = {

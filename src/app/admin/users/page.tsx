@@ -1,4 +1,4 @@
-import { getUsers } from '@/lib/data';
+import { getUsers, getWorkplaces } from '@/lib/data';
 import { getCurrentUser } from '../../actions';
 import { redirect } from 'next/navigation';
 import UserManagement from './user-management';
@@ -14,6 +14,7 @@ export default async function UsersPage() {
     }
 
     const users = await getUsers();
+    const workplaces = await getWorkplaces();
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem' }}>
@@ -24,7 +25,7 @@ export default async function UsersPage() {
                 </Link>
             </header>
 
-            <UserManagement initialUsers={users} />
+            <UserManagement initialUsers={users} workplaces={workplaces} />
         </div>
     );
 }

@@ -1,6 +1,6 @@
 import path from 'path';
-import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord } from './types';
-export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord };
+import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace } from './types';
+export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace };
 
 import { sql } from '@vercel/postgres';
 
@@ -17,6 +17,12 @@ type UserRow = {
   work_lat?: number;
   work_lng?: number;
   allowed_radius?: number;
+  workplace_id?: string;
+  // Joined fields
+  wp_lat?: number;
+  wp_lng?: number;
+  wp_address?: string;
+  wp_radius?: number;
 };
 
 
@@ -47,7 +53,20 @@ async function ensureFile(filePath: string, defaultData: unknown) {
 export async function getUsers(): Promise<User[]> {
   if (isPostgresEnabled()) {
     try {
-      const { rows } = await sql<UserRow>`SELECT * FROM users ORDER BY created_at DESC`;
+      // Join with workplaces to get location if workplace_id is set
+      // Actually, for simplicity and to avoid complex joins if not needed, we can just fetch all and map?
+      // Or better, do a LEFT JOIN.
+      // But to keep it simple with sql template, let's just fetch users and if they have workplace_id, we might need to look it up?
+      // No, `getUsers` should return the effective location. 
+      // Let's do a JOIN.
+
+      const { rows } = await sql<UserRow>`
+        SELECT u.*, w.lat as wp_lat, w.lng as wp_lng, w.address as wp_address, w.radius as wp_radius
+        FROM users u
+        LEFT JOIN workplaces w ON u.workplace_id = w.id
+        ORDER BY u.created_at DESC
+      `;
+
       return rows.map(r => ({
         id: r.id,
         phoneNumber: r.phone_number,
@@ -56,13 +75,14 @@ export async function getUsers(): Promise<User[]> {
         role: r.role as 'admin' | 'cleaner',
         createdAt: r.created_at.toString(),
         password: r.password,
-        workAddress: r.work_address,
-        workLat: r.work_lat,
-        workLng: r.work_lng,
-        allowedRadius: r.allowed_radius
+        // Prioritize workplace settings if valid, otherwise fallback to user specific
+        workAddress: r.workplace_id ? r.wp_address : r.work_address,
+        workLat: r.workplace_id ? r.wp_lat : r.work_lat,
+        workLng: r.workplace_id ? r.wp_lng : r.work_lng,
+        allowedRadius: r.workplace_id ? r.wp_radius : r.allowed_radius,
+        workplaceId: r.workplace_id
       }));
     } catch (error) {
-      // Fallback or error if table doesn't exist?
       console.warn('Postgres error (getUsers):', error);
       return [];
     }
@@ -73,7 +93,25 @@ export async function getUsers(): Promise<User[]> {
   try {
     const fs = (await import('fs/promises')).default;
     const data = await fs.readFile(USERS_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
+    const users: User[] = JSON.parse(data);
+
+    // For file system, we also need to join with workplaces manually
+    const workplaces = await getWorkplaces();
+    return users.map(u => {
+      if (u.workplaceId) {
+        const wp = workplaces.find(w => w.id === u.workplaceId);
+        if (wp) {
+          return {
+            ...u,
+            workAddress: wp.address,
+            workLat: wp.lat,
+            workLng: wp.lng,
+            allowedRadius: wp.radius
+          };
+        }
+      }
+      return u;
+    });
   } catch {
     return [];
   }
@@ -93,8 +131,8 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
       const password = user.password || user.phoneNumber.slice(-4);
 
       await sql`
-        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password)
-        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password})
+        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password, workplace_id, work_address, work_lat, work_lng, allowed_radius)
+        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password}, ${user.workplaceId ?? null}, ${user.workAddress ?? null}, ${user.workLat ?? null}, ${user.workLng ?? null}, ${user.allowedRadius ?? null})
        `;
       // Return constructed user
       return {
@@ -108,7 +146,8 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         workAddress: user.workAddress,
         workLat: user.workLat,
         workLng: user.workLng,
-        allowedRadius: user.allowedRadius
+        allowedRadius: user.allowedRadius,
+        workplaceId: user.workplaceId
       };
     } catch (e) {
       console.error('Database error adding user', e);
@@ -124,9 +163,16 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
     password: user.password || user.phoneNumber.slice(-4)
   };
 
-  users.push(newUser);
+  // We need to write the raw user, not the joined one. 
+  // But getUsers returns joined ones? 
+  // For file system, we read raw file, so we should append to raw list.
+  // Re-read file to be safe
   const fs = (await import('fs/promises')).default;
-  await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
+  const rawData = await fs.readFile(USERS_FILE_PATH, 'utf-8').catch(() => '[]');
+  const rawUsers: User[] = JSON.parse(rawData);
+
+  rawUsers.push(newUser);
+  await fs.writeFile(USERS_FILE_PATH, JSON.stringify(rawUsers, null, 2), 'utf-8');
   return newUser;
 }
 
@@ -136,10 +182,115 @@ export async function deleteUser(userId: string): Promise<void> {
     return;
   }
 
-  const users = await getUsers();
-  const filtered = users.filter(u => u.id !== userId);
   const fs = (await import('fs/promises')).default;
+  const rawData = await fs.readFile(USERS_FILE_PATH, 'utf-8').catch(() => '[]');
+  let rawUsers: User[] = JSON.parse(rawData);
+  const filtered = rawUsers.filter(u => u.id !== userId);
   await fs.writeFile(USERS_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+}
+
+// --- Workplace Management ---
+const WORKPLACES_FILE_PATH = path.join(process.cwd(), 'workplaces.json');
+
+
+
+export async function getWorkplaces(): Promise<Workplace[]> {
+  if (isPostgresEnabled()) {
+    try {
+      const { rows } = await sql`SELECT * FROM workplaces ORDER BY created_at DESC`;
+      return rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        address: r.address,
+        lat: r.lat,
+        lng: r.lng,
+        radius: r.radius,
+        createdAt: r.created_at.toString()
+      }));
+    } catch (e) {
+      console.warn('DB Error getting workplaces:', e);
+      return [];
+    }
+  }
+
+  await ensureFile(WORKPLACES_FILE_PATH, []);
+  try {
+    const fs = (await import('fs/promises')).default;
+    const data = await fs.readFile(WORKPLACES_FILE_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function addWorkplace(data: Omit<Workplace, 'id' | 'createdAt'>): Promise<Workplace> {
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
+            INSERT INTO workplaces (id, name, address, lat, lng, radius, created_at)
+            VALUES (${id}, ${data.name}, ${data.address}, ${data.lat}, ${data.lng}, ${data.radius}, NOW())
+        `;
+    return { ...data, id, createdAt: new Date().toISOString() };
+  }
+
+  const workplaces = await getWorkplaces();
+  const newWorkplace: Workplace = {
+    ...data,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString()
+  };
+  workplaces.push(newWorkplace);
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(WORKPLACES_FILE_PATH, JSON.stringify(workplaces, null, 2), 'utf-8');
+  return newWorkplace;
+}
+
+export async function updateWorkplace(id: string, updates: Partial<Workplace>): Promise<void> {
+  if (isPostgresEnabled()) {
+    const { rows } = await sql`SELECT * FROM workplaces WHERE id = ${id}`;
+    if (rows.length === 0) throw new Error('Workplace not found');
+    const existing = rows[0];
+
+    // Ensure we handle potentially undefined updates correctly or rely on SQL existing value logic
+    const newName = updates.name ?? existing.name;
+    const newAddress = updates.address ?? existing.address;
+    const newLat = updates.lat ?? existing.lat;
+    const newLng = updates.lng ?? existing.lng;
+    const newRadius = updates.radius ?? existing.radius;
+
+    await sql`
+            UPDATE workplaces
+            SET name = ${newName},
+                address = ${newAddress},
+                lat = ${newLat},
+                lng = ${newLng},
+                radius = ${newRadius}
+            WHERE id = ${id}
+        `;
+    return;
+  }
+
+  const workplaces = await getWorkplaces();
+  const index = workplaces.findIndex(w => w.id === id);
+  if (index === -1) throw new Error('Workplace not found');
+
+  workplaces[index] = { ...workplaces[index], ...updates };
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(WORKPLACES_FILE_PATH, JSON.stringify(workplaces, null, 2), 'utf-8');
+}
+
+export async function deleteWorkplace(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE users SET workplace_id = NULL WHERE workplace_id = ${id}`;
+    await sql`DELETE FROM workplaces WHERE id = ${id}`;
+    return;
+  }
+
+  // File system for dev
+  let workplaces = await getWorkplaces();
+  workplaces = workplaces.filter(w => w.id !== id);
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(WORKPLACES_FILE_PATH, JSON.stringify(workplaces, null, 2), 'utf-8');
 }
 
 export async function getUserByPhone(phoneNumber: string): Promise<User | undefined> {
