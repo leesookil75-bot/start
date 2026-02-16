@@ -194,10 +194,12 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                 </div>
 
                 {recentNotice && (
-                    <Link href={`/notices/${recentNotice.id}`} className={styles.noticeBanner}>
-                        <div className={styles.noticeIcon}>📢</div>
-                        <div className={styles.noticeText}>{recentNotice.title}</div>
-                    </Link>
+                    <div className={styles.noticeContainer}>
+                        <Link href={`/notices/${recentNotice.id}`} className={styles.noticeBanner}>
+                            <div className={styles.noticeIcon}>📢</div>
+                            <div className={styles.noticeText}>{recentNotice.title}</div>
+                        </Link>
+                    </div>
                 )}
 
                 {/* Mobile Tabs */}
