@@ -197,7 +197,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                     <div className={styles.noticeContainer}>
                         <Link href={`/notices/${recentNotice.id}`} className={styles.noticeBanner}>
                             <div className={styles.noticeIcon}>📢</div>
-                            <div className={styles.noticeText}>{recentNotice.title}</div>
+                            <div className={styles.noticeText}>
+                                <span className={styles.scrollingText}>{recentNotice.title}   ---   {recentNotice.title}   ---   {recentNotice.title}</span>
+                            </div>
                         </Link>
                     </div>
                 )}
