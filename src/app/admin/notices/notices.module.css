@@ -32,18 +32,22 @@
 }
 
 .section {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
+    background: var(--card-bg, #1a1a1a);
+    border: 1px solid var(--card-border, #333);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 2rem;
     margin-bottom: 2rem;
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .sectionTitle {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     margin-bottom: 1.5rem;
     font-weight: 600;
+    color: #fff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1rem;
 }
 
 .form {
@@ -55,145 +59,202 @@
 .inputGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
-    /* Slightly more space between label and input */
-    margin-bottom: 0.5rem;
-    /* Extra breathing room between groups */
+    gap: 0.5rem;
 }
 
 .label {
     font-size: 0.9rem;
-    color: #aaa;
-    font-weight: 500;
+    color: #e5e7eb;
+    /* Brighter than #aaa */
+    font-weight: 600;
+    margin-bottom: 0.25rem;
 }
 
 .input,
 .textarea {
-    padding: 0.75rem;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: white;
     font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.input:focus,
+.textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .textarea {
-    min-height: 120px;
+    min-height: 150px;
     resize: vertical;
+    line-height: 1.6;
 }
 
 .fileInput {
-    padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.fileInput::file-selector-button {
+    background: #374151;
     color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin-right: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.fileInput::file-selector-button:hover {
+    background: #4b5563;
 }
 
 .preview {
     margin-top: 1rem;
     border-radius: 8px;
     overflow: hidden;
-    max-width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
 }
 
 .preview img {
     max-width: 100%;
-    max-height: 300px;
+    max-height: 400px;
     object-fit: contain;
+    border-radius: 4px;
 }
 
 .submitButton {
     background: #3b82f6;
     color: white;
-    padding: 1rem;
+    padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 8px;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
 }
 
 .submitButton:hover {
     background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(59, 130, 246, 0.3);
+}
+
+.submitButton:active {
+    transform: translateY(0);
 }
 
 .submitButton:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .noticeList {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .noticeItem {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--card-bg, #1a1a1a);
+    border: 1px solid var(--card-border, #333);
     border-radius: 12px;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.noticeItem:hover {
+    border-color: #4b5563;
 }
 
 .noticeHeader {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .noticeTitle {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .noticeDate {
-    font-size: 0.8rem;
-    color: #888;
+    font-size: 0.85rem;
+    color: #9ca3af;
+    display: block;
 }
 
 .noticeContent {
-    color: #ccc;
+    color: #d1d5db;
     line-height: 1.6;
     white-space: pre-wrap;
-    /* Preserve whitespace and newlines */
     word-break: break-word;
-    /* Prevent overflow */
-    letter-spacing: normal;
-    font-family: inherit;
-    /* Use same font as input */
-    line-height: 1.7;
-    /* Slightly more breathing room for paragraphs */
+    font-size: 0.95rem;
+}
+
+.noticeImage {
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .noticeImage img {
     max-width: 100%;
-    max-height: 300px;
+    max-height: 400px;
     border-radius: 8px;
     object-fit: cover;
 }
 
 .deleteButton {
-    align-self: flex-end;
     background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    color: #fca5a5;
     border: 1px solid rgba(239, 68, 68, 0.2);
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
 }
 
 .deleteButton:hover {
     background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fff;
 }
 
 .error {
-    color: #ef4444;
+    color: #fca5a5;
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.2);
     padding: 1rem;
