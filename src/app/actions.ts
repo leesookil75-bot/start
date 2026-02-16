@@ -592,3 +592,26 @@ export async function deleteWorkplaceAction(id: string): Promise<{ success: bool
         return { success: false, error: e.message || 'Failed to delete workplace' };
     }
 }
+
+export async function searchAddressAction(query: string): Promise<{ success: boolean; data?: any[]; error?: string }> {
+    if (!query) return { success: false, error: 'Query is empty' };
+
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`, {
+            headers: {
+                'User-Agent': 'CleanTrackApp/1.0',
+                'Referer': 'https://clean-track.vercel.app'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Nominatim API failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Address Search Error:', error);
+        return { success: false, error: 'Failed to search address' };
+    }
+}
