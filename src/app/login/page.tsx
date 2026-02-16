@@ -94,39 +94,6 @@ export default function LoginPage() {
                 </form>
 
                 {error && <p className={styles.error}>{error}</p>}
-
-                <div style={{ marginTop: '2rem', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                    <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>
-                        시스템 설정이 필요하신가요?
-                    </p>
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            if (!confirm('데이터베이스를 초기화하시겠습니까?')) return;
-                            try {
-                                const { initializeDB } = await import('../actions');
-                                const result = await initializeDB();
-                                if (result.success) {
-                                    alert('✅ 시스템 초기화 성공! 이제 로그인하세요.');
-                                } else {
-                                    alert('❌ 초기화 실패: ' + result.error);
-                                }
-                            } catch (e: any) {
-                                alert('❌ 오류: ' + e.message);
-                            }
-                        }}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#ccc',
-                            textDecoration: 'underline',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        ⚙️ 시스템/DB 초기화 (문제 해결용)
-                    </button>
-                </div>
             </div>
         </div>
     );
