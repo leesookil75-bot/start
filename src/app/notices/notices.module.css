@@ -59,13 +59,25 @@
 
 .cardImage {
     width: 100%;
-    background: #000;
+    background: rgba(0, 0, 0, 0.03);
+    /* Light gray background for contrast */
+    padding: 1rem;
+    /* Container padding */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .cardImage img {
-    width: 100%;
+    max-width: 100%;
     height: auto;
     display: block;
+    border-radius: 8px;
+    /* Rounded corners for the image itself */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Subtle shadow for lift */
+    object-fit: contain;
+    /* Ensure full image is visible */
 }
 
 .content {
