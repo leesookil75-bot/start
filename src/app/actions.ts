@@ -769,3 +769,41 @@ export async function searchAddressAction(query: string): Promise<{ success: boo
         return { success: false, error: 'Failed to search address' };
     }
 }
+// ... existing code ...
+
+export async function getMyDailyAttendanceStatus(): Promise<{ status: 'IDLE' | 'WORKING' | 'DONE'; startTime?: string; endTime?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { status: 'IDLE' }; // Or handle error
+
+    const records = await getAttendanceRecords(user.id);
+    const startOfToday = getStartOfTodayKST();
+
+    const todayRecords = records.filter(r => new Date(r.timestamp) >= startOfToday);
+    todayRecords.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    const checkIns = todayRecords.filter(r => r.type === 'CHECK_IN');
+    const checkOuts = todayRecords.filter(r => r.type === 'CHECK_OUT');
+
+    const firstIn = checkIns.length > 0 ? checkIns[0] : null;
+    const lastOut = checkOuts.length > 0 ? checkOuts[checkOuts.length - 1] : null;
+
+    if (!firstIn) {
+        return { status: 'IDLE' };
+    }
+
+    if (firstIn && !lastOut) {
+        return { status: 'WORKING', startTime: firstIn.timestamp };
+    }
+
+    // If we have both, we need to check if the last OUT is after the last IN.
+    // Actually, simple logic: if last record is OUT, then DONE. If last record is IN, then WORKING.
+    // checking `lastOut` existence is not enough if they checked in again.
+
+    // Let's look at the VERY last record.
+    const lastRecord = todayRecords[todayRecords.length - 1];
+    if (lastRecord.type === 'CHECK_IN') {
+        return { status: 'WORKING', startTime: firstIn.timestamp };
+    } else {
+        return { status: 'DONE', startTime: firstIn.timestamp, endTime: lastRecord.timestamp };
+    }
+}

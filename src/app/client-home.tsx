@@ -1,20 +1,22 @@
 'use client';
 
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import styles from './page.module.css';
 import { BellIcon, KeyIcon, LogOutIcon } from '@/components/icons';
 import { submitUsage } from './actions';
 import MyStatsView from './components/MyStatsView';
 import InstallPrompt from '@/components/InstallPrompt';
-
 import Link from 'next/link';
-
 import { logout } from './actions';
 
 interface ClientHomeProps {
     initialUsage: { count50: number; count75: number };
     stats: any;
-    recentNotice?: any;
+    attendanceStatus: {
+        status: 'IDLE' | 'WORKING' | 'DONE';
+        startTime?: string;
+        endTime?: string;
+    };
     user: {
         name: string;
         cleaningArea: string;
@@ -22,7 +24,7 @@ interface ClientHomeProps {
     };
 }
 
-export default function ClientHome({ initialUsage, stats, recentNotice, user }: ClientHomeProps) {
+export default function ClientHome({ initialUsage, stats, attendanceStatus, user }: ClientHomeProps) {
     // 0 = Usage, 1 = Stats
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -81,6 +83,38 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
 
     const onPointerLeave = () => {
         startX.current = null;
+    };
+
+    // --- Attendance Button Logic ---
+    const renderAttendanceButton = () => {
+        if (attendanceStatus.status === 'IDLE') {
+            return (
+                <Link href="/attendance/map?mode=CHECK_IN" className={styles.attendanceBtn}>
+                    <div className={styles.attendanceIcon}>🕒</div>
+                    <div className={styles.attendanceText}>출근하기</div>
+                </Link>
+            );
+        } else if (attendanceStatus.status === 'WORKING') {
+            return (
+                <Link href="/attendance/map?mode=CHECK_OUT" className={`${styles.attendanceBtn} ${styles.checkOutBtn}`}>
+                    <div className={styles.attendanceIcon}>🏃</div>
+                    <div className={styles.attendanceText}>퇴근하기</div>
+                </Link>
+            );
+        } else {
+            return (
+                <div className={`${styles.attendanceBtn} ${styles.doneBtn}`}>
+                    <div className={styles.attendanceIcon}>✅</div>
+                    <div className={styles.attendanceText}>오늘 근무 완료</div>
+                    {attendanceStatus.startTime && attendanceStatus.endTime && (
+                        <div className={styles.attendanceSubText}>
+                            {new Date(attendanceStatus.startTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} ~
+                            {new Date(attendanceStatus.endTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
     };
 
     return (
@@ -166,20 +200,10 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
                     </div>
                 </div>
 
-                {/* Notice Widget (Mobile & Desktop) */}
-                {recentNotice && (
-                    <div className={styles.noticeContainer}>
-                        <Link href={`/notices/${recentNotice.id}`} style={{ textDecoration: 'none' }}>
-                            <div className={styles.noticeBanner}>
-                                <div className={styles.noticeIcon}>📢</div>
-                                <div className={styles.noticeContent}>
-                                    <h3 className={styles.noticeTitle}>{recentNotice.title}</h3>
-                                </div>
-                                <div className={styles.noticeArrow}>›</div>
-                            </div>
-                        </Link>
-                    </div>
-                )}
+                {/* Attendance Buttons (Replaces Notice Widget) */}
+                <div className={styles.noticeContainer}>
+                    {renderAttendanceButton()}
+                </div>
 
                 <InstallPrompt />
 
@@ -247,4 +271,3 @@ export default function ClientHome({ initialUsage, stats, recentNotice, user }: 
         </div>
     );
 }
-
