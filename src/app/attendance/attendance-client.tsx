@@ -3,6 +3,9 @@
 import { useState, useTransition, useEffect } from 'react';
 import styles from './attendance.module.css';
 import { checkInAction, checkOutAction, initializeDB } from '../actions';
+import dynamic from 'next/dynamic';
+
+const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
 interface AttendanceClientProps {
     isWorking: boolean;
@@ -17,6 +20,7 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
     const [message, setMessage] = useState<string | null>(null);
     const [locationStatus, setLocationStatus] = useState<'checking' | 'allowed' | 'denied' | 'error'>('checking');
     const [distance, setDistance] = useState<number | null>(null);
+    const [myLocation, setMyLocation] = useState<{ lat: number, lng: number } | null>(null);
 
     useEffect(() => {
         // If no work location is set, we allow attendance
@@ -37,6 +41,7 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
                 (position) => {
                     const currentLat = position.coords.latitude;
                     const currentLng = position.coords.longitude;
+                    setMyLocation({ lat: currentLat, lng: currentLng });
                     const dist = getDistanceFromLatLonInM(workLat, workLng, currentLat, currentLng);
 
                     setDistance(Math.round(dist));
@@ -115,17 +120,28 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
                 <div className={styles.timeDisplay}>
                     {todayDate}
                 </div>
-                {distance !== null && locationStatus === 'denied' && (
-                    <div style={{ fontSize: '0.8rem', color: 'red', marginTop: '0.5rem' }}>
-                        🚫 근무지 이탈 ({distance}m)
-                    </div>
-                )}
                 {distance !== null && locationStatus === 'allowed' && workLat && (
                     <div style={{ fontSize: '0.8rem', color: 'green', marginTop: '0.5rem' }}>
                         ✅ 근무지 범위 내 ({distance}m)
                     </div>
                 )}
             </div>
+
+            {/* Map Visualization */}
+            {workLat && workLng && (
+                <div style={{ margin: '1rem 0', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                    <Map
+                        center={myLocation ? [myLocation.lat, myLocation.lng] : [workLat, workLng]}
+                        zoom={17}
+                        markers={[
+                            { lat: workLat, lng: workLng, popup: '근무지', color: 'red' },
+                            ...(myLocation ? [{ lat: myLocation.lat, lng: myLocation.lng, popup: '내 위치', color: 'blue' }] : [])
+                        ]}
+                        circle={{ lat: workLat, lng: workLng, radius: allowedRadius, color: 'red' }}
+                        height="250px"
+                    />
+                </div>
+            )}
 
             <div className={styles.actionButtons}>
                 <button

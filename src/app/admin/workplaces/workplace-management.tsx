@@ -66,6 +66,7 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
                             lat={newWorkplace.lat}
                             lng={newWorkplace.lng}
                             onSelect={(addr, lat, lng) => setNewWorkplace({ ...newWorkplace, address: addr, lat, lng })}
+                            radius={newWorkplace.radius}
                         />
                     </div>
 
@@ -228,7 +229,11 @@ function EditModal({ workplace, onClose, onSave, isPending }: { workplace: Workp
     );
 }
 
-function AddressSearch({ address, lat, lng, onSelect }: { address: string, lat: number, lng: number, onSelect: (addr: string, lat: number, lng: number) => void }) {
+// Dynamic Import for Map
+import dynamic from 'next/dynamic';
+const Map = dynamic(() => import('@/components/Map'), { ssr: false });
+
+function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address: string, lat: number, lng: number, onSelect: (addr: string, lat: number, lng: number) => void, radius?: number }) {
     const [query, setQuery] = useState(address);
     const [results, setResults] = useState<any[]>([]);
     const [searching, setSearching] = useState(false);
@@ -261,8 +266,8 @@ function AddressSearch({ address, lat, lng, onSelect }: { address: string, lat: 
 
     return (
         <div className={styles.inputGroup} style={{ marginBottom: '0.5rem' }}>
-            <label className={styles.label}>주소 검색</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <label className={styles.label}>주소 검색 & 위치 확인</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <input
                     type="text"
                     value={query}
@@ -296,7 +301,7 @@ function AddressSearch({ address, lat, lng, onSelect }: { address: string, lat: 
             </div>
 
             {results.length > 0 && (
-                <div style={{ marginTop: '0.5rem' }}>
+                <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
                     <p style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 600, marginBottom: '0.25rem' }}>
                         ⬇️ 검색 결과 중 하나를 클릭하여 선택해주세요:
                     </p>
@@ -338,10 +343,22 @@ function AddressSearch({ address, lat, lng, onSelect }: { address: string, lat: 
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                <div>위도: {lat || '-'}</div>
-                <div>경도: {lng || '-'}</div>
-            </div>
+            {/* Map Visualization */}
+            {lat !== 0 && lng !== 0 && (
+                <div style={{ marginTop: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                    <Map
+                        center={[lat, lng]}
+                        zoom={16}
+                        markers={[{ lat, lng, popup: '근무지 위치', color: 'red' }]}
+                        circle={{ lat, lng, radius: radius, color: 'red' }}
+                        height="300px"
+                    />
+                    <div style={{ padding: '0.5rem', background: '#f9fafb', fontSize: '0.8rem', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
+                        위치: {lat}, {lng} / 반경: {radius}m
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
