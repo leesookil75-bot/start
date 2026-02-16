@@ -25,10 +25,7 @@ export default async function Home() {
   const notices = await getNotices();
   // Filter out recent notices if they are already dismissed? 
   // For now just pass the latest one.
-  // Actually, user requested to REMOVE the notice banner.
-  // So we don't need to pass recentNotice anymore, OR we keep it for the "Notice" tab but not the banner.
-  // The User said "replace the notice banner". 
-  // I will stop passing `recentNotice` to ClientHome or ClientHome will ignore it.
+  const recentNotice = notices.length > 0 ? notices[0] : null;
   // I'll keep fetching it just in case, but ClientHome will handle the UI change.
 
   return (
@@ -36,6 +33,7 @@ export default async function Home() {
       <ClientHome
         initialUsage={initialUsage}
         stats={stats}
+        recentNotice={recentNotice}
         attendanceStatus={attendanceStatus}
         user={{
           name: user.name,

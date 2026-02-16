@@ -12,6 +12,10 @@ import { logout } from './actions';
 interface ClientHomeProps {
     initialUsage: { count50: number; count75: number };
     stats: any;
+    recentNotice?: {
+        id: string;
+        title: string;
+    } | null;
     attendanceStatus: {
         status: 'IDLE' | 'WORKING' | 'DONE';
         startTime?: string;
@@ -24,7 +28,7 @@ interface ClientHomeProps {
     };
 }
 
-export default function ClientHome({ initialUsage, stats, attendanceStatus, user }: ClientHomeProps) {
+export default function ClientHome({ initialUsage, stats, attendanceStatus, user, recentNotice }: ClientHomeProps) {
     // 0 = Usage, 1 = Stats
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -188,6 +192,13 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                 <div className={styles.noticeContainer}>
                     {renderAttendanceButton()}
                 </div>
+
+                {recentNotice && (
+                    <Link href={`/notices/${recentNotice.id}`} className={styles.noticeBanner}>
+                        <div className={styles.noticeIcon}>📢</div>
+                        <div className={styles.noticeText}>{recentNotice.title}</div>
+                    </Link>
+                )}
 
                 {/* Mobile Tabs */}
                 <div className={styles.tabs}>
