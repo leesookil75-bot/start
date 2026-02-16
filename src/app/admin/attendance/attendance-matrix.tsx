@@ -138,9 +138,19 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                     <thead>
                         <tr>
                             <th className={styles.stickyCol}>이름</th>
-                            {days.map(d => (
-                                <th key={d}>{d}일</th>
-                            ))}
+                            {days.map(d => {
+                                const date = new Date(year, month - 1, d);
+                                const isSunday = date.getDay() === 0;
+                                const isSaturday = date.getDay() === 6;
+                                return (
+                                    <th key={d} className={`
+                                        ${isSunday ? styles.weekend : ''}
+                                        ${isSaturday ? styles.saturday : ''}
+                                    `}>
+                                        {d}일
+                                    </th>
+                                );
+                            })}
                         </tr>
                     </thead>
                     <tbody>
@@ -152,10 +162,19 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                                 </td>
                                 {days.map(day => {
                                     const cell = getCellContent(user.id, day);
+                                    const date = new Date(year, month - 1, day);
+                                    const isSunday = date.getDay() === 0;
+                                    const isSaturday = date.getDay() === 6;
+
                                     return (
                                         <td
                                             key={day}
-                                            className={`${styles.cell} ${cell.isLate ? styles.late : ''}`}
+                                            className={`
+                                                ${styles.cell} 
+                                                ${cell.isLate ? styles.late : ''}
+                                                ${isSunday ? styles.weekend : ''}
+                                                ${isSaturday ? styles.saturday : ''}
+                                            `}
                                             onClick={() => handleCellClick(user.id, day)}
                                         >
                                             <div className={styles.cellContent}>
