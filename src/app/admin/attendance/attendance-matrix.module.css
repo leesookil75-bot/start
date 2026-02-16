@@ -1,0 +1,213 @@
+.container {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: calc(100vh - 150px);
+    /* Adjust based on layout */
+    display: flex;
+    flex-direction: column;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.monthSelector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.monthSelector button {
+    background: #f3f4f6;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.currentMonth {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.exportButton {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tableWrapper {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    position: relative;
+}
+
+.matrixTable {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.matrixTable th,
+.matrixTable td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.matrixTable th {
+    background: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-weight: 600;
+}
+
+.stickyCol {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 20;
+    /* Higher than header? Header needs z-index 30 for intersection */
+    border-right: 2px solid #e5e7eb;
+    min-width: 100px;
+}
+
+.matrixTable thead th.stickyCol {
+    z-index: 30;
+}
+
+.name {
+    font-weight: bold;
+    color: #111;
+}
+
+.area {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.cell {
+    cursor: pointer;
+    transition: background 0.2s;
+    min-width: 100px;
+}
+
+.cell:hover {
+    background-color: #eff6ff;
+}
+
+.cellContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.late {
+    background-color: #fef2f2;
+    color: #ef4444;
+}
+
+.empty {
+    color: #d1d5db;
+}
+
+/* Modal */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.recordList {
+    margin: 1rem 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.recordItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.recordItem:last-child {
+    border-bottom: none;
+}
+
+.addForm {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.addForm h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.input,
+.select {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.addButton {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.addButton:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+}
+
+.footer {
+    margin-top: 1.5rem;
+    text-align: right;
+}
+
+.closeButton {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}

@@ -533,6 +533,82 @@ export async function getAllAttendanceStatusAction() {
     return result;
 }
 
+// --- Monthly Attendance Actions ---
+import { updateAttendanceRecord, deleteAttendanceRecord } from '@/lib/data';
+
+export async function getMonthlyAttendanceAction(year: number, month: number) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') return { users: [], records: [] };
+
+    // Calculate start and end of month in KST (or UTC equivalent)
+    // We want all records that fall within the month in KST.
+    // Simplest: Fetch all, filter in JS. For < 10k records this is fine.
+
+    // 1. Get All Users
+    const users = await getUsers();
+
+    // 2. Get All Records (or range query if implemented)
+    // Currently getAttendanceRecords fetches all.
+    const allRecords = await getAttendanceRecords();
+
+    // 3. Filter by month
+    // Month is 1-12
+    const filteredRecords = allRecords.filter(r => {
+        const d = new Date(r.timestamp);
+        // Convert to KST for correct filtering? 
+        // Or just rely on UTC month if close enough, but for "Monthly Report" strict KST is better.
+        // r.timestamp is UTC string.
+        const kstDate = new Date(new Date(r.timestamp).getTime() + 9 * 60 * 60 * 1000);
+        return kstDate.getUTCFullYear() === year && (kstDate.getUTCMonth() + 1) === month;
+    });
+
+    return { users, records: filteredRecords };
+}
+
+export async function updateAttendanceRecordAction(
+    action: 'update' | 'create' | 'delete',
+    data: { id?: string, userId?: string, type?: 'CHECK_IN' | 'CHECK_OUT', timestamp?: string }
+): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        if (action === 'update' && data.id) {
+            await updateAttendanceRecord(data.id, {
+                type: data.type,
+                timestamp: data.timestamp
+            });
+        } else if (action === 'create' && data.userId && data.type) {
+            // we use addAttendanceRecord but we need to force timestamp if provided
+            // data.addAttendanceRecord uses NOW().
+            // So we use SQL or direct insert helper?
+            // Existing addAttendanceRecord uses NOW().
+            // We need a way to add PASTAND records.
+            // Let's modify addAttendanceRecord or use update logic?
+            // Better: updateAttendanceRecord checks ID.
+            // Let's add a new helper `addManualAttendanceRecord`?
+            // Or just use sql directly here for simplicity if allowed? 
+            // "data.ts" encapsulates DB.
+            // I should have added `addAttendanceRecordWithTimestamp` to data.ts
+            // But I can't go back easily.
+            // WORKAROUND: Create with NOW(), then immediately Update timestamp.
+            const newRecord = await addAttendanceRecord(data.userId, data.type);
+            if (data.timestamp) {
+                await updateAttendanceRecord(newRecord.id, { timestamp: data.timestamp });
+            }
+        } else if (action === 'delete' && data.id) {
+            await deleteAttendanceRecord(data.id);
+        }
+
+        revalidatePath('/admin/attendance');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to update record' };
+    }
+}
+
 // --- Workplace Actions ---
 import {
     addWorkplace,

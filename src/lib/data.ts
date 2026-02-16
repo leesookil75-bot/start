@@ -780,6 +780,46 @@ export async function getLatestAttendance(userId: string): Promise<AttendanceRec
   return records.length > 0 ? records[0] : null;
 }
 
+export async function updateAttendanceRecord(id: string, updates: Partial<AttendanceRecord>): Promise<void> {
+  if (isPostgresEnabled()) {
+    const { rows } = await sql`SELECT * FROM attendance_records WHERE id = ${id}`;
+    if (rows.length === 0) throw new Error('Record not found');
+    const existing = rows[0];
+
+    const newType = updates.type ?? existing.type;
+    const newTimestamp = updates.timestamp ?? existing.timestamp;
+
+    await sql`
+            UPDATE attendance_records
+            SET type = ${newType}, timestamp = ${newTimestamp}
+            WHERE id = ${id}
+        `;
+    return;
+  }
+
+  const fs = (await import('fs/promises')).default;
+  const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+  let allRecords: AttendanceRecord[] = JSON.parse(data);
+  const index = allRecords.findIndex(r => r.id === id);
+  if (index === -1) throw new Error('Record not found');
+
+  allRecords[index] = { ...allRecords[index], ...updates };
+  await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(allRecords, null, 2), 'utf-8');
+}
+
+export async function deleteAttendanceRecord(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM attendance_records WHERE id = ${id}`;
+    return;
+  }
+
+  const fs = (await import('fs/promises')).default;
+  const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+  let allRecords: AttendanceRecord[] = JSON.parse(data);
+  const filtered = allRecords.filter(r => r.id !== id);
+  await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+}
+
 // --- Daily Overrides ---
 // DailyOverride type imported from ./types
 
