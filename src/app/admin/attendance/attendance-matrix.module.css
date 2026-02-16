@@ -46,82 +46,139 @@
     font-weight: 600;
 }
 
+/* Main Table Styles */
 .tableWrapper {
     flex: 1;
     overflow: auto;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #9ca3af;
+    /* Darker border */
     position: relative;
+    background-color: #f9fafb;
 }
 
 .matrixTable {
-    border-collapse: collapse;
+    border-collapse: separate;
+    /* Changed for better sticky handling with borders */
+    border-spacing: 0;
     width: 100%;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    /* Slightly larger text */
+    color: #111;
+    /* Darkest text */
 }
 
+/* Borders and Cells */
 .matrixTable th,
 .matrixTable td {
-    border: 1px solid #e5e7eb;
-    padding: 0.5rem;
+    border-right: 1px solid #d1d5db;
+    /* Middle grey */
+    border-bottom: 1px solid #d1d5db;
+    padding: 0.6rem;
     text-align: center;
     white-space: nowrap;
 }
 
 .matrixTable th {
-    background: #f9fafb;
+    background: #e5e7eb;
+    /* Darker header background */
     position: sticky;
     top: 0;
     z-index: 10;
-    font-weight: 600;
+    font-weight: 700;
+    color: #1f2937;
+    border-bottom: 2px solid #9ca3af;
+    /* Stronger header separator */
 }
 
+.matrixTable thead tr th:first-child {
+    /* Fix top-left corner border */
+    border-left: 1px solid #d1d5db;
+}
+
+/* Zebra Striping */
+.matrixTable tbody tr:nth-child(even) {
+    background-color: #f3f4f6;
+}
+
+.matrixTable tbody tr:hover {
+    background-color: #e0f2fe;
+    /* Hover highlight */
+}
+
+/* Sticky Column (Names) */
 .stickyCol {
     position: sticky;
     left: 0;
     background: #fff;
+    /* Default, overridden by zebra if needed */
     z-index: 20;
-    /* Higher than header? Header needs z-index 30 for intersection */
-    border-right: 2px solid #e5e7eb;
-    min-width: 100px;
+    border-right: 2px solid #6b7280 !important;
+    /* Proper separation line */
+    min-width: 120px;
+}
+
+/* Ensure zebra striping works on sticky column too */
+.matrixTable tbody tr:nth-child(even) .stickyCol {
+    background-color: #f3f4f6;
+}
+
+.matrixTable tbody tr:hover .stickyCol {
+    background-color: #e0f2fe;
 }
 
 .matrixTable thead th.stickyCol {
     z-index: 30;
+    background: #e5e7eb;
 }
 
+/* Cell Content */
 .name {
-    font-weight: bold;
-    color: #111;
+    font-weight: 800;
+    color: #000;
+    font-size: 0.95rem;
 }
 
 .area {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: #4b5563;
+    font-weight: 600;
 }
 
 .cell {
     cursor: pointer;
-    transition: background 0.2s;
     min-width: 100px;
-}
-
-.cell:hover {
-    background-color: #eff6ff;
 }
 
 .cellContent {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    font-weight: 500;
 }
 
+/* Status Colors */
 .late {
-    background-color: #fef2f2;
-    color: #ef4444;
+    background-color: #fee2e2 !important;
+    /* Red background for late */
+    color: #b91c1c;
+    font-weight: 700;
 }
 
 .empty {
-    color: #d1d5db;
+    color: #e5e7eb;
+    /* Very light for empty dashes */
+}
+
+.weekend {
+    background-color: #fff1f2;
+    /* Light red/pink for Sunday */
+    color: #881337;
+}
+
+.saturday {
+    background-color: #eff6ff;
+    /* Light blue for Saturday */
+    color: #1e3a8a;
 }
 
 /* Modal */
