@@ -107,7 +107,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
             );
         } else {
             return (
-                <div className={`${styles.attendanceBtn} ${styles.doneBtn}`}>
+                <Link href="/attendance" className={`${styles.attendanceBtn} ${styles.doneBtn}`}>
                     <div className={styles.attendanceIcon}>✅</div>
                     <div className={styles.attendanceText}>오늘 근무 완료</div>
                     {attendanceStatus.startTime && attendanceStatus.endTime && (
@@ -116,7 +116,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                             {new Date(attendanceStatus.endTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                         </div>
                     )}
-                </div>
+                </Link>
             );
         }
     };
