@@ -2,6 +2,7 @@ import { getNotices } from '@/lib/data';
 import Link from 'next/link';
 import styles from '../notices.module.css';
 import { notFound } from 'next/navigation';
+import { ArrowLeftIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,8 @@ export default async function NoticeDetailPage({ params }: Props) {
         <div className={styles.container}>
             <header className={styles.header}>
                 <h1 className={styles.title}>공지사항</h1>
-                <Link href="/notices" className={styles.backLink}>
-                    목록으로
+                <Link href="/notices" className={styles.backLink} aria-label="목록으로">
+                    <ArrowLeftIcon />
                 </Link>
             </header>
 
