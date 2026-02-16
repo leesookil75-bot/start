@@ -184,6 +184,11 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                     </div>
                 </div>
 
+                {/* Attendance Buttons (Replaces Notice Widget) */}
+                <div className={styles.noticeContainer}>
+                    {renderAttendanceButton()}
+                </div>
+
                 {/* Mobile Tabs */}
                 <div className={styles.tabs}>
                     <div
@@ -198,11 +203,6 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                     >
                         내 통계
                     </div>
-                </div>
-
-                {/* Attendance Buttons (Replaces Notice Widget) */}
-                <div className={styles.noticeContainer}>
-                    {renderAttendanceButton()}
                 </div>
 
                 <InstallPrompt />
