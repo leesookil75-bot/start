@@ -251,6 +251,18 @@
     cursor: pointer;
 }
 
+.inlineInput {
+    width: 100%;
+    min-width: 80px;
+    padding: 2px 4px;
+    font-size: 0.85rem;
+    text-align: center;
+    border: 2px solid #2563eb;
+    /* Focus color */
+    border-radius: 4px;
+    outline: none;
+}
+
 .addButton:disabled {
     background: #93c5fd;
     cursor: not-allowed;

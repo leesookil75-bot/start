@@ -609,6 +609,80 @@ export async function updateAttendanceRecordAction(
     }
 }
 
+export async function upsertDailyAttendanceAction(
+    userId: string,
+    dateStr: string, // YYYY-MM-DD
+    checkInTime: string | null, // HH:mm
+    checkOutTime: string | null // HH:mm
+): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        // 1. Get existing records for this user on this day
+        // We can fetch all and filter, or use range query. 
+        // For simplicity reusing getAttendanceRecords(userId) then filtering.
+        const allRecords = await getAttendanceRecords(userId);
+
+        // Filter by day (KST)
+        // dateStr is '2026-02-16'
+        const targetRecords = allRecords.filter(r => {
+            const kstDate = new Date(new Date(r.timestamp).getTime() + 9 * 60 * 60 * 1000);
+            const rDateStr = kstDate.toISOString().split('T')[0];
+            return rDateStr === dateStr;
+        });
+
+        const existingCheckIn = targetRecords.find(r => r.type === 'CHECK_IN');
+        const existingCheckOut = targetRecords.find(r => r.type === 'CHECK_OUT');
+
+        // Helper to create ISO string from dateStr + time (assumes KST input)
+        const toIso = (time: string) => new Date(`${dateStr}T${time}:00+09:00`).toISOString();
+
+        // 2. Check In Logic
+        if (checkInTime) {
+            const newIso = toIso(checkInTime);
+            if (existingCheckIn) {
+                if (existingCheckIn.timestamp !== newIso) {
+                    await updateAttendanceRecord(existingCheckIn.id, { timestamp: newIso });
+                }
+            } else {
+                // Create new, but we need to force timestamp. 
+                // addAttendanceRecord uses NOW(). 
+                // Workaround: Create then Update.
+                const newRec = await addAttendanceRecord(userId, 'CHECK_IN');
+                await updateAttendanceRecord(newRec.id, { timestamp: newIso });
+            }
+        } else if (existingCheckIn) {
+            // User cleared the time -> Delete
+            await deleteAttendanceRecord(existingCheckIn.id);
+        }
+
+        // 3. Check Out Logic
+        if (checkOutTime) {
+            const newIso = toIso(checkOutTime);
+            if (existingCheckOut) {
+                if (existingCheckOut.timestamp !== newIso) {
+                    await updateAttendanceRecord(existingCheckOut.id, { timestamp: newIso });
+                }
+            } else {
+                const newRec = await addAttendanceRecord(userId, 'CHECK_OUT');
+                await updateAttendanceRecord(newRec.id, { timestamp: newIso });
+            }
+        } else if (existingCheckOut) {
+            await deleteAttendanceRecord(existingCheckOut.id);
+        }
+
+        revalidatePath('/admin/attendance');
+        return { success: true };
+
+    } catch (e: any) {
+        console.error('Upsert Error:', e);
+        return { success: false, error: e.message || 'Failed to update attendance' };
+    }
+}
+
 // --- Workplace Actions ---
 import {
     addWorkplace,
