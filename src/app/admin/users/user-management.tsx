@@ -269,7 +269,6 @@ function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: Use
                         phoneNumber: formData.get('phoneNumber') as string,
                         cleaningArea: formData.get('cleaningArea') as string,
                         role: formData.get('role') as 'admin' | 'cleaner',
-                        role: formData.get('role') as 'admin' | 'cleaner',
                         workplaceId: formData.get('workplaceId') as string || null, // Convert empty string to null for DB
                         totalLeaves: parseInt(formData.get('totalLeaves') as string) || 15
                     };
@@ -332,6 +331,18 @@ function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: Use
                             <option value="cleaner">청소부</option>
                             <option value="admin">관리자</option>
                         </select>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>연차 일수</label>
+                        <input
+                            type="number"
+                            name="totalLeaves"
+                            defaultValue={user.totalLeaves ?? 15}
+                            className={styles.input}
+                            required
+                            min="0"
+                        />
                     </div>
 
                     <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
