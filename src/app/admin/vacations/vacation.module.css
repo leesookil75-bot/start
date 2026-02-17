@@ -1,6 +1,6 @@
 .container {
     padding: 2rem;
-    color: #fff;
+    color: #1a1a1a;
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -14,18 +14,20 @@
 
 .pageTitle {
     font-size: 1.8rem;
-    font-weight: 700;
+    font-weight: 800;
+    color: #111;
 }
 
 .excelBtn {
     background: #10b981;
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     transition: background 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .excelBtn:hover {
@@ -46,18 +48,20 @@
 }
 
 .section {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #fff;
+    border: 1px solid #e5e7eb;
     border-radius: 16px;
     padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .sectionTitle {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid #f3f4f6;
     padding-bottom: 0.5rem;
+    color: #374151;
 }
 
 .list {
@@ -69,82 +73,94 @@
 }
 
 .empty {
-    color: #888;
+    color: #9ca3af;
     text-align: center;
     padding: 2rem 0;
 }
 
 .card {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #fff;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
 }
 
 .cardHeader {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
 }
 
 .userName {
     font-weight: 700;
-    color: #fff;
+    color: #111;
+    font-size: 1.1rem;
 }
 
 .date {
-    font-size: 0.8rem;
-    color: #888;
+    font-size: 0.85rem;
+    color: #6b7280;
 }
 
 .period {
-    color: #93c5fd;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+    color: #2563eb;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    background: #eff6ff;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    display: inline-block;
 }
 
 .reason {
-    font-size: 0.9rem;
-    color: #ccc;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 0.5rem;
+    font-size: 0.95rem;
+    color: #374151;
+    background: #f9fafb;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
 .actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .btn {
     flex: 1;
-    padding: 0.5rem;
+    padding: 0.6rem;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: opacity 0.2s;
+    font-size: 0.95rem;
+    color: white;
 }
 
 .btn:hover {
-    opacity: 0.8;
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
 .approveBtn {
     background: #3b82f6;
-    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .rejectBtn {
     background: #ef4444;
-    color: white;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 .calendarWrapper {
-    background: #1f2937;
-    /* Dark bg for calendar container */
-    padding: 1rem;
+    background: #fff;
+    padding: 0;
     border-radius: 12px;
 }
 
@@ -152,20 +168,22 @@
 .tileContent {
     display: flex;
     flex-wrap: wrap;
-    gap: 2px;
+    gap: 3px;
     justify-content: center;
     margin-top: 4px;
 }
 
 .leaveDot {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     background: #10b981;
     border-radius: 50%;
-    font-size: 9px;
+    font-size: 10px;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-weight: bold;
 }
