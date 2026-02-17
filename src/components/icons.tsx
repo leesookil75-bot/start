@@ -110,14 +110,12 @@ export function PlaneIcon(props: React.SVGProps<SVGSVGElement>) {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            {/* Box from the image */}
-            <rect x="2" y="2" width="20" height="20" rx="6" />
-            {/* Commercial Airplane silhouette similar to the image */}
-            <path d="M14.5 12c.5 0 2.5 0 3.5 0 .5 0 1 .5 1 1s-.5 1-1 1H11.5l-2.5 4h-2l1.5-4H7l-1 1h-1l.5-1.5L5 11h1l1 1h1.5L7 8h2l2.5 4h3z" />
+            {/* Larger Commercial Airplane silhouette */}
+            <path d="M2 13h2l3-9h3l-2 9h7a2 2 0 1 1 0 4h-7l2 9h-3l-3-9h-2v-4z" />
         </svg>
     )
 }
