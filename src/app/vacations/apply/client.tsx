@@ -6,15 +6,20 @@ import 'react-calendar/dist/Calendar.css'; // Import calendar styles
 import styles from './apply.module.css';
 import { requestVacation, getMyLeaveStatus } from '../actions';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftIcon } from '@/components/icons';
+import { ArrowLeftIcon, PlaneIcon } from '@/components/icons';
 import Link from 'next/link';
 import './calendar-override.css'; // Custom overrides
 import { useEffect } from 'react';
+import { LeaveRequest } from '@/lib/data';
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
-export default function ClientApplyPage() {
+interface ClientApplyPageProps {
+    initialRequests?: LeaveRequest[];
+}
+
+export default function ClientApplyPage({ initialRequests = [] }: ClientApplyPageProps) {
     const [date, setDate] = useState<Value>(new Date());
     const [reason, setReason] = useState('');
     const [isPending, startTransition] = useTransition();
@@ -103,6 +108,31 @@ export default function ClientApplyPage() {
                         selectRange={true} // Allow range selection
                         className="react-calendar-custom"
                         minDate={new Date()} // Can't select past dates
+                        tileContent={({ date: cellDate, view }) => {
+                            if (view !== 'month') return null;
+
+                            // Check if cellDate is within any approved leave
+                            const isApproved = initialRequests.some(r => {
+                                if (r.status !== 'APPROVED') return false;
+                                const start = new Date(r.startDate);
+                                const end = new Date(r.endDate);
+                                // Set times to midnight for comparison
+                                start.setHours(0, 0, 0, 0);
+                                end.setHours(0, 0, 0, 0);
+                                cellDate.setHours(0, 0, 0, 0);
+                                return cellDate >= start && cellDate <= end;
+                            });
+
+                            if (isApproved) {
+                                return (
+                                    <div className={styles.leaveTileContent}>
+                                        <PlaneIcon className={styles.leaveTileIcon} />
+                                        <span className={styles.leaveTileText}>휴가승인</span>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        }}
                     />
                     <p className={styles.helpText}>
                         * 날짜를 터치하여 기간을 선택하세요.<br />
