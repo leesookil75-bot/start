@@ -85,6 +85,11 @@
   padding: 0;
 }
 
+/* Specific style for vacation icon link if needed, 
+   but since icon has a box now, we can either keep existing or tweak it.
+   Let's make sure the icon fits well.
+*/
+
 .iconLink:hover,
 .iconButton:hover {
   background: rgba(255, 255, 255, 0.2);
