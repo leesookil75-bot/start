@@ -114,8 +114,8 @@ export function PlaneIcon(props: React.SVGProps<SVGSVGElement>) {
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            {/* Clean, balanced side-view jet silhouette */}
-            <path d="M22 13h-4l-3 7h-2l2-7H8l-1 2H5l1-4-1-4h2l1 2h7l-2-7h2l3 7h4s1 .5 1 2-1 2-1 2Z" />
+            {/* Silhouette matching the user's provided image (side-top view) */}
+            <path d="M19.5 12c0-1.5-1-2-2.5-2H13l-4-7H7l2 7H6l-2-2H3l1 3.5-1 3.5h1l2-2h3l-2 7h2l4-7h4c1.5 0 2.5-.5 2.5-2Z" />
         </svg>
     )
 }
