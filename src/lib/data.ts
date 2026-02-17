@@ -375,6 +375,43 @@ export async function getRecords(): Promise<UsageRecord[]> {
   }
 }
 
+export async function cleanupOrphanedRecords(): Promise<number> {
+  if (isPostgresEnabled()) {
+    try {
+      // Delete usage_records where user_id is not in users table
+      // and user_name is not '관리자' (optional, but safer to keep admin records if they don't have id)
+      // Actually, checking if user_id exists in users table is most reliable.
+      const result = await sql`
+        DELETE FROM usage_records 
+        WHERE user_id IS NOT NULL 
+        AND user_id NOT IN (SELECT id FROM users)
+      `;
+      return result.rowCount ?? 0;
+    } catch (error) {
+      console.error('Error cleaning up orphaned records:', error);
+      throw new Error('Failed to cleanup data');
+    }
+  }
+
+  // File System Fallback
+  const users = await getUsers();
+  const validUserIds = new Set(users.map(u => u.id));
+  const records = await getRecords();
+
+  const filtered = records.filter(r => {
+    // Keep record if it has no userId (e.g. old generic record) or if userId is valid
+    if (!r.userId) return true;
+    return validUserIds.has(r.userId);
+  });
+
+  const deletedCount = records.length - filtered.length;
+  if (deletedCount > 0) {
+    const fs = (await import('fs/promises')).default;
+    await fs.writeFile(DATA_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+  }
+  return deletedCount;
+}
+
 export async function addRecord(size: 45 | 50 | 75, userId?: string, userName?: string): Promise<UsageRecord> {
   if (isPostgresEnabled()) {
     const id = crypto.randomUUID();

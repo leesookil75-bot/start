@@ -134,8 +134,35 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
             </div>
 
             <div className={styles.section}>
-                {/* ... existing table code ... */}
-                <h2 className={styles.sectionTitle}>등록된 사용자</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>등록된 사용자</h2>
+                    <button
+                        onClick={async () => {
+                            if (confirm('사용자 목록에 없는 유령 데이터를 정리하시겠습니까?\n이 작업은 리포트에서 "Unknown"으로 표시되는 데이터를 삭제합니다.')) {
+                                startTransition(async () => {
+                                    const { cleanupOrphanedRecordsAction } = await import('../../actions');
+                                    const result = await cleanupOrphanedRecordsAction();
+                                    if (result.success) {
+                                        alert(`${result.count}개의 유령 데이터가 정리되었습니다.`);
+                                    } else {
+                                        setError(result.error || 'Failed to cleanup data');
+                                    }
+                                });
+                            }
+                        }}
+                        style={{
+                            padding: '0.4rem 0.8rem',
+                            background: '#555',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
+                        }}
+                    >
+                        유령 데이터 정리
+                    </button>
+                </div>
                 <div className={styles.tableWrapper}>
                     <table className={styles.table}>
                         <thead>

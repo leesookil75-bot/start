@@ -9,6 +9,7 @@ import {
     deleteUser as removeUser,
     getUserByPhone,
     updateUserPassword,
+    cleanupOrphanedRecords,
     User
 } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
@@ -212,6 +213,21 @@ export async function updateUserAction(id: string, updates: Partial<User>): Prom
         return { success: true };
     } catch (e: any) {
         return { success: false, error: e.message || 'Failed to update user' };
+    }
+}
+
+export async function cleanupOrphanedRecordsAction(): Promise<{ success: boolean; count?: number; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        const count = await cleanupOrphanedRecords();
+        revalidatePath('/admin');
+        return { success: true, count };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to cleanup records' };
     }
 }
 
