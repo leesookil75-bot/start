@@ -228,6 +228,7 @@ export async function cleanupOrphanedRecordsAction(): Promise<{ success: boolean
         revalidatePath('/admin');
         return { success: true, count };
     } catch (e: any) {
+        console.error('Cleanup Error:', e);
         return { success: false, error: e.message || 'Failed to cleanup records' };
     }
 }

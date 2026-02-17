@@ -380,8 +380,8 @@ export async function cleanupOrphanedRecords(): Promise<number> {
     try {
       let totalDeleted = 0;
 
-      // 1. Usage Records
-      // Remove records where user_id is null/empty (except admin) OR user doesn't exist
+      // 1. Usage Records (Has id)
+      // Delete if user doesn't exist OR if user_id is null (excluding '관리자')
       const usageResult = await sql`
         DELETE FROM usage_records 
         WHERE id IN (
@@ -392,36 +392,28 @@ export async function cleanupOrphanedRecords(): Promise<number> {
       `;
       totalDeleted += usageResult.rowCount ?? 0;
 
-      // 2. Daily Overrides
+      // 2. Daily Overrides (NO surrogate id, PK is (date, user_id, type))
+      // Simply delete if user_id doesn't exist in users table
       const overrideResult = await sql`
         DELETE FROM daily_overrides 
-        WHERE id IN (
-          SELECT o.id FROM daily_overrides o
-          LEFT JOIN users u ON o.user_id = u.id
-          WHERE u.id IS NULL
-        )
+        WHERE user_id IS NOT NULL 
+        AND user_id NOT IN (SELECT id FROM users)
       `;
       totalDeleted += overrideResult.rowCount ?? 0;
 
-      // 3. Attendance Records
+      // 3. Attendance Records (Has id)
       const attendanceResult = await sql`
         DELETE FROM attendance_records 
-        WHERE id IN (
-          SELECT a.id FROM attendance_records a
-          LEFT JOIN users u ON a.user_id = u.id
-          WHERE u.id IS NULL
-        )
+        WHERE user_id IS NOT NULL 
+        AND user_id NOT IN (SELECT id FROM users)
       `;
       totalDeleted += attendanceResult.rowCount ?? 0;
 
-      // 4. Leave Requests
+      // 4. Leave Requests (Has id)
       const leaveResult = await sql`
         DELETE FROM leave_requests 
-        WHERE id IN (
-          SELECT l.id FROM leave_requests l
-          LEFT JOIN users u ON l.user_id = u.id
-          WHERE u.id IS NULL
-        )
+        WHERE user_id IS NOT NULL 
+        AND user_id NOT IN (SELECT id FROM users)
       `;
       totalDeleted += leaveResult.rowCount ?? 0;
 
@@ -429,7 +421,8 @@ export async function cleanupOrphanedRecords(): Promise<number> {
       return totalDeleted;
     } catch (error) {
       console.error('Error cleaning up orphaned records:', error);
-      throw new Error('Failed to cleanup data');
+      // Re-throw with more detail for diagnostics
+      throw error;
     }
   }
 
