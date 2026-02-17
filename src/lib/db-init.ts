@@ -29,6 +29,7 @@ export async function initializeDB() {
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS work_lng DOUBLE PRECISION;`;
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS work_address VARCHAR(255);`;
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_radius INTEGER DEFAULT 100;`;
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_leaves INTEGER DEFAULT 15;`;
 
         await sql`
             CREATE TABLE IF NOT EXISTS usage_records (

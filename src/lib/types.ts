@@ -12,6 +12,7 @@ export type User = {
     workLng?: number;
     allowedRadius?: number; // meters
     workplaceId?: string;
+    totalLeaves?: number;
 };
 
 export type Workplace = {

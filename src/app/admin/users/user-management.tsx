@@ -18,13 +18,14 @@ type User = {
     workLng?: number;
     allowedRadius?: number;
     workplaceId?: string; // Add workplaceId to User type locally
+    totalLeaves?: number;
 };
 
 export default function UserManagement({ initialUsers, workplaces }: { initialUsers: User[], workplaces: Workplace[] }) {
     // Note: For a real app, we might want to use optimistic updates or re-fetch, 
     // ... comments ...
 
-    const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner' as const, workplaceId: '' });
+    const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner' as const, workplaceId: '', totalLeaves: 15 });
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
@@ -39,7 +40,7 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
 
             const result = await createUser(submission);
             if (result.success) {
-                setNewUser({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner', workplaceId: '' });
+                setNewUser({ name: '', phoneNumber: '', cleaningArea: '', role: 'cleaner', workplaceId: '', totalLeaves: 15 });
             } else {
                 setError(result.error || 'Failed to add user');
             }
@@ -90,6 +91,18 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                             onChange={e => setNewUser({ ...newUser, cleaningArea: e.target.value })}
                             required
                             placeholder="A동 1층"
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>연차 일수</label>
+                        <input
+                            type="number"
+                            className={styles.input}
+                            value={newUser.totalLeaves}
+                            onChange={e => setNewUser({ ...newUser, totalLeaves: parseInt(e.target.value) || 0 })}
+                            required
+                            placeholder="15"
+                            min="0"
                         />
                     </div>
 
@@ -256,7 +269,9 @@ function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: Use
                         phoneNumber: formData.get('phoneNumber') as string,
                         cleaningArea: formData.get('cleaningArea') as string,
                         role: formData.get('role') as 'admin' | 'cleaner',
-                        workplaceId: formData.get('workplaceId') as string || null // Convert empty string to null for DB
+                        role: formData.get('role') as 'admin' | 'cleaner',
+                        workplaceId: formData.get('workplaceId') as string || null, // Convert empty string to null for DB
+                        totalLeaves: parseInt(formData.get('totalLeaves') as string) || 15
                     };
 
                     // If workplaceId is NOT selected, we use the manual fields

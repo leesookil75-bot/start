@@ -60,7 +60,7 @@ export async function getUsers(): Promise<User[]> {
       // No, `getUsers` should return the effective location. 
       // Let's do a JOIN.
 
-      const { rows } = await sql<UserRow>`
+      const { rows } = await sql<UserRow & { total_leaves: number }>`
         SELECT u.*, w.lat as wp_lat, w.lng as wp_lng, w.address as wp_address, w.radius as wp_radius
         FROM users u
         LEFT JOIN workplaces w ON u.workplace_id = w.id
@@ -80,7 +80,8 @@ export async function getUsers(): Promise<User[]> {
         workLat: r.workplace_id ? r.wp_lat : r.work_lat,
         workLng: r.workplace_id ? r.wp_lng : r.work_lng,
         allowedRadius: r.workplace_id ? r.wp_radius : r.allowed_radius,
-        workplaceId: r.workplace_id
+        workplaceId: r.workplace_id,
+        totalLeaves: r.total_leaves ?? 15 // Default to 15 if null
       }));
     } catch (error) {
       console.warn('Postgres error (getUsers):', error);
@@ -131,8 +132,8 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
       const password = user.password || user.phoneNumber.slice(-4);
 
       await sql`
-        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password, workplace_id, work_address, work_lat, work_lng, allowed_radius)
-        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password}, ${user.workplaceId ?? null}, ${user.workAddress ?? null}, ${user.workLat ?? null}, ${user.workLng ?? null}, ${user.allowedRadius ?? null})
+        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password, workplace_id, work_address, work_lat, work_lng, allowed_radius, total_leaves)
+        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password}, ${user.workplaceId ?? null}, ${user.workAddress ?? null}, ${user.workLat ?? null}, ${user.workLng ?? null}, ${user.allowedRadius ?? null}, ${user.totalLeaves ?? 15})
        `;
       // Return constructed user
       return {
@@ -147,7 +148,8 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
         workLat: user.workLat,
         workLng: user.workLng,
         allowedRadius: user.allowedRadius,
-        workplaceId: user.workplaceId
+        workplaceId: user.workplaceId,
+        totalLeaves: user.totalLeaves ?? 15
       };
     } catch (e) {
       console.error('Database error adding user', e);
@@ -160,7 +162,8 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
     ...user,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    password: user.password || user.phoneNumber.slice(-4)
+    password: user.password || user.phoneNumber.slice(-4),
+    totalLeaves: user.totalLeaves ?? 15
   };
 
   // We need to write the raw user, not the joined one. 
@@ -327,7 +330,8 @@ export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 
                 work_lat = ${updates.workLat ?? user.work_lat},
                 work_lng = ${updates.workLng ?? user.work_lng},
                 allowed_radius = ${updates.allowedRadius ?? user.allowed_radius},
-                workplace_id = ${updates.workplaceId ?? user.workplace_id}
+                workplace_id = ${updates.workplaceId ?? user.workplace_id},
+                total_leaves = ${updates.totalLeaves ?? user.total_leaves}
             WHERE id = ${id}
         `;
     return;

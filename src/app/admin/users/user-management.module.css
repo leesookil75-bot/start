@@ -53,8 +53,9 @@
 
 .form {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 1rem;
+    /* Responsive Grid: Items will be minimum 200px wide, expanding to fill space */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
     align-items: end;
 }
 
