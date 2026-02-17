@@ -140,10 +140,15 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                         onClick={async () => {
                             if (confirm('사용자 목록에 없는 유령 데이터를 정리하시겠습니까?\n이 작업은 리포트에서 "Unknown"으로 표시되는 데이터를 삭제합니다.')) {
                                 startTransition(async () => {
-                                    const { cleanupOrphanedRecordsAction } = await import('../../actions');
+                                    const { cleanupOrphanedRecordsAction, getUnknownRecordsAction } = await import('../../actions');
+
+                                    // Diagnostics first
+                                    const diag = await getUnknownRecordsAction();
+                                    console.log('Diagnostic Unknown Records:', diag);
+
                                     const result = await cleanupOrphanedRecordsAction();
                                     if (result.success) {
-                                        alert(`${result.count}개의 유령 데이터가 정리되었습니다.`);
+                                        alert(`${result.count}개의 유령 데이터가 정리되었습니다.\n진단 결과: ${diag.usage.length}개의 사용기록, ${diag.overrides.length}개의 보정값이 발견됨.`);
                                     } else {
                                         setError(result.error || 'Failed to cleanup data');
                                     }
