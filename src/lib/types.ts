@@ -89,3 +89,16 @@ export interface DailyUserStat {
     total50: number;
     total75: number;
 }
+
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export type LeaveRequest = {
+    id: string;
+    userId: string;
+    startDate: string; // YYYY-MM-DD
+    endDate: string;   // YYYY-MM-DD
+    reason?: string;
+    status: LeaveStatus;
+    createdAt: string;
+    userName?: string; // Optional for display convenience
+};

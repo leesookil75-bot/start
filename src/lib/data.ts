@@ -1,6 +1,6 @@
 import path from 'path';
-import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace } from './types';
-export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace };
+import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus } from './types';
+export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus };
 
 import { sql } from '@vercel/postgres';
 
@@ -563,6 +563,133 @@ export async function updateUserPassword(userId: string, newPassword: string): P
     users[userIndex].password = newPassword;
     const fs = (await import('fs/promises')).default;
     await fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
+  }
+}
+
+// --- Leave Requests (Vacations) ---
+const LEAVES_FILE_PATH = path.join(process.cwd(), 'leaves.json');
+
+export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]> {
+  if (isPostgresEnabled()) {
+    try {
+      let query = sql`SELECT * FROM leave_requests ORDER BY created_at DESC`;
+      if (userId) {
+        const { rows } = await sql`SELECT * FROM leave_requests WHERE user_id = ${userId} ORDER BY created_at DESC`;
+        return rows.map(r => ({
+          id: r.id,
+          userId: r.user_id,
+          startDate: r.start_date, // stored as YYYY-MM-DD string or date? defaulting to string for simplicity in types, but DB might be date.
+          endDate: r.end_date,
+          reason: r.reason,
+          status: r.status,
+          createdAt: r.created_at.toString(),
+          userName: r.user_name // Assuming we denounce or join
+        }));
+      }
+
+      // If we need userName, we might need a join. For simplicity, let's assume we might need to fetch it or it's stored.
+      // Let's do a join to get user name for Admin view
+      const { rows } = await sql`
+        SELECT l.*, u.name as user_name 
+        FROM leave_requests l
+        LEFT JOIN users u ON l.user_id = u.id
+        ORDER BY l.created_at DESC
+      `;
+      return rows.map(r => ({
+        id: r.id,
+        userId: r.user_id,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        reason: r.reason,
+        status: r.status,
+        createdAt: r.created_at.toString(),
+        userName: r.user_name
+      }));
+    } catch (e) {
+      console.warn('DB Error getting leaves:', e);
+      return [];
+    }
+  }
+
+  await ensureFile(LEAVES_FILE_PATH, []);
+  try {
+    const fs = (await import('fs/promises')).default;
+    const data = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
+    const all: LeaveRequest[] = JSON.parse(data);
+
+    // Join with users to get userName for file system too (if not stored)
+    // Actually, let's store userName when adding to avoid complex joins in FS mode?
+    // Or just look it up.
+    if (userId) {
+      return all.filter(r => r.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    // For admin, map names if missing?
+    const users = await getUsers();
+    return all.map(l => ({
+      ...l,
+      userName: users.find(u => u.id === l.userId)?.name
+    })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  } catch {
+    return [];
+  }
+}
+
+export async function addLeaveRequest(data: Omit<LeaveRequest, 'id' | 'createdAt' | 'status' | 'userName'>): Promise<LeaveRequest> {
+  const status: LeaveStatus = 'PENDING';
+
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
+      INSERT INTO leave_requests (id, user_id, start_date, end_date, reason, status, created_at)
+      VALUES (${id}, ${data.userId}, ${data.startDate}, ${data.endDate}, ${data.reason}, ${status}, NOW())
+    `;
+    return {
+      ...data,
+      id,
+      status,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  const leaves = await getLeaveRequests();
+  // Note: getLeaveRequests returns with userName, but for storage we want raw. 
+  // So we should read raw file actually.
+
+  const fs = (await import('fs/promises')).default;
+  await ensureFile(LEAVES_FILE_PATH, []);
+  const rawData = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
+  let rawLeaves: LeaveRequest[] = JSON.parse(rawData);
+
+  const newLeave: LeaveRequest = {
+    id: crypto.randomUUID(),
+    userId: data.userId,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    reason: data.reason,
+    status,
+    createdAt: new Date().toISOString()
+  };
+
+  rawLeaves.push(newLeave);
+  await fs.writeFile(LEAVES_FILE_PATH, JSON.stringify(rawLeaves, null, 2), 'utf-8');
+  return newLeave;
+}
+
+export async function updateLeaveRequestStatus(id: string, status: LeaveStatus): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE leave_requests SET status = ${status} WHERE id = ${id}`;
+    return;
+  }
+
+  const fs = (await import('fs/promises')).default;
+  const rawData = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
+  let rawLeaves: LeaveRequest[] = JSON.parse(rawData);
+  const index = rawLeaves.findIndex(l => l.id === id);
+  if (index !== -1) {
+    rawLeaves[index].status = status;
+    await fs.writeFile(LEAVES_FILE_PATH, JSON.stringify(rawLeaves, null, 2), 'utf-8');
   }
 }
 

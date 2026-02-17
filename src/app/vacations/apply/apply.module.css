@@ -1,0 +1,111 @@
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    min-height: 100vh;
+    background: #f8f9fa;
+    /* Light background */
+    color: #333;
+}
+
+/* Dark mode support if needed, but keeping it simple/light for calendar visibility */
+@media (prefers-color-scheme: dark) {
+    .container {
+        background: #111;
+        color: #fff;
+    }
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.backLink {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(128, 128, 128, 0.1);
+    border-radius: 50%;
+    color: inherit;
+    transition: background 0.2s;
+}
+
+.backLink:hover {
+    background: rgba(128, 128, 128, 0.2);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.calendarWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.label {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.helpText {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    resize: vertical;
+    background: rgba(255, 255, 255, 0.05);
+    /* Works for dark mode too */
+    color: inherit;
+}
+
+.submitBtn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #3b82f6;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

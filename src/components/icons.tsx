@@ -99,3 +99,33 @@ export function HomeIcon(props: React.SVGProps<SVGSVGElement>) {
         </svg>
     )
 }
+
+export function PlaneIcon(props: React.SVGProps<SVGSVGElement>) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M2 12h20" />
+            <path d="M13 12l5-8-8.5 8" />
+            <path d="M10.5 12l2 9-3.5-9" />
+            {/* Simple plane shape? Or Lucide Plane */}
+            {/* Using a better path closer to lucide-react plane */}
+            <path d="M2 12h20" />
+            <path d="M13 12l5-8-8.5 8" />
+            <path d="M6 12l-4 3 2.5-3" /> {/* Tail */}
+            <path d="M15.5 4l-2.5 8" /> {/* Wing */}
+            {/* Actually let's use standard Lucide/Feather Plane */}
+            <path d="M22 2 11 13" />
+            <path d="m22 2-7 20-4-9-9-4 20-7z" />
+        </svg>
+    )
+}

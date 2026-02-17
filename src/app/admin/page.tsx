@@ -5,6 +5,7 @@ import { getExcelData, getMonthlyUserStats, getDailyUserStats } from '@/lib/stat
 import { getNotices } from '@/lib/data';
 import AdminDashboardClient from './dashboard-client';
 import { redirect } from 'next/navigation';
+import VacationNotification from './components/VacationNotification';
 
 // Ensure dynamic rendering to fetch fresh data on every request
 export const dynamic = 'force-dynamic';
@@ -43,23 +44,31 @@ export default async function AdminPage({
         getDailyUserStats(queryYear, queryMonth)
     ]);
 
+    // Fetch pending vacation requests
+    const { getVacationRequests } = await import('@/app/vacations/actions');
+    const vacationResult = await getVacationRequests(true); // as admin
+    const pendingVacations = (vacationResult.data || []).filter(r => r.status === 'PENDING').length;
+
     // Header moved to Client component for conditional page visibility
     return (
-        <AdminDashboardClient
-            records={records}
-            stats={{
-                daily: [],
-                weekly: [],
-                monthly: [],
-                yearly: [],
-                area: [],
-                monthlyUser: monthlyUserStats,
-                dailyUser: dailyUserStats
-            }}
-            currentDate={{ year: queryYear, month: queryMonth }}
-            summaryStats={stats}
-            excelData={excelData}
-            notices={notices}
-        />
+        <>
+            <AdminDashboardClient
+                records={records}
+                stats={{
+                    daily: [],
+                    weekly: [],
+                    monthly: [],
+                    yearly: [],
+                    area: [],
+                    monthlyUser: monthlyUserStats,
+                    dailyUser: dailyUserStats
+                }}
+                currentDate={{ year: queryYear, month: queryMonth }}
+                summaryStats={stats}
+                excelData={excelData}
+                notices={notices}
+            />
+            <VacationNotification count={pendingVacations} />
+        </>
     );
 }

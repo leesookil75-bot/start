@@ -58,6 +58,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                 >
                     🏢 근무지 관리
                 </Link>
+                <Link
+                    href="/admin/vacations"
+                    className={`${styles.sidebarNavItem} ${isActive('/admin/vacations') ? styles.sidebarNavActive : ''}`}
+                >
+                    ✈️ 휴가 관리
+                </Link>
 
                 <div className={styles.sidebarDivider} />
 

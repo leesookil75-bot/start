@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect } from 'react';
 import styles from './page.module.css';
-import { BellIcon, KeyIcon, LogOutIcon } from '@/components/icons';
+import { BellIcon, KeyIcon, LogOutIcon, PlaneIcon } from '@/components/icons';
 import { submitUsage } from './actions';
 import MyStatsView from './components/MyStatsView';
 import InstallPrompt from '@/components/InstallPrompt';
@@ -176,6 +176,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         </Link>
                         <Link href="/notices" className={styles.iconLink} aria-label="공지사항">
                             <BellIcon />
+                        </Link>
+                        <Link href="/vacations/apply" className={styles.iconLink} aria-label="휴가 신청">
+                            <PlaneIcon />
                         </Link>
                         <Link href="/change-password" className={styles.iconLink} aria-label="비밀번호 변경">
                             <KeyIcon />

@@ -1,0 +1,76 @@
+/* Override React Calendar Styles for Dark Mode compat and Better Touch */
+
+.react-calendar {
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    font-family: inherit;
+    line-height: 1.125em;
+    padding: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    .react-calendar {
+        background: #1e1e24;
+        border-color: #333;
+        color: #fff;
+    }
+
+    .react-calendar__navigation button {
+        color: #fff;
+    }
+
+    .react-calendar__navigation button:disabled {
+        background-color: #1e1e24;
+        color: #666;
+    }
+
+    .react-calendar__month-view__days__day--weekend {
+        color: #ef4444;
+        /* Red for weekend */
+    }
+
+    .react-calendar__month-view__days__day--neighboringMonth {
+        color: #555;
+    }
+
+    .react-calendar__tile:enabled:hover,
+    .react-calendar__tile:enabled:focus {
+        background-color: #333;
+    }
+
+    .react-calendar__tile--now {
+        background: #333;
+        color: #fbbf24;
+        /* Amber */
+    }
+
+    .react-calendar__tile--now:enabled:hover,
+    .react-calendar__tile--now:enabled:focus {
+        background: #444;
+    }
+}
+
+/* Common overrides */
+.react-calendar__tile {
+    padding: 1rem 0 !important;
+    /* Larger touch target */
+}
+
+.react-calendar__tile--active {
+    background: #3b82f6 !important;
+    color: white !important;
+    border-radius: 8px;
+}
+
+.react-calendar__tile--active:enabled:hover,
+.react-calendar__tile--active:enabled:focus {
+    background: #2563eb !important;
+}
+
+/* Range selection middle */
+.react-calendar--selectRange .react-calendar__tile--hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
