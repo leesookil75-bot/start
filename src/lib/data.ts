@@ -378,15 +378,39 @@ export async function getRecords(): Promise<UsageRecord[]> {
 export async function cleanupOrphanedRecords(): Promise<number> {
   if (isPostgresEnabled()) {
     try {
-      // Delete usage_records where user_id is not in users table
-      // and user_name is not '관리자' (optional, but safer to keep admin records if they don't have id)
-      // Actually, checking if user_id exists in users table is most reliable.
-      const result = await sql`
+      let totalDeleted = 0;
+
+      // 1. Usage Records
+      // Delete where user_id is not in users table OR is null (excluding '관리자')
+      const usageResult = await sql`
         DELETE FROM usage_records 
-        WHERE user_id IS NOT NULL 
-        AND user_id NOT IN (SELECT id FROM users)
+        WHERE (user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users))
+           OR (user_id IS NULL AND user_name != '관리자')
       `;
-      return result.rowCount ?? 0;
+      totalDeleted += usageResult.rowCount ?? 0;
+
+      // 2. Daily Overrides
+      const overrideResult = await sql`
+        DELETE FROM daily_overrides 
+        WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)
+      `;
+      totalDeleted += overrideResult.rowCount ?? 0;
+
+      // 3. Attendance Records
+      const attendanceResult = await sql`
+        DELETE FROM attendance_records 
+        WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)
+      `;
+      totalDeleted += attendanceResult.rowCount ?? 0;
+
+      // 4. Leave Requests
+      const leaveResult = await sql`
+        DELETE FROM leave_requests 
+        WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)
+      `;
+      totalDeleted += leaveResult.rowCount ?? 0;
+
+      return totalDeleted;
     } catch (error) {
       console.error('Error cleaning up orphaned records:', error);
       throw new Error('Failed to cleanup data');
@@ -396,20 +420,35 @@ export async function cleanupOrphanedRecords(): Promise<number> {
   // File System Fallback
   const users = await getUsers();
   const validUserIds = new Set(users.map(u => u.id));
+
+  // Helper to filter orphaned records (keep if valid user or admin)
+  const isOrphaned = (userId?: string, userName?: string) => {
+    if (userName === '관리자') return false;
+    if (!userId) return true;
+    return !validUserIds.has(userId);
+  };
+
+  const fs = (await import('fs/promises')).default;
+  let totalDeleted = 0;
+
+  // Cleanup Usage Records
   const records = await getRecords();
-
-  const filtered = records.filter(r => {
-    // Keep record if it has no userId (e.g. old generic record) or if userId is valid
-    if (!r.userId) return true;
-    return validUserIds.has(r.userId);
-  });
-
-  const deletedCount = records.length - filtered.length;
-  if (deletedCount > 0) {
-    const fs = (await import('fs/promises')).default;
-    await fs.writeFile(DATA_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+  const filteredRecords = records.filter(r => !isOrphaned(r.userId, r.userName));
+  totalDeleted += records.length - filteredRecords.length;
+  if (records.length !== filteredRecords.length) {
+    await fs.writeFile(DATA_FILE_PATH, JSON.stringify(filteredRecords, null, 2), 'utf-8');
   }
-  return deletedCount;
+
+  // Cleanup Overrides
+  const overrides = await getDailyOverrides();
+  const filteredOverrides = overrides.filter(o => !isOrphaned(o.userId));
+  totalDeleted += overrides.length - filteredOverrides.length;
+  if (overrides.length !== filteredOverrides.length) {
+    await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(filteredOverrides, null, 2), 'utf-8');
+  }
+
+  // Note: Skipping complex FS cleanup for attendance/leaves as Postgres is primary for this feature
+  return totalDeleted;
 }
 
 export async function addRecord(size: 45 | 50 | 75, userId?: string, userName?: string): Promise<UsageRecord> {
