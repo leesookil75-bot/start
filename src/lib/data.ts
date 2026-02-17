@@ -376,70 +376,67 @@ export async function getRecords(): Promise<UsageRecord[]> {
 }
 
 export async function cleanupOrphanedRecords(): Promise<number> {
+  // Common Logic: Identify orphaned records
+  const users = await getUsers();
+  const validUserIds = new Set(users.map(u => u.id));
+
+  const isOrphaned = (userId?: string, userName?: string) => {
+    // Preserve Administrator records
+    if (userName === '관리자') return false;
+    // Orphans: No ID or ID not in valid user list
+    if (!userId || userId.trim() === '') return true;
+    return !validUserIds.has(userId);
+  };
+
   if (isPostgresEnabled()) {
     try {
       let totalDeleted = 0;
 
-      // 1. Usage Records (Has id)
-      // Delete if user doesn't exist OR if user_id is null (excluding '관리자')
-      const usageResult = await sql`
-        DELETE FROM usage_records 
-        WHERE id IN (
-          SELECT r.id FROM usage_records r
-          LEFT JOIN users u ON r.user_id = u.id
-          WHERE (u.id IS NULL AND r.user_name != '관리자')
-        )
-      `;
-      totalDeleted += usageResult.rowCount ?? 0;
+      // Fetch all to identify
+      const records = await getRecords();
+      const usageIdsToDelete = records
+        .filter(r => isOrphaned(r.userId, r.userName))
+        .map(r => r.id);
 
-      // 2. Daily Overrides (NO surrogate id, PK is (date, user_id, type))
-      // Simply delete if user_id doesn't exist in users table
-      const overrideResult = await sql`
-        DELETE FROM daily_overrides 
-        WHERE user_id IS NOT NULL 
-        AND user_id NOT IN (SELECT id FROM users)
-      `;
-      totalDeleted += overrideResult.rowCount ?? 0;
+      if (usageIdsToDelete.length > 0) {
+        for (const id of usageIdsToDelete) {
+          const result = await sql`DELETE FROM usage_records WHERE id = ${id}`;
+          totalDeleted += result.rowCount ?? 0;
+        }
+      }
 
-      // 3. Attendance Records (Has id)
-      const attendanceResult = await sql`
-        DELETE FROM attendance_records 
-        WHERE user_id IS NOT NULL 
-        AND user_id NOT IN (SELECT id FROM users)
-      `;
-      totalDeleted += attendanceResult.rowCount ?? 0;
+      const overrides = await getDailyOverrides();
+      const overrideIds = overrides
+        .filter(o => isOrphaned(o.userId))
+        .map(o => ({ date: o.date, user_id: o.userId, type: o.type }));
 
-      // 4. Leave Requests (Has id)
-      const leaveResult = await sql`
-        DELETE FROM leave_requests 
-        WHERE user_id IS NOT NULL 
-        AND user_id NOT IN (SELECT id FROM users)
-      `;
+      for (const o of overrideIds) {
+        const result = await sql`
+          DELETE FROM daily_overrides 
+          WHERE date = ${o.date} AND user_id = ${o.user_id} AND type = ${o.type}
+        `;
+        totalDeleted += result.rowCount ?? 0;
+      }
+
+      // Cleanup attendance (simple SQL fallback for tables with generic user_id check)
+      const attrResult = await sql`DELETE FROM attendance_records WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)`;
+      totalDeleted += attrResult.rowCount ?? 0;
+
+      const leaveResult = await sql`DELETE FROM leave_requests WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)`;
       totalDeleted += leaveResult.rowCount ?? 0;
 
-      console.log(`Cleaned up ${totalDeleted} orphaned records.`);
+      console.log(`Successfully cleaned up ${totalDeleted} orphaned records.`);
       return totalDeleted;
     } catch (error) {
-      console.error('Error cleaning up orphaned records:', error);
-      // Re-throw with more detail for diagnostics
+      console.error('Error in cleanupOrphanedRecords:', error);
       throw error;
     }
   }
 
   // File System Fallback
-  const users = await getUsers();
-  const validUserIds = new Set(users.map(u => u.id));
-
-  const isOrphaned = (userId?: string, userName?: string) => {
-    if (userName === '관리자') return false;
-    if (!userId || userId.trim() === '') return true;
-    return !validUserIds.has(userId);
-  };
-
   const fs = (await import('fs/promises')).default;
   let totalDeleted = 0;
 
-  // Cleanup Usage Records
   const records = await getRecords();
   const filteredRecords = records.filter(r => !isOrphaned(r.userId, r.userName));
   totalDeleted += records.length - filteredRecords.length;
@@ -447,7 +444,6 @@ export async function cleanupOrphanedRecords(): Promise<number> {
     await fs.writeFile(DATA_FILE_PATH, JSON.stringify(filteredRecords, null, 2), 'utf-8');
   }
 
-  // Cleanup Overrides
   const overrides = await getDailyOverrides();
   const filteredOverrides = overrides.filter(o => !isOrphaned(o.userId));
   totalDeleted += overrides.length - filteredOverrides.length;
