@@ -381,35 +381,51 @@ export async function cleanupOrphanedRecords(): Promise<number> {
       let totalDeleted = 0;
 
       // 1. Usage Records
-      // Delete where user_id is not in users table OR is null (excluding '관리자')
+      // Remove records where user_id is null/empty (except admin) OR user doesn't exist
       const usageResult = await sql`
         DELETE FROM usage_records 
-        WHERE (user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users))
-           OR (user_id IS NULL AND user_name != '관리자')
+        WHERE id IN (
+          SELECT r.id FROM usage_records r
+          LEFT JOIN users u ON r.user_id = u.id
+          WHERE (u.id IS NULL AND r.user_name != '관리자')
+        )
       `;
       totalDeleted += usageResult.rowCount ?? 0;
 
       // 2. Daily Overrides
       const overrideResult = await sql`
         DELETE FROM daily_overrides 
-        WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)
+        WHERE id IN (
+          SELECT o.id FROM daily_overrides o
+          LEFT JOIN users u ON o.user_id = u.id
+          WHERE u.id IS NULL
+        )
       `;
       totalDeleted += overrideResult.rowCount ?? 0;
 
       // 3. Attendance Records
       const attendanceResult = await sql`
         DELETE FROM attendance_records 
-        WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)
+        WHERE id IN (
+          SELECT a.id FROM attendance_records a
+          LEFT JOIN users u ON a.user_id = u.id
+          WHERE u.id IS NULL
+        )
       `;
       totalDeleted += attendanceResult.rowCount ?? 0;
 
       // 4. Leave Requests
       const leaveResult = await sql`
         DELETE FROM leave_requests 
-        WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)
+        WHERE id IN (
+          SELECT l.id FROM leave_requests l
+          LEFT JOIN users u ON l.user_id = u.id
+          WHERE u.id IS NULL
+        )
       `;
       totalDeleted += leaveResult.rowCount ?? 0;
 
+      console.log(`Cleaned up ${totalDeleted} orphaned records.`);
       return totalDeleted;
     } catch (error) {
       console.error('Error cleaning up orphaned records:', error);
@@ -421,10 +437,9 @@ export async function cleanupOrphanedRecords(): Promise<number> {
   const users = await getUsers();
   const validUserIds = new Set(users.map(u => u.id));
 
-  // Helper to filter orphaned records (keep if valid user or admin)
   const isOrphaned = (userId?: string, userName?: string) => {
     if (userName === '관리자') return false;
-    if (!userId) return true;
+    if (!userId || userId.trim() === '') return true;
     return !validUserIds.has(userId);
   };
 
@@ -447,7 +462,6 @@ export async function cleanupOrphanedRecords(): Promise<number> {
     await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(filteredOverrides, null, 2), 'utf-8');
   }
 
-  // Note: Skipping complex FS cleanup for attendance/leaves as Postgres is primary for this feature
   return totalDeleted;
 }
 
