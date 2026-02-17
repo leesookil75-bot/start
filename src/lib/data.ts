@@ -600,7 +600,7 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
       // safely: EXTRACT(DAY FROM (end_date::timestamp - start_date::timestamp)) + 1
       const { rows } = await sql`
         WITH used_leaves AS (
-          SELECT user_id, SUM(end_date - start_date + 1) as used_days
+          SELECT user_id, SUM(end_date::date - start_date::date + 1) as used_days
           FROM leave_requests
           WHERE status = 'APPROVED'
           GROUP BY user_id
