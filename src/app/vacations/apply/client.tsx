@@ -4,11 +4,12 @@ import { useState, useTransition } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'; // Import calendar styles
 import styles from './apply.module.css';
-import { requestVacation } from '../actions';
+import { requestVacation, getMyLeaveStatus } from '../actions';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@/components/icons';
 import Link from 'next/link';
 import './calendar-override.css'; // Custom overrides
+import { useEffect } from 'react';
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -17,7 +18,18 @@ export default function ClientApplyPage() {
     const [date, setDate] = useState<Value>(new Date());
     const [reason, setReason] = useState('');
     const [isPending, startTransition] = useTransition();
+    const [leaveStats, setLeaveStats] = useState<{ total: number; used: number; remaining: number } | null>(null);
     const router = useRouter();
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            const result = await getMyLeaveStatus();
+            if (result.success && result.data) {
+                setLeaveStats(result.data);
+            }
+        };
+        fetchStats();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,6 +79,20 @@ export default function ClientApplyPage() {
                 </Link>
                 <h1 className={styles.title}>휴가 신청</h1>
             </header>
+
+            {leaveStats && (
+                <div className={styles.statsContainer}>
+                    <div className={styles.statBox}>
+                        <span className={styles.statLabel}>잔여 연차</span>
+                        <span className={styles.statValue}>{leaveStats.remaining}일</span>
+                    </div>
+                    <div className={styles.statDivider} />
+                    <div className={styles.statBox}>
+                        <span className={styles.statLabel}>전체 연차</span>
+                        <span className={styles.statTotal}>{leaveStats.total}일</span>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.calendarWrapper}>
