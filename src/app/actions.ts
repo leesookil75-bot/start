@@ -233,25 +233,7 @@ export async function cleanupOrphanedRecordsAction(): Promise<{ success: boolean
     }
 }
 
-export async function getUnknownRecordsAction(): Promise<{ usage: any[], overrides: any[] }> {
-    const users = await getUsers();
-    const userIds = new Set(users.map(u => u.id));
 
-    const records = await getRecords();
-    const unknownUsage = records.filter(r => {
-        if (r.userName === '관리자') return false;
-        if (!r.userId) return true;
-        return !userIds.has(r.userId);
-    });
-
-    const overrides = await getDailyOverrides();
-    const unknownOverrides = overrides.filter(o => {
-        if (!o.userId) return true;
-        return !userIds.has(o.userId);
-    });
-
-    return { usage: unknownUsage, overrides: unknownOverrides };
-}
 
 // --- Notice Actions ---
 import { addNotice, deleteNotice as removeNotice, updateNotice } from '@/lib/data';
