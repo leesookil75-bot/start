@@ -127,7 +127,7 @@ export default function ClientApplyPage({ initialRequests = [] }: ClientApplyPag
                                 return (
                                     <div className={styles.leaveTileContent}>
                                         <PlaneIcon className={styles.leaveTileIcon} />
-                                        <span className={styles.leaveTileText}>휴가승인</span>
+                                        <span className={styles.leaveTileText}>휴가</span>
                                     </div>
                                 );
                             }
