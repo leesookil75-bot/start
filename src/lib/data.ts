@@ -601,7 +601,7 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
           startDate: r.start_date,
           endDate: r.end_date,
           reason: r.reason,
-          status: r.status,
+          status: r.status as LeaveStatus,
           createdAt: r.created_at.toString(),
           userName: u?.name || r.user_name || '진행중...',
           cleaningArea: u?.cleaningArea || '',
@@ -626,14 +626,6 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
     const data = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
     const all: LeaveRequest[] = JSON.parse(data);
 
-    // Join with users to get userName for file system too (if not stored)
-    // Actually, let's store userName when adding to avoid complex joins in FS mode?
-    // Or just look it up.
-    if (userId) {
-      return all.filter(r => r.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
-
-    // For admin, map names if missing?
     const users = await getUsers();
 
     // Calculate used leaves from all requests
@@ -642,12 +634,12 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
       if (r.status === 'APPROVED') {
         const start = new Date(r.startDate);
         const end = new Date(r.endDate);
-        const days = (end.getTime() - start.getTime()) / (1000 * 3600 * 24) + 1;
+        const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
         usedMap[r.userId] = (usedMap[r.userId] || 0) + days;
       }
     });
 
-    return all.map(l => {
+    const results = all.map(l => {
       const u = users.find(user => user.id === l.userId);
       const total = u?.totalLeaves ?? 15;
       const used = usedMap[l.userId] || 0;
@@ -658,215 +650,186 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
         cleaningArea: u?.cleaningArea,
         remainingLeaves: total - used
       };
-      const data = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
-      const all: LeaveRequest[] = JSON.parse(data);
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-      // Join with users to get userName for file system too (if not stored)
-      // Actually, let's store userName when adding to avoid complex joins in FS mode?
-      // Or just look it up.
-      if (userId) {
-        return all.filter(r => r.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      }
-
-      // For admin, map names if missing?
-      const users = await getUsers();
-
-      // Calculate used leaves from all requests
-      const usedMap: Record<string, number> = {};
-      all.forEach(r => {
-        if (r.status === 'APPROVED') {
-          const start = new Date(r.startDate);
-          const end = new Date(r.endDate);
-          const days = (end.getTime() - start.getTime()) / (1000 * 3600 * 24) + 1;
-          usedMap[r.userId] = (usedMap[r.userId] || 0) + days;
-        }
-      });
-
-      return all.map(l => {
-        const u = users.find(user => user.id === l.userId);
-        const total = u?.totalLeaves ?? 15;
-        const used = usedMap[l.userId] || 0;
-
-        return {
-          ...l,
-          userName: u?.name,
-          cleaningArea: u?.cleaningArea,
-          remainingLeaves: total - used
-        };
-      }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    } catch {
-      return [];
+    if (userId) {
+      return results.filter(r => r.userId === userId);
     }
+    return results;
+
+  } catch (e) {
+    console.error('File system error getting leaves:', e);
+    return [];
   }
+}
 
 export async function addLeaveRequest(data: Omit<LeaveRequest, 'id' | 'createdAt' | 'status' | 'userName'>): Promise<LeaveRequest> {
-    const status: LeaveStatus = 'PENDING';
+  const status: LeaveStatus = 'PENDING';
 
-    if (isPostgresEnabled()) {
-      const id = crypto.randomUUID();
-      await sql`
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
       INSERT INTO leave_requests (id, user_id, start_date, end_date, reason, status, created_at)
       VALUES (${id}, ${data.userId}, ${data.startDate}, ${data.endDate}, ${data.reason}, ${status}, NOW())
     `;
-      return {
-        ...data,
-        id,
-        status,
-        createdAt: new Date().toISOString()
-      };
-    }
-
-    const leaves = await getLeaveRequests();
-    // Note: getLeaveRequests returns with userName, but for storage we want raw. 
-    // So we should read raw file actually.
-
-    const fs = (await import('fs/promises')).default;
-    await ensureFile(LEAVES_FILE_PATH, []);
-    const rawData = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
-    let rawLeaves: LeaveRequest[] = JSON.parse(rawData);
-
-    const newLeave: LeaveRequest = {
-      id: crypto.randomUUID(),
-      userId: data.userId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      reason: data.reason,
+    return {
+      ...data,
+      id,
       status,
       createdAt: new Date().toISOString()
     };
+  }
 
-    rawLeaves.push(newLeave);
+  const leaves = await getLeaveRequests();
+  // Note: getLeaveRequests returns with userName, but for storage we want raw. 
+  // So we should read raw file actually.
+
+  const fs = (await import('fs/promises')).default;
+  await ensureFile(LEAVES_FILE_PATH, []);
+  const rawData = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
+  let rawLeaves: LeaveRequest[] = JSON.parse(rawData);
+
+  const newLeave: LeaveRequest = {
+    id: crypto.randomUUID(),
+    userId: data.userId,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    reason: data.reason,
+    status,
+    createdAt: new Date().toISOString()
+  };
+
+  rawLeaves.push(newLeave);
+  await fs.writeFile(LEAVES_FILE_PATH, JSON.stringify(rawLeaves, null, 2), 'utf-8');
+  return newLeave;
+}
+
+export async function updateLeaveRequestStatus(id: string, status: LeaveStatus): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE leave_requests SET status = ${status} WHERE id = ${id}`;
+    return;
+  }
+
+  const fs = (await import('fs/promises')).default;
+  const rawData = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
+  let rawLeaves: LeaveRequest[] = JSON.parse(rawData);
+  const index = rawLeaves.findIndex(l => l.id === id);
+  if (index !== -1) {
+    rawLeaves[index].status = status;
     await fs.writeFile(LEAVES_FILE_PATH, JSON.stringify(rawLeaves, null, 2), 'utf-8');
-    return newLeave;
   }
+}
 
-  export async function updateLeaveRequestStatus(id: string, status: LeaveStatus): Promise<void> {
-    if (isPostgresEnabled()) {
-      await sql`UPDATE leave_requests SET status = ${status} WHERE id = ${id}`;
-      return;
-    }
-
-    const fs = (await import('fs/promises')).default;
-    const rawData = await fs.readFile(LEAVES_FILE_PATH, 'utf-8');
-    let rawLeaves: LeaveRequest[] = JSON.parse(rawData);
-    const index = rawLeaves.findIndex(l => l.id === id);
-    if (index !== -1) {
-      rawLeaves[index].status = status;
-      await fs.writeFile(LEAVES_FILE_PATH, JSON.stringify(rawLeaves, null, 2), 'utf-8');
-    }
-  }
-
-  // --- Notices ---
-  // Notice type imported from ./types
+// --- Notices ---
+// Notice type imported from ./types
 
 
-  const NOTICES_FILE_PATH = path.join(process.cwd(), 'notices.json');
+const NOTICES_FILE_PATH = path.join(process.cwd(), 'notices.json');
 
-  export async function getNotices(): Promise<Notice[]> {
-    if (isPostgresEnabled()) {
-      try {
-        // Using generic/any for row type for now to avoid extensive type definitions overhead
-        const { rows } = await sql`SELECT * FROM notices ORDER BY is_pinned DESC, created_at DESC`;
-        return rows.map(r => ({
-          id: r.id,
-          title: r.title,
-          content: r.content,
-          imageData: r.image_data,
-          isPinned: r.is_pinned,
-          createdAt: r.created_at.toString(),
-          authorId: r.author_id
-        }));
-      } catch (e) {
-        console.warn('DB Error getting notices (ignoring for build):', e);
-        return [];
-      }
-    }
-
-    await ensureFile(NOTICES_FILE_PATH, []);
+export async function getNotices(): Promise<Notice[]> {
+  if (isPostgresEnabled()) {
     try {
-      const fs = (await import('fs/promises')).default;
-      const data = await fs.readFile(NOTICES_FILE_PATH, 'utf-8');
-      const notices: Notice[] = JSON.parse(data);
-      return notices.sort((a, b) => {
-        // Sort by Pinned (true first), then Date (newest first)
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-    } catch {
+      // Using generic/any for row type for now to avoid extensive type definitions overhead
+      const { rows } = await sql`SELECT * FROM notices ORDER BY is_pinned DESC, created_at DESC`;
+      return rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        content: r.content,
+        imageData: r.image_data,
+        isPinned: r.is_pinned,
+        createdAt: r.created_at.toString(),
+        authorId: r.author_id
+      }));
+    } catch (e) {
+      console.warn('DB Error getting notices (ignoring for build):', e);
       return [];
     }
   }
 
-  export async function addNotice(notice: Omit<Notice, 'id' | 'createdAt'>): Promise<Notice> {
-    if (isPostgresEnabled()) {
-      const id = crypto.randomUUID();
-      await sql`
+  await ensureFile(NOTICES_FILE_PATH, []);
+  try {
+    const fs = (await import('fs/promises')).default;
+    const data = await fs.readFile(NOTICES_FILE_PATH, 'utf-8');
+    const notices: Notice[] = JSON.parse(data);
+    return notices.sort((a, b) => {
+      // Sort by Pinned (true first), then Date (newest first)
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function addNotice(notice: Omit<Notice, 'id' | 'createdAt'>): Promise<Notice> {
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
             INSERT INTO notices (id, title, content, image_data, is_pinned, created_at, author_id)
             VALUES (${id}, ${notice.title}, ${notice.content}, ${notice.imageData || null}, ${notice.isPinned || false}, NOW(), ${notice.authorId})
          `;
-      return {
-        ...notice,
-        id,
-        createdAt: new Date().toISOString()
-      };
-    }
-
-    const notices = await getNotices();
-    const newNotice: Notice = {
+    return {
       ...notice,
-      id: crypto.randomUUID(),
+      id,
       createdAt: new Date().toISOString()
     };
-    notices.unshift(newNotice); // Add to beginning
-    const fs = (await import('fs/promises')).default;
-    await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
-    return newNotice;
   }
 
-  export async function deleteNotice(id: string): Promise<void> {
-    if (isPostgresEnabled()) {
-      await sql`DELETE FROM notices WHERE id = ${id}`;
-      return;
-    }
+  const notices = await getNotices();
+  const newNotice: Notice = {
+    ...notice,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString()
+  };
+  notices.unshift(newNotice); // Add to beginning
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
+  return newNotice;
+}
 
-    const notices = await getNotices();
-    const filtered = notices.filter(n => n.id !== id);
-    const fs = (await import('fs/promises')).default;
-    await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+export async function deleteNotice(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM notices WHERE id = ${id}`;
+    return;
   }
 
-  export async function updateNotice(id: string, updates: Partial<Notice>): Promise<void> {
-    if (isPostgresEnabled()) {
-      // Dynamic query construction is tricky with template literals helper, so we handle fields individually or basic coalesce
-      // For simplicity, we'll update fields if they are provided. 
-      // Ideally use a builder, but here we can check keys.
-      // However, since we usually update all fields in the form, let's assume we pass what we have.
-      // Actually, SQL template tags don't support dynamic columns easily.
-      // We will assume 'updates' contains the full set of editable fields for simplicity, or we write a smarter query.
-      // Let's just update all editable fields (title, content, isPinned, imageData). Note: imageData might be null or undefined.
+  const notices = await getNotices();
+  const filtered = notices.filter(n => n.id !== id);
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+}
 
-      // If imageData is undefined, we shouldn't overwrite it if we want partial updates?
-      // But the form usually sends the new state. If image isn't changed, we might send the old one or undefined?
-      // Let's assume the action logic handles "keep existing image".
-      // Here we act on what is passed.
+export async function updateNotice(id: string, updates: Partial<Notice>): Promise<void> {
+  if (isPostgresEnabled()) {
+    // Dynamic query construction is tricky with template literals helper, so we handle fields individually or basic coalesce
+    // For simplicity, we'll update fields if they are provided. 
+    // Ideally use a builder, but here we can check keys.
+    // However, since we usually update all fields in the form, let's assume we pass what we have.
+    // Actually, SQL template tags don't support dynamic columns easily.
+    // We will assume 'updates' contains the full set of editable fields for simplicity, or we write a smarter query.
+    // Let's just update all editable fields (title, content, isPinned, imageData). Note: imageData might be null or undefined.
 
-      // We need to construct the SET clause safely.
-      // Since sql`` is a function, we can't easily map.
-      // We will do a robust check.
+    // If imageData is undefined, we shouldn't overwrite it if we want partial updates?
+    // But the form usually sends the new state. If image isn't changed, we might send the old one or undefined?
+    // Let's assume the action logic handles "keep existing image".
+    // Here we act on what is passed.
 
-      // Simplest approach: Retrieve existing, merge, update.
-      const { rows } = await sql`SELECT * FROM notices WHERE id = ${id}`;
-      if (rows.length === 0) throw new Error('Notice not found');
-      const existing = rows[0];
+    // We need to construct the SET clause safely.
+    // Since sql`` is a function, we can't easily map.
+    // We will do a robust check.
 
-      const newTitle = updates.title ?? existing.title;
-      const newContent = updates.content ?? existing.content;
-      const newPinned = updates.isPinned ?? existing.is_pinned; // DB uses snake_case column
-      const newImage = updates.imageData === undefined ? existing.image_data : updates.imageData; // Allow setting to null? If updates.imageData is null, it means remove image. If undefined, means no change.
+    // Simplest approach: Retrieve existing, merge, update.
+    const { rows } = await sql`SELECT * FROM notices WHERE id = ${id}`;
+    if (rows.length === 0) throw new Error('Notice not found');
+    const existing = rows[0];
 
-      await sql`
+    const newTitle = updates.title ?? existing.title;
+    const newContent = updates.content ?? existing.content;
+    const newPinned = updates.isPinned ?? existing.is_pinned; // DB uses snake_case column
+    const newImage = updates.imageData === undefined ? existing.image_data : updates.imageData; // Allow setting to null? If updates.imageData is null, it means remove image. If undefined, means no change.
+
+    await sql`
       UPDATE notices 
       SET title = ${newTitle}, 
           content = ${newContent}, 
@@ -874,201 +837,201 @@ export async function addLeaveRequest(data: Omit<LeaveRequest, 'id' | 'createdAt
           image_data = ${newImage}
       WHERE id = ${id}
     `;
-      return;
-    }
-
-    const notices = await getNotices();
-    const index = notices.findIndex(n => n.id === id);
-    if (index === -1) throw new Error('Notice not found');
-
-    notices[index] = { ...notices[index], ...updates };
-    const fs = (await import('fs/promises')).default;
-    await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
+    return;
   }
 
-  // --- Attendance ---
-  const ATTENDANCE_FILE_PATH = path.join(process.cwd(), 'attendance.json');
+  const notices = await getNotices();
+  const index = notices.findIndex(n => n.id === id);
+  if (index === -1) throw new Error('Notice not found');
 
-  export async function getAttendanceRecords(userId?: string): Promise<AttendanceRecord[]> {
-    if (isPostgresEnabled()) {
-      try {
-        let query = sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
-        // If filtering by userId is needed strictly in SQL
-        if (userId) {
-          const { rows } = await sql`SELECT * FROM attendance_records WHERE user_id = ${userId} ORDER BY timestamp DESC`;
-          return rows.map(r => ({
-            id: r.id,
-            userId: r.user_id,
-            type: r.type,
-            timestamp: r.timestamp.toString()
-          }));
-        }
+  notices[index] = { ...notices[index], ...updates };
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(NOTICES_FILE_PATH, JSON.stringify(notices, null, 2), 'utf-8');
+}
 
-        const { rows } = await sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+// --- Attendance ---
+const ATTENDANCE_FILE_PATH = path.join(process.cwd(), 'attendance.json');
+
+export async function getAttendanceRecords(userId?: string): Promise<AttendanceRecord[]> {
+  if (isPostgresEnabled()) {
+    try {
+      let query = sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+      // If filtering by userId is needed strictly in SQL
+      if (userId) {
+        const { rows } = await sql`SELECT * FROM attendance_records WHERE user_id = ${userId} ORDER BY timestamp DESC`;
         return rows.map(r => ({
           id: r.id,
           userId: r.user_id,
           type: r.type,
           timestamp: r.timestamp.toString()
         }));
-      } catch (e) {
-        console.warn('DB Error getting attendance (ignoring):', e);
-        return [];
       }
-    }
 
-    await ensureFile(ATTENDANCE_FILE_PATH, []);
-    try {
-      const fs = (await import('fs/promises')).default;
-      const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
-      const all: AttendanceRecord[] = JSON.parse(data);
-      if (userId) {
-        return all.filter(r => r.userId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      }
-      return all.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    } catch {
+      const { rows } = await sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+      return rows.map(r => ({
+        id: r.id,
+        userId: r.user_id,
+        type: r.type,
+        timestamp: r.timestamp.toString()
+      }));
+    } catch (e) {
+      console.warn('DB Error getting attendance (ignoring):', e);
       return [];
     }
   }
 
-  export async function addAttendanceRecord(userId: string, type: 'CHECK_IN' | 'CHECK_OUT'): Promise<AttendanceRecord> {
-    if (isPostgresEnabled()) {
-      const id = crypto.randomUUID();
-      await sql`
+  await ensureFile(ATTENDANCE_FILE_PATH, []);
+  try {
+    const fs = (await import('fs/promises')).default;
+    const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+    const all: AttendanceRecord[] = JSON.parse(data);
+    if (userId) {
+      return all.filter(r => r.userId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }
+    return all.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  } catch {
+    return [];
+  }
+}
+
+export async function addAttendanceRecord(userId: string, type: 'CHECK_IN' | 'CHECK_OUT'): Promise<AttendanceRecord> {
+  if (isPostgresEnabled()) {
+    const id = crypto.randomUUID();
+    await sql`
       INSERT INTO attendance_records (id, user_id, type, timestamp)
       VALUES (${id}, ${userId}, ${type}, NOW())
     `;
-      return {
-        id,
-        userId,
-        type,
-        timestamp: new Date().toISOString()
-      };
-    }
-
-    const records = await getAttendanceRecords(); // This actually loads all if we don't pass userId, which is fine for appending
-    // Actually getAttendanceRecords might return filtered list if I updated it to take args.
-    // Let's reuse ensureFile logic for simplicity to get raw array
-    await ensureFile(ATTENDANCE_FILE_PATH, []);
-    const fs = (await import('fs/promises')).default;
-    const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
-    let allRecords: AttendanceRecord[] = JSON.parse(data);
-
-    const newRecord: AttendanceRecord = {
-      id: crypto.randomUUID(),
+    return {
+      id,
       userId,
       type,
       timestamp: new Date().toISOString()
     };
-
-    allRecords.push(newRecord);
-    await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(allRecords, null, 2), 'utf-8');
-    return newRecord;
   }
 
-  export async function getLatestAttendance(userId: string): Promise<AttendanceRecord | null> {
-    const records = await getAttendanceRecords(userId);
-    return records.length > 0 ? records[0] : null;
-  }
+  const records = await getAttendanceRecords(); // This actually loads all if we don't pass userId, which is fine for appending
+  // Actually getAttendanceRecords might return filtered list if I updated it to take args.
+  // Let's reuse ensureFile logic for simplicity to get raw array
+  await ensureFile(ATTENDANCE_FILE_PATH, []);
+  const fs = (await import('fs/promises')).default;
+  const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+  let allRecords: AttendanceRecord[] = JSON.parse(data);
 
-  export async function updateAttendanceRecord(id: string, updates: Partial<AttendanceRecord>): Promise<void> {
-    if (isPostgresEnabled()) {
-      const { rows } = await sql`SELECT * FROM attendance_records WHERE id = ${id}`;
-      if (rows.length === 0) throw new Error('Record not found');
-      const existing = rows[0];
+  const newRecord: AttendanceRecord = {
+    id: crypto.randomUUID(),
+    userId,
+    type,
+    timestamp: new Date().toISOString()
+  };
 
-      const newType = updates.type ?? existing.type;
-      const newTimestamp = updates.timestamp ?? existing.timestamp;
+  allRecords.push(newRecord);
+  await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(allRecords, null, 2), 'utf-8');
+  return newRecord;
+}
 
-      await sql`
+export async function getLatestAttendance(userId: string): Promise<AttendanceRecord | null> {
+  const records = await getAttendanceRecords(userId);
+  return records.length > 0 ? records[0] : null;
+}
+
+export async function updateAttendanceRecord(id: string, updates: Partial<AttendanceRecord>): Promise<void> {
+  if (isPostgresEnabled()) {
+    const { rows } = await sql`SELECT * FROM attendance_records WHERE id = ${id}`;
+    if (rows.length === 0) throw new Error('Record not found');
+    const existing = rows[0];
+
+    const newType = updates.type ?? existing.type;
+    const newTimestamp = updates.timestamp ?? existing.timestamp;
+
+    await sql`
             UPDATE attendance_records
             SET type = ${newType}, timestamp = ${newTimestamp}
             WHERE id = ${id}
         `;
-      return;
-    }
-
-    const fs = (await import('fs/promises')).default;
-    const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
-    let allRecords: AttendanceRecord[] = JSON.parse(data);
-    const index = allRecords.findIndex(r => r.id === id);
-    if (index === -1) throw new Error('Record not found');
-
-    allRecords[index] = { ...allRecords[index], ...updates };
-    await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(allRecords, null, 2), 'utf-8');
+    return;
   }
 
-  export async function deleteAttendanceRecord(id: string): Promise<void> {
-    if (isPostgresEnabled()) {
-      await sql`DELETE FROM attendance_records WHERE id = ${id}`;
-      return;
-    }
+  const fs = (await import('fs/promises')).default;
+  const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+  let allRecords: AttendanceRecord[] = JSON.parse(data);
+  const index = allRecords.findIndex(r => r.id === id);
+  if (index === -1) throw new Error('Record not found');
 
-    const fs = (await import('fs/promises')).default;
-    const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
-    let allRecords: AttendanceRecord[] = JSON.parse(data);
-    const filtered = allRecords.filter(r => r.id !== id);
-    await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+  allRecords[index] = { ...allRecords[index], ...updates };
+  await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(allRecords, null, 2), 'utf-8');
+}
+
+export async function deleteAttendanceRecord(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM attendance_records WHERE id = ${id}`;
+    return;
   }
 
-  // --- Daily Overrides ---
-  // DailyOverride type imported from ./types
+  const fs = (await import('fs/promises')).default;
+  const data = await fs.readFile(ATTENDANCE_FILE_PATH, 'utf-8');
+  let allRecords: AttendanceRecord[] = JSON.parse(data);
+  const filtered = allRecords.filter(r => r.id !== id);
+  await fs.writeFile(ATTENDANCE_FILE_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+}
+
+// --- Daily Overrides ---
+// DailyOverride type imported from ./types
 
 
-  const DAILY_OVERRIDES_FILE_PATH = path.join(process.cwd(), 'daily_overrides.json');
+const DAILY_OVERRIDES_FILE_PATH = path.join(process.cwd(), 'daily_overrides.json');
 
-  export async function getDailyOverrides(): Promise<DailyOverride[]> {
-    if (isPostgresEnabled()) {
-      try {
-        // Postgres implementation - assumed table 'daily_overrides'
-        const { rows } = await sql`SELECT * FROM daily_overrides`;
-        return rows.map(r => ({
-          date: r.date, // formatting might be needed depending on DB type
-          userId: r.user_id,
-          type: r.type,
-          value: !isNaN(Number(r.value)) ? Number(r.value) : r.value
-        }));
-      } catch (e) {
-        console.warn('DB Error getting overrides (ignoring for build):', e);
-        return [];
-      }
-    }
-
-    await ensureFile(DAILY_OVERRIDES_FILE_PATH, []);
+export async function getDailyOverrides(): Promise<DailyOverride[]> {
+  if (isPostgresEnabled()) {
     try {
-      const fs = (await import('fs/promises')).default;
-      const data = await fs.readFile(DAILY_OVERRIDES_FILE_PATH, 'utf-8');
-      return JSON.parse(data);
-    } catch {
+      // Postgres implementation - assumed table 'daily_overrides'
+      const { rows } = await sql`SELECT * FROM daily_overrides`;
+      return rows.map(r => ({
+        date: r.date, // formatting might be needed depending on DB type
+        userId: r.user_id,
+        type: r.type,
+        value: !isNaN(Number(r.value)) ? Number(r.value) : r.value
+      }));
+    } catch (e) {
+      console.warn('DB Error getting overrides (ignoring for build):', e);
       return [];
     }
   }
 
-  export async function saveDailyOverride(override: DailyOverride): Promise<void> {
-    if (isPostgresEnabled()) {
-      // Postgres upsert
-      // Cast value to string for storage if mixed types are allowed, or use specific column
-      // Here we assume value column is TEXT
-      await sql`
+  await ensureFile(DAILY_OVERRIDES_FILE_PATH, []);
+  try {
+    const fs = (await import('fs/promises')).default;
+    const data = await fs.readFile(DAILY_OVERRIDES_FILE_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function saveDailyOverride(override: DailyOverride): Promise<void> {
+  if (isPostgresEnabled()) {
+    // Postgres upsert
+    // Cast value to string for storage if mixed types are allowed, or use specific column
+    // Here we assume value column is TEXT
+    await sql`
       INSERT INTO daily_overrides (date, user_id, type, value, updated_at)
       VALUES (${override.date}, ${override.userId}, ${override.type}, ${String(override.value)}, NOW())
       ON CONFLICT (date, user_id, type) 
       DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
     `;
-      return;
-    }
-
-    const overrides = await getDailyOverrides();
-    const index = overrides.findIndex(
-      o => o.date === override.date && o.userId === override.userId && o.type === override.type
-    );
-
-    if (index !== -1) {
-      overrides[index] = override;
-    } else {
-      overrides.push(override);
-    }
-
-    const fs = (await import('fs/promises')).default;
-    await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(overrides, null, 2), 'utf-8');
+    return;
   }
+
+  const overrides = await getDailyOverrides();
+  const index = overrides.findIndex(
+    o => o.date === override.date && o.userId === override.userId && o.type === override.type
+  );
+
+  if (index !== -1) {
+    overrides[index] = override;
+  } else {
+    overrides.push(override);
+  }
+
+  const fs = (await import('fs/promises')).default;
+  await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(overrides, null, 2), 'utf-8');
+}
