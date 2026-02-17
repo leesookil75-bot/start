@@ -442,78 +442,10 @@
     }
 }
 
-/* Slider / Swipe Styles */
-.sliderContainer {
-    overflow: hidden;
-    width: 100%;
-    position: relative;
-    touch-action: pan-y;
-}
 
-.slideTrack {
-    display: flex;
-    transition: transform 0.3s ease-out;
-}
-
-.slide {
-    flex-shrink: 0;
-    padding: 0.5rem;
-}
-
-/* Page Indicator / Tabs */
-.pageTabs {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-}
-
-.pageTab {
-    padding: 0.4rem 0.8rem;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #888;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-    font-size: 0.85rem;
-}
-
-.activePageTab {
-    background: #fff;
-    color: #000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
 
 @media (max-width: 768px) {
-    .pageTabs {
-        /* User wants more space from top (currently margin-top is implicitly small due to no specific padding in parent) */
-        margin-top: 1rem;
-        margin-bottom: 1.5rem;
-        /* More space below */
-        gap: 0.5rem;
-        /* Increase gap */
-    }
 
-    .pageTab {
-        /* User wants bigger buttons and text */
-        padding: 0.6rem 1rem;
-        font-size: 0.95rem;
-        /* Larger font */
-        flex: 1;
-        text-align: center;
-        white-space: nowrap;
-        background: rgba(255, 255, 255, 0.15);
-        /* Slightly clearer bg */
-    }
-
-    .activePageTab {
-        font-weight: 800;
-        font-size: 1rem;
-        /* Active slightly bigger? or same */
-    }
 
     /* Dashboard internal tabs (Records, Daily, Weekly...) */
     .tabs {
@@ -931,17 +863,7 @@
         color: #6b7280;
     }
 
-    /* Tabs on PC */
-    .pageTab {
-        background: #e5e7eb;
-        color: #4b5563;
-    }
 
-    .activePageTab {
-        background: #2563eb;
-        /* Blue */
-        color: #ffffff;
-    }
 
     /* Sticky Headers/Cols on PC - White Background */
     .stickyBg,
