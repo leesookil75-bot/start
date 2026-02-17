@@ -164,26 +164,39 @@
     border-radius: 12px;
 }
 
-/* Tile Content for Dots */
+/* Tile Content for Detailed Leaves */
 .tileContent {
     display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
     margin-top: 4px;
+    width: 100%;
 }
 
-.leaveDot {
-    width: 18px;
-    height: 18px;
-    background: #10b981;
-    border-radius: 50%;
-    font-size: 10px;
-    color: white;
+.leaveItem {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.75rem;
+    color: #1e3a8a;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-weight: bold;
+    flex-direction: column;
+    /* align-items: center; */
+    text-align: left;
+    line-height: 1.2;
+    overflow: hidden;
+}
+
+.leaveName {
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.leaveArea {
+    font-size: 0.7rem;
+    color: #3b82f6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

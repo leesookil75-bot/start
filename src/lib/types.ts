@@ -102,4 +102,5 @@ export type LeaveRequest = {
     status: LeaveStatus;
     createdAt: string;
     userName?: string; // Optional for display convenience
+    cleaningArea?: string; // Optional for display convenience
 };

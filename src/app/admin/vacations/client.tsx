@@ -91,8 +91,9 @@ export default function AdminVacationClient({ initialRequests }: AdminVacationCl
         return (
             <div className={styles.tileContent}>
                 {leavesOnDay.map((l, i) => (
-                    <div key={i} className={styles.leaveDot} title={l.userName}>
-                        {l.userName?.slice(0, 1)}
+                    <div key={i} className={styles.leaveItem} title={`${l.userName} (${l.cleaningArea})`}>
+                        <span className={styles.leaveName}>{l.userName}</span>
+                        <span className={styles.leaveArea}>{l.cleaningArea}</span>
                     </div>
                 ))}
             </div>

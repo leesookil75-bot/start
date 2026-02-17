@@ -594,7 +594,7 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
       // If we need userName, we might need a join. For simplicity, let's assume we might need to fetch it or it's stored.
       // Let's do a join to get user name for Admin view
       const { rows } = await sql`
-        SELECT l.*, u.name as user_name 
+        SELECT l.*, u.name as user_name, u.cleaning_area as user_cleaning_area
         FROM leave_requests l
         LEFT JOIN users u ON l.user_id = u.id
         ORDER BY l.created_at DESC
@@ -607,7 +607,8 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
         reason: r.reason,
         status: r.status,
         createdAt: r.created_at.toString(),
-        userName: r.user_name
+        userName: r.user_name,
+        cleaningArea: r.user_cleaning_area
       }));
     } catch (e) {
       console.warn('DB Error getting leaves:', e);
@@ -630,10 +631,14 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
 
     // For admin, map names if missing?
     const users = await getUsers();
-    return all.map(l => ({
-      ...l,
-      userName: users.find(u => u.id === l.userId)?.name
-    })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return all.map(l => {
+      const u = users.find(user => user.id === l.userId);
+      return {
+        ...l,
+        userName: u?.name,
+        cleaningArea: u?.cleaningArea
+      };
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   } catch {
     return [];
