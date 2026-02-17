@@ -84,6 +84,18 @@ export async function initializeDB() {
             );
         `;
 
+        await sql`
+            CREATE TABLE IF NOT EXISTS leave_requests (
+                id UUID PRIMARY KEY,
+                user_id UUID REFERENCES users(id),
+                start_date VARCHAR(20) NOT NULL,
+                end_date VARCHAR(20) NOT NULL,
+                reason TEXT,
+                status VARCHAR(20) NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS workplace_id UUID REFERENCES workplaces(id);`;
 
 
