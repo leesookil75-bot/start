@@ -593,10 +593,27 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
 
       // If we need userName, we might need a join. For simplicity, let's assume we might need to fetch it or it's stored.
       // Let's do a join to get user name for Admin view
+      // Also calculate used leaves. 
+      // Note: This matches "APPROVED" leaves. 
+      // Postgres date subtraction gives integer days? No, interval. 
+      // (end_date - start_date) might return integer if they are Date types.
+      // safely: EXTRACT(DAY FROM (end_date::timestamp - start_date::timestamp)) + 1
       const { rows } = await sql`
-        SELECT l.*, u.name as user_name, u.cleaning_area as user_cleaning_area
+        WITH used_leaves AS (
+          SELECT user_id, SUM(end_date - start_date + 1) as used_days
+          FROM leave_requests
+          WHERE status = 'APPROVED'
+          GROUP BY user_id
+        )
+        SELECT 
+          l.*, 
+          u.name as user_name, 
+          u.cleaning_area as user_cleaning_area,
+          u.total_leaves,
+          COALESCE(ul.used_days, 0) as used_days
         FROM leave_requests l
         LEFT JOIN users u ON l.user_id = u.id
+        LEFT JOIN used_leaves ul ON l.user_id = ul.user_id
         ORDER BY l.created_at DESC
       `;
       return rows.map(r => ({
@@ -608,7 +625,8 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
         status: r.status,
         createdAt: r.created_at.toString(),
         userName: r.user_name,
-        cleaningArea: r.user_cleaning_area
+        cleaningArea: r.user_cleaning_area,
+        remainingLeaves: (r.total_leaves || 15) - (r.used_days || 0)
       }));
     } catch (e) {
       console.warn('DB Error getting leaves:', e);
@@ -631,12 +649,28 @@ export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]>
 
     // For admin, map names if missing?
     const users = await getUsers();
+
+    // Calculate used leaves from all requests
+    const usedMap: Record<string, number> = {};
+    all.forEach(r => {
+      if (r.status === 'APPROVED') {
+        const start = new Date(r.startDate);
+        const end = new Date(r.endDate);
+        const days = (end.getTime() - start.getTime()) / (1000 * 3600 * 24) + 1;
+        usedMap[r.userId] = (usedMap[r.userId] || 0) + days;
+      }
+    });
+
     return all.map(l => {
       const u = users.find(user => user.id === l.userId);
+      const total = u?.totalLeaves ?? 15;
+      const used = usedMap[l.userId] || 0;
+
       return {
         ...l,
         userName: u?.name,
-        cleaningArea: u?.cleaningArea
+        cleaningArea: u?.cleaningArea,
+        remainingLeaves: total - used
       };
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 

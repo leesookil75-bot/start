@@ -91,8 +91,13 @@ export default function AdminVacationClient({ initialRequests }: AdminVacationCl
         return (
             <div className={styles.tileContent}>
                 {leavesOnDay.map((l, i) => (
-                    <div key={i} className={styles.leaveItem} title={`${l.userName} (${l.cleaningArea})`}>
-                        <span className={styles.leaveName}>{l.userName}</span>
+                    <div key={i} className={styles.leaveItem} title={`${l.userName} (잔여: ${l.remainingLeaves}) - ${l.cleaningArea}`}>
+                        <span className={styles.leaveName}>
+                            {l.userName}
+                            <span style={{ fontSize: '0.8em', marginLeft: '2px', fontWeight: 'normal', opacity: 0.8 }}>
+                                ({l.remainingLeaves})
+                            </span>
+                        </span>
                         <span className={styles.leaveArea}>{l.cleaningArea}</span>
                     </div>
                 ))}

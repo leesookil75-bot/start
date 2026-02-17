@@ -103,4 +103,5 @@ export type LeaveRequest = {
     createdAt: string;
     userName?: string; // Optional for display convenience
     cleaningArea?: string; // Optional for display convenience
+    remainingLeaves?: number; // Calculated on fetch
 };
