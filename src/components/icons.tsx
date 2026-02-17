@@ -114,8 +114,8 @@ export function PlaneIcon(props: React.SVGProps<SVGSVGElement>) {
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            {/* Larger Commercial Airplane silhouette */}
-            <path d="M2 13h2l3-9h3l-2 9h7a2 2 0 1 1 0 4h-7l2 9h-3l-3-9h-2v-4z" />
+            {/* Clean, balanced side-view jet silhouette */}
+            <path d="M22 13h-4l-3 7h-2l2-7H8l-1 2H5l1-4-1-4h2l1 2h7l-2-7h2l3 7h4s1 .5 1 2-1 2-1 2Z" />
         </svg>
     )
 }
