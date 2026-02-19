@@ -85,7 +85,7 @@ function MapEvents({ onClick }: { onClick?: (lat: number, lng: number) => void }
     return null;
 }
 
-export default function Map({ center, zoom = 15, markers = [], circle, onMapClick, height = '300px' }: MapProps) {
+export default function Map({ center, zoom = 15, markers = [], circle, userCircle, onMapClick, height = '300px' }: MapProps) {
     // Ensure Leaflet CSS is loaded globally or here.
     // Next.js might struggle with 'window' in Leaflet import if not dynamic.
     // This component MUST be imported dynamically with `ssr: false` in parent.
