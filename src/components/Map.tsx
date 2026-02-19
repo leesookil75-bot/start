@@ -62,6 +62,11 @@ interface MapProps {
         radius: number;
         color?: string;
     };
+    userCircle?: {
+        lat: number;
+        lng: number;
+        radius: number;
+    };
     onMapClick?: (lat: number, lng: number) => void;
     height?: string;
 }
@@ -110,6 +115,14 @@ export default function Map({ center, zoom = 15, markers = [], circle, onMapClic
                     center={[circle.lat, circle.lng]}
                     radius={circle.radius}
                     pathOptions={{ color: circle.color || 'red', fillColor: circle.color || 'red', fillOpacity: 0.2 }}
+                />
+            )}
+
+            {userCircle && (
+                <Circle
+                    center={[userCircle.lat, userCircle.lng]}
+                    radius={userCircle.radius}
+                    pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.15, weight: 1 }}
                 />
             )}
         </MapContainer>
