@@ -24,6 +24,7 @@ export default function MapClient({ user }: MapClientProps) {
     const [center, setCenter] = useState<[number, number]>([defaultLat, defaultLng]);
     const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
     const [accuracy, setAccuracy] = useState<number | null>(null);
+    const [accuracyGrade, setAccuracyGrade] = useState<{ label: string, color: string } | null>(null);
     const [status, setStatus] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
     const [errorMsg, setErrorMsg] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -50,52 +51,61 @@ export default function MapClient({ user }: MapClientProps) {
     const [distance, setDistance] = useState<number | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
 
+    const getAccuracyGrade = (acc: number) => {
+        if (acc <= 20) return { label: '좋음 (GPS)', color: '#4ade80' };
+        if (acc <= 60) return { label: '보통 (Wi-Fi/교외)', color: '#fbbf24' };
+        return { label: '낮음 (실내/기상)', color: '#f87171' };
+    };
+
+    const getAdvice = (error: GeolocationPositionError) => {
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                return '위치 정보 권한이 거부되었습니다. 설정에서 브라우저의 위치 권한을 허용해 주세요.';
+            case error.POSITION_UNAVAILABLE:
+                return '위치 정보를 사용할 수 없습니다. GPS가 켜져 있는지 확인하고 창가나 실외로 이동해 주세요.';
+            case error.TIMEOUT:
+                return '위치 확인 시간이 초과되었습니다. 신호가 약한 지역일 수 있으니 자리를 옮겨 다시 시도해 주세요.';
+            default:
+                return '알 수 없는 오류가 발생했습니다: ' + error.message;
+        }
+    };
+
     useEffect(() => {
-        const options = { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 };
+        const options = { enableHighAccuracy: true, timeout: 30000, maximumAge: 1000 };
 
-        // Warm-up: get current position once
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude, accuracy } = pos.coords;
-                setUserLoc([latitude, longitude]);
-                setAccuracy(accuracy);
-                setCenter([latitude, longitude]);
-                setStatus('READY');
-            },
-            () => { /* Ignore initial error if watch takes over */ },
-            options
-        );
+        const updatePosition = (pos: GeolocationPosition) => {
+            const { latitude, longitude, accuracy } = pos.coords;
+            setUserLoc([latitude, longitude]);
+            setAccuracy(accuracy);
+            setAccuracyGrade(getAccuracyGrade(accuracy));
+            setCenter([latitude, longitude]);
+            setStatus('READY');
 
-        const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const { latitude, longitude, accuracy } = position.coords;
-                setUserLoc([latitude, longitude]);
-                setAccuracy(accuracy);
-                setCenter([latitude, longitude]);
-                setStatus('READY');
+            if (user.workLat && user.workLng) {
+                const dist = getDistanceFromLatLonInM(latitude, longitude, user.workLat, user.workLng);
+                setDistance(dist);
+                const radius = user.allowedRadius || 50;
+                setIsWithinRadius(dist <= radius);
+            } else if (!user.workLat) {
+                setIsWithinRadius(true);
+            }
+        };
 
-                // Calculate distance if workplace location exists
-                if (user.workLat && user.workLng) {
-                    const dist = getDistanceFromLatLonInM(latitude, longitude, user.workLat, user.workLng);
-                    setDistance(dist);
+        const handleError = (err: GeolocationPositionError) => {
+            console.error('WatchPosition Error:', err);
+            if (status === 'LOADING') {
+                setStatus('ERROR');
+                setErrorMsg(getAdvice(err));
+            }
+        };
 
-                    const radius = user.allowedRadius || 50; // Default to 50m if not set
-                    setIsWithinRadius(dist <= radius);
-                } else {
-                    if (!user.workLat) {
-                        setIsWithinRadius(true); // No restriction if no workplace
-                    }
-                }
-            },
-            (err) => {
-                console.error(err);
-                if (status === 'LOADING') {
-                    setStatus('ERROR');
-                    setErrorMsg('위치 정보를 가져올 수 없습니다: ' + err.message);
-                }
-            },
-            options
-        );
+        // Warm-up
+        navigator.geolocation.getCurrentPosition(updatePosition, () => {
+            // If high accuracy fails during warm-up, try once with low accuracy
+            navigator.geolocation.getCurrentPosition(updatePosition, handleError, { ...options, enableHighAccuracy: false });
+        }, options);
+
+        const watchId = navigator.geolocation.watchPosition(updatePosition, handleError, options);
 
         return () => navigator.geolocation.clearWatch(watchId);
     }, [user.workLat, user.workLng, user.allowedRadius]);
@@ -103,21 +113,36 @@ export default function MapClient({ user }: MapClientProps) {
     const refreshLocation = () => {
         if (!navigator.geolocation) return;
         setIsRefreshing(true);
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude, accuracy } = pos.coords;
-                setUserLoc([latitude, longitude]);
-                setAccuracy(accuracy);
-                setCenter([latitude, longitude]);
+
+        const onRefreshSuccess = (pos: GeolocationPosition) => {
+            const { latitude, longitude, accuracy } = pos.coords;
+            setUserLoc([latitude, longitude]);
+            setAccuracy(accuracy);
+            setAccuracyGrade(getAccuracyGrade(accuracy));
+            setCenter([latitude, longitude]);
+            setIsRefreshing(false);
+        };
+
+        const onRefreshError = (err: GeolocationPositionError) => {
+            if (err.code === err.TIMEOUT) {
+                // One last try with highAccuracy: false on timeout
+                navigator.geolocation.getCurrentPosition(onRefreshSuccess, (finalErr) => {
+                    console.error('Refresh Error (Final):', finalErr);
+                    setIsRefreshing(false);
+                    alert(getAdvice(finalErr));
+                }, { enableHighAccuracy: false, timeout: 10000 });
+            } else {
+                console.error('Refresh Error:', err);
                 setIsRefreshing(false);
-            },
-            (err) => {
-                console.error(err);
-                setIsRefreshing(false);
-                alert('위치를 갱신할 수 없습니다: ' + err.message);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+                alert(getAdvice(err));
+            }
+        };
+
+        navigator.geolocation.getCurrentPosition(onRefreshSuccess, onRefreshError, {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 0
+        });
     };
 
     const handleConfirm = () => {
@@ -244,15 +269,22 @@ export default function MapClient({ user }: MapClientProps) {
                     position: 'absolute',
                     top: '10px',
                     left: '10px',
-                    background: 'rgba(0,0,0,0.6)',
+                    background: 'rgba(0,0,0,0.7)',
                     color: '#fff',
-                    padding: '0.4rem 0.6rem',
-                    borderRadius: '8px',
-                    fontSize: '0.7rem',
+                    padding: '0.6rem 0.8rem',
+                    borderRadius: '12px',
+                    fontSize: '0.75rem',
                     zIndex: 1000,
-                    maxWidth: '120px'
+                    maxWidth: '150px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                 }}>
-                    💡 정확도를 높이려면 Wi-Fi를 켜거나 실외로 이동해주세요
+                    <div style={{ marginBottom: '0.4rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        정확도: <span style={{ color: accuracyGrade?.color || '#fff' }}>{accuracyGrade?.label || '확인 중...'}</span>
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#ccc', lineHeight: '1.3' }}>
+                        💡 원이 클수록 부정확합니다. 창가로 이동해 🔄 버튼을 눌러보세요.
+                    </div>
                 </div>
             </div>
 
