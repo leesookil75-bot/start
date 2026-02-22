@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
+import { createPortal } from 'react-dom';
 import { getUserMonthlyUsages, submitUsageForDate } from '../actions';
 import styles from '../page.module.css';
 
@@ -14,11 +15,13 @@ export default function MyStatsEditCalendar() {
     const [isPending, startTransition] = useTransition();
     const [pendingDelta, setPendingDelta] = useState({ count50: 0, count75: 0 });
     const [message, setMessage] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
 
     useEffect(() => {
+        setMounted(true);
         loadData();
     }, [year, month]);
 
@@ -157,7 +160,7 @@ export default function MyStatsEditCalendar() {
                 })}
             </div>
 
-            {selectedDate && (
+            {mounted && selectedDate && createPortal(
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -212,7 +215,8 @@ export default function MyStatsEditCalendar() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
