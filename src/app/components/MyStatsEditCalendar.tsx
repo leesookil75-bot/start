@@ -104,60 +104,66 @@ export default function MyStatsEditCalendar() {
     };
 
     return (
-        <div style={{ padding: '1rem', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <button onClick={handlePrevMonth} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>◀</button>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>{year}년 {month}월</h2>
-                <button onClick={handleNextMonth} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: (year === new Date().getFullYear() && month === new Date().getMonth() + 1) ? 0.3 : 1 }} disabled={year === new Date().getFullYear() && month === new Date().getMonth() + 1}>▶</button>
-            </div>
+        <div className={styles.card}>
+            <h1 className={styles.title} style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.5rem' }}>
+                배출량 수정 ({month}월)
+            </h1>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '0.5rem', fontWeight: 'bold', color: '#6b7280', fontSize: '0.85rem' }}>
-                <div style={{ color: 'red' }}>일</div>
-                <div>월</div>
-                <div>화</div>
-                <div>수</div>
-                <div>목</div>
-                <div>금</div>
-                <div style={{ color: 'blue' }}>토</div>
-            </div>
+            <div style={{ width: '100%', background: 'rgba(0, 0, 0, 0.2)', padding: '1rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <button onClick={handlePrevMonth} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#fff' }}>◀</button>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: '#fff' }}>{year}년 {month}월</h2>
+                    <button onClick={handleNextMonth} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#fff', opacity: (year === new Date().getFullYear() && month === new Date().getMonth() + 1) ? 0.3 : 1 }} disabled={year === new Date().getFullYear() && month === new Date().getMonth() + 1}>▶</button>
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
-                {days.map((day, idx) => {
-                    if (day === null) return <div key={`empty-${idx}`} style={{ padding: '0.5rem' }} />;
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '0.5rem', fontWeight: 'bold', color: '#9ca3af', fontSize: '0.85rem' }}>
+                    <div style={{ color: '#ef4444' }}>일</div>
+                    <div>월</div>
+                    <div>화</div>
+                    <div>수</div>
+                    <div>목</div>
+                    <div>금</div>
+                    <div style={{ color: '#3b82f6' }}>토</div>
+                </div>
 
-                    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const data = monthlyData[dateStr];
-                    const hasData = data && (data.count50 > 0 || data.count75 > 0);
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                    {days.map((day, idx) => {
+                        if (day === null) return <div key={`empty-${idx}`} style={{ padding: '0.5rem' }} />;
 
-                    const isToday = dateStr === new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+                        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const data = monthlyData[dateStr];
+                        const hasData = data && (data.count50 > 0 || data.count75 > 0);
 
-                    return (
-                        <div
-                            key={day}
-                            onClick={() => handleDateClick(day)}
-                            style={{
-                                padding: '0.25rem',
-                                border: isToday ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                background: hasData ? '#f0fdf4' : '#f9fafb',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                minHeight: '60px',
-                                opacity: dateStr > new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0] ? 0.5 : 1
-                            }}
-                        >
-                            <span style={{ fontSize: '0.85rem', fontWeight: isToday ? 'bold' : 'normal', marginBottom: '4px' }}>{day}</span>
-                            {hasData && (
-                                <div style={{ fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
-                                    {data.count50 > 0 && <div style={{ background: '#bfdbfe', color: '#1e3a8a', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>50L: {data.count50}</div>}
-                                    {data.count75 > 0 && <div style={{ background: '#fef08a', color: '#854d0e', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>75L: {data.count75}</div>}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                        const isToday = dateStr === new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+                        return (
+                            <div
+                                key={day}
+                                onClick={() => handleDateClick(day)}
+                                style={{
+                                    padding: '0.25rem',
+                                    border: isToday ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '8px',
+                                    background: hasData ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255,255,255,0.02)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: '60px',
+                                    opacity: dateStr > new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0] ? 0.5 : 1
+                                }}
+                            >
+                                <span style={{ fontSize: '0.85rem', fontWeight: isToday ? 'bold' : 'normal', marginBottom: '4px', color: '#e5e7eb' }}>{day}</span>
+                                {hasData && (
+                                    <div style={{ fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
+                                        {data.count50 > 0 && <div style={{ background: 'rgba(59, 130, 246, 0.5)', color: '#fff', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>50L: {data.count50}</div>}
+                                        {data.count75 > 0 && <div style={{ background: 'rgba(245, 158, 11, 0.5)', color: '#fff', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>75L: {data.count75}</div>}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             {mounted && selectedDate && createPortal(
