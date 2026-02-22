@@ -99,12 +99,6 @@ export default function MapClient({ user }: MapClientProps) {
             }
         };
 
-        // Warm-up
-        navigator.geolocation.getCurrentPosition(updatePosition, () => {
-            // If high accuracy fails during warm-up, try once with low accuracy
-            navigator.geolocation.getCurrentPosition(updatePosition, handleError, { ...options, enableHighAccuracy: false });
-        }, options);
-
         const watchId = navigator.geolocation.watchPosition(updatePosition, handleError, options);
 
         return () => navigator.geolocation.clearWatch(watchId);

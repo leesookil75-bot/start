@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import styles from './workplace-management.module.css';
 import { addWorkplaceAction, updateWorkplaceAction, deleteWorkplaceAction, searchAddressAction } from '../../actions';
 import { Workplace } from '@/lib/data';
@@ -234,9 +234,19 @@ import dynamic from 'next/dynamic';
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
 function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address: string, lat: number, lng: number, onSelect: (addr: string, lat: number, lng: number) => void, radius?: number }) {
-    const [query, setQuery] = useState(address);
+    const [query, setQuery] = useState('');
+    const [detailAddress, setDetailAddress] = useState('');
+    // Split incoming address on mount if possible, but for simplicity we'll just use the provided address as the base
+    // In a real app we might store base and detail separately, but here we just concatenate them.
     const [results, setResults] = useState<any[]>([]);
     const [searching, setSearching] = useState(false);
+
+    // Initialize state from existing address (simple split by last space or comma if needed, or just keep as one)
+    useEffect(() => {
+        if (address && !query && !detailAddress) {
+            setQuery(address);
+        }
+    }, [address]);
 
     const handleSearch = async () => {
         if (!query) {
@@ -255,7 +265,7 @@ function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address:
                     setResults([]);
                 }
             } else {
-                alert('주소 검색 실패 (Server): ' + (result.error || 'Unknown error'));
+                alert('주소 검색 실패: ' + (result.error || 'Unknown error'));
             }
         } catch (e: any) {
             alert('주소 검색 에러 (Client): ' + e.message);
@@ -264,9 +274,26 @@ function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address:
         }
     };
 
+    const handleSelectResult = (r: any) => {
+        setQuery(r.display_name);
+        // Reset detail address when a new main address is selected
+        setDetailAddress('');
+        onSelect(r.display_name, parseFloat(r.lat), parseFloat(r.lon));
+        setResults([]);
+        setSearching(false);
+    };
+
+    const handleDetailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newDetail = e.target.value;
+        setDetailAddress(newDetail);
+        // Combine base query and new detail to emit as full address
+        const fullAddress = `${query} ${newDetail}`.trim();
+        onSelect(fullAddress, lat, lng); // keep existing coordinates, just update address string
+    };
+
     return (
         <div className={styles.inputGroup} style={{ marginBottom: '0.5rem' }}>
-            <label className={styles.label}>주소 검색 & 위치 확인</label>
+            <label className={styles.label}>주소 검색 & 상세 위치 설정</label>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <input
                     type="text"
@@ -278,7 +305,7 @@ function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address:
                             handleSearch();
                         }
                     }}
-                    placeholder="예: 서울특별시 중구 세종대로 110"
+                    placeholder="지번, 도로명, 건물명 검색 (예: 판교역로 166)"
                     className={styles.input}
                     style={{ flex: 1 }}
                 />
@@ -319,12 +346,7 @@ function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address:
                         {results.map((r, i) => (
                             <li
                                 key={i}
-                                onClick={() => {
-                                    setQuery(r.display_name);
-                                    onSelect(r.display_name, parseFloat(r.lat), parseFloat(r.lon));
-                                    setResults([]);
-                                    setSearching(false); // Clear searching state
-                                }}
+                                onClick={() => handleSelectResult(r)}
                                 style={{
                                     padding: '0.75rem',
                                     borderBottom: i === results.length - 1 ? 'none' : '1px solid #f3f4f6',
@@ -343,22 +365,44 @@ function AddressSearch({ address, lat, lng, onSelect, radius = 100 }: { address:
                 </div>
             )}
 
+            {/* Detailed Address Input (Shown only after a base address is selected and coordinates exist) */}
+            {lat !== 0 && lng !== 0 && (
+                <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                    <input
+                        type="text"
+                        value={detailAddress}
+                        onChange={handleDetailChange}
+                        placeholder="상세 주소 (예: A동 3층 301호)"
+                        className={styles.input}
+                        style={{ width: '100%' }}
+                    />
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                        정확한 출근 기록을 위해 세부 공간 정보를 기입해 주세요. (위 기본 주소 뒤에 합쳐집니다: {query} {detailAddress})
+                    </p>
+                </div>
+            )}
+
             {/* Map Visualization */}
             {lat !== 0 && lng !== 0 && (
                 <div style={{ marginTop: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ padding: '0.5rem', background: '#e0f2fe', color: '#0369a1', fontSize: '0.85rem', fontWeight: 600, borderBottom: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span>📍</span> 지도를 클릭하여 출근 핀(빨간 원)의 위치를 건물 입구 등으로 <strong>미세 조정</strong>할 수 있습니다.
+                    </div>
                     <Map
                         center={[lat, lng]}
-                        zoom={16}
-                        markers={[{ lat, lng, popup: '근무지 위치', color: 'red' }]}
+                        zoom={17}
+                        markers={[{ lat, lng, popup: '근무지 기준점', color: 'red' }]}
                         circle={{ lat, lng, radius: radius, color: 'red' }}
                         onMapClick={(clickedLat, clickedLng) => {
                             // User can fine-tune location by clicking map
-                            onSelect(address, clickedLat, clickedLng);
+                            // We don't change the address string here, just the coordinates
+                            const fullAddress = `${query} ${detailAddress}`.trim();
+                            onSelect(fullAddress, clickedLat, clickedLng);
                         }}
                         height="300px"
                     />
                     <div style={{ padding: '0.5rem', background: '#f9fafb', fontSize: '0.8rem', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
-                        위치: {lat}, {lng} / 반경: {radius}m
+                        선택된 좌표: {lat.toFixed(5)}, {lng.toFixed(5)} / 반경: {radius}m
                     </div>
                 </div>
             )}

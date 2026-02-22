@@ -35,9 +35,11 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
             return;
         }
 
-        const checkLocation = () => {
+        let watchId: number;
+
+        const startWatching = () => {
             setLocationStatus('checking');
-            navigator.geolocation.getCurrentPosition(
+            watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const currentLat = position.coords.latitude;
                     const currentLng = position.coords.longitude;
@@ -63,8 +65,14 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
             );
         };
 
-        checkLocation();
-        // Optional: Watch position or interval? For now, check on mount.
+        startWatching();
+
+        return () => {
+            if (watchId !== undefined) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+        };
+
         // User might move, so adding a "Retry Location" button might be good or auto-refresh.
     }, [workLat, workLng, allowedRadius]);
 

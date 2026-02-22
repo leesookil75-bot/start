@@ -765,24 +765,37 @@ export async function deleteWorkplaceAction(id: string): Promise<{ success: bool
 export async function searchAddressAction(query: string): Promise<{ success: boolean; data?: any[]; error?: string }> {
     if (!query) return { success: false, error: 'Query is empty' };
 
-
-    console.log('Searching address:', query);
+    console.log('Searching address via Kakao API:', query);
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`, {
+        const apiKey = process.env.KAKAO_REST_API_KEY;
+        if (!apiKey) {
+            console.error('KAKAO_REST_API_KEY is missing');
+            return { success: false, error: '카카오 API 키가 설정되지 않았습니다. 관리자에게 문의하세요.' };
+        }
+
+        const response = await fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}`, {
             headers: {
-                'User-Agent': 'CleanTrackApp/1.0',
-                'Referer': 'https://start-rho-azure.vercel.app'
+                'Authorization': `KakaoAK ${apiKey}`
             }
         });
 
         if (!response.ok) {
-            console.error('Nominatim API error:', response.statusText);
-            throw new Error(`Nominatim API failed: ${response.statusText}`);
+            console.error('Kakao API error:', response.statusText);
+            throw new Error(`Kakao API failed: ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('Nominatim response length:', data.length);
-        return { success: true, data };
+        const documents = data.documents || [];
+
+        // Map Kakao format to the previous format expected by frontend (or we can change frontend too, but mapping is easier)
+        const mappedData = documents.map((doc: any) => ({
+            display_name: doc.address_name,
+            lat: doc.y,
+            lon: doc.x
+        }));
+
+        console.log('Kakao response length:', mappedData.length);
+        return { success: true, data: mappedData };
     } catch (error: any) {
         console.error('Address Search Error:', error);
         return { success: false, error: 'Failed to search address' };
