@@ -170,7 +170,8 @@ function EditModal({ workplace, onClose, onSave, isPending }: { workplace: Workp
             <div style={{
                 background: '#fff', padding: '2rem', borderRadius: '12px',
                 width: '90%', maxWidth: '500px', border: '1px solid #e5e7eb',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                maxHeight: '90vh', overflowY: 'auto'
             }}>
                 <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#111', fontSize: '1.25rem', fontWeight: 'bold' }}>근무지 수정</h3>
                 <form onSubmit={(e) => {
