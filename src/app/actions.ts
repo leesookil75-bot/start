@@ -361,6 +361,59 @@ function getStartOfTodayKST() {
     return new Date(nowKst.getTime() - kstOffset);
 }
 
+export async function submitUsageForDate(delta50: number, delta75: number, targetDate: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        if (delta50 === 0 && delta75 === 0) {
+            return { success: true };
+        }
+
+        await manageUsageDelta(user.id, user.name, delta50, delta75, targetDate);
+
+        revalidatePath('/admin');
+        revalidatePath('/');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to submit usage for date:', error);
+        return { success: false, error: error.message || 'Failed to submit usage' };
+    }
+}
+
+export async function getUserMonthlyUsages(year: number, month: number) {
+    const user = await getCurrentUser();
+    if (!user) return {};
+
+    const records = await getRecords();
+    const userRecords = records.filter(r => r.userId === user.id);
+
+    const monthlyData: Record<string, { count50: number, count75: number }> = {};
+
+    userRecords.forEach(r => {
+        const rDate = new Date(r.timestamp);
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstDate = new Date(rDate.getTime() + kstOffset);
+
+        const rYear = kstDate.getUTCFullYear();
+        const rMonth = kstDate.getUTCMonth() + 1;
+        const rDateNum = kstDate.getUTCDate();
+
+        if (rYear === year && rMonth === month) {
+            const dateKey = `${rYear}-${String(rMonth).padStart(2, '0')}-${String(rDateNum).padStart(2, '0')}`;
+            if (!monthlyData[dateKey]) {
+                monthlyData[dateKey] = { count50: 0, count75: 0 };
+            }
+            if (r.size === 45 || r.size === 50) monthlyData[dateKey].count50++;
+            else if (r.size === 75) monthlyData[dateKey].count75++;
+        }
+    });
+
+    return monthlyData;
+}
+
 export async function getTodayUserUsage(): Promise<{ count50: number; count75: number }> {
     const user = await getCurrentUser();
     if (!user) return { count50: 0, count75: 0 };

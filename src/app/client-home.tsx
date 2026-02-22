@@ -5,6 +5,7 @@ import styles from './page.module.css';
 import { BellIcon, KeyIcon, LogOutIcon, PlaneIcon } from '@/components/icons';
 import { submitUsage } from './actions';
 import MyStatsView from './components/MyStatsView';
+import MyStatsEditCalendar from './components/MyStatsEditCalendar';
 import InstallPrompt from '@/components/InstallPrompt';
 import Link from 'next/link';
 import { logout } from './actions';
@@ -29,7 +30,7 @@ interface ClientHomeProps {
 }
 
 export default function ClientHome({ initialUsage, stats, attendanceStatus, user, recentNotice }: ClientHomeProps) {
-    // 0 = Usage, 1 = Stats
+    // 0 = Usage, 1 = Stats, 2 = Edit Calendar
     const [activeIndex, setActiveIndex] = useState(0);
 
     // --- Usage Logic ---
@@ -77,9 +78,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
         const diff = startX.current - e.clientX;
         if (Math.abs(diff) > 50) {
             if (diff > 0) {
-                setActiveIndex(1); // Next
+                setActiveIndex(prev => Math.min(2, prev + 1)); // Next
             } else {
-                setActiveIndex(0); // Prev
+                setActiveIndex(prev => Math.max(0, prev - 1)); // Prev
             }
         }
         startX.current = null;
@@ -213,13 +214,19 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`}
                         onClick={() => setActiveIndex(0)}
                     >
-                        배출량 입력
+                        입력
                     </div>
                     <div
                         className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`}
                         onClick={() => setActiveIndex(1)}
                     >
-                        배출량 통계
+                        통계
+                    </div>
+                    <div
+                        className={`${styles.tab} ${activeIndex === 2 ? styles.activeTab : ''}`}
+                        onClick={() => setActiveIndex(2)}
+                    >
+                        수정
                     </div>
                 </div>
 
@@ -234,7 +241,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                 >
                     <div
                         className={styles.sliderContainer}
-                        style={{ transform: `translateX(-${activeIndex * 50}%)` }}
+                        style={{ transform: `translateX(-${activeIndex * 33.3333}%)` }}
                         data-active-index={activeIndex}
                     >
                         {/* Slide 1: Usage Input */}
@@ -282,6 +289,11 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         {/* Slide 2: Stats View */}
                         <div className={styles.slide}>
                             <MyStatsView stats={stats} />
+                        </div>
+
+                        {/* Slide 3: Edit Calendar View (Mobile Only) */}
+                        <div className={styles.slide}>
+                            <MyStatsEditCalendar />
                         </div>
                     </div>
                 </div>

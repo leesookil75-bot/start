@@ -489,15 +489,19 @@ export async function manageUsageDelta(
   userId: string,
   userName: string,
   delta50: number, // Renamed from delta45
-  delta75: number
+  delta75: number,
+  targetDate?: string
 ): Promise<{ success: boolean; message?: string }> {
+  // Use provided date or today (local string)
+  const dateStr = targetDate || new Date().toISOString().split('T')[0];
+
   if (isPostgresEnabled()) {
     // Postgres Transaction Logic
 
     if (delta50 > 0) {
       for (let i = 0; i < delta50; i++) {
         // Insert new 50L records
-        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 50, ${userId}, ${userName}, NOW())`;
+        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 50, ${userId}, ${userName}, ${dateStr}::timestamp + interval '12 hours')`;
       }
     } else if (delta50 < 0) {
       const limit = Math.abs(delta50);
@@ -513,7 +517,7 @@ export async function manageUsageDelta(
                 DELETE FROM usage_records
                 WHERE id IN (
                     SELECT id FROM usage_records
-                    WHERE user_id = ${userId} AND size = 50 AND timestamp::date = CURRENT_DATE
+                    WHERE user_id = ${userId} AND size = 50 AND timestamp::date = ${dateStr}::date
                     ORDER BY timestamp DESC
                     LIMIT ${limit}
                 )
@@ -530,7 +534,7 @@ export async function manageUsageDelta(
             DELETE FROM usage_records
             WHERE id IN (
                 SELECT id FROM usage_records
-                WHERE user_id = ${userId} AND size = 45 AND timestamp::date = CURRENT_DATE
+                WHERE user_id = ${userId} AND size = 45 AND timestamp::date = ${dateStr}::date
                 ORDER BY timestamp DESC
                 LIMIT ${remaining}
             )
@@ -540,7 +544,7 @@ export async function manageUsageDelta(
 
     if (delta75 > 0) {
       for (let i = 0; i < delta75; i++) {
-        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 75, ${userId}, ${userName}, NOW())`;
+        await sql`INSERT INTO usage_records (id, size, user_id, user_name, timestamp) VALUES (${crypto.randomUUID()}, 75, ${userId}, ${userName}, ${dateStr}::timestamp + interval '12 hours')`;
       }
     } else if (delta75 < 0) {
       const limit = Math.abs(delta75);
@@ -548,7 +552,7 @@ export async function manageUsageDelta(
             DELETE FROM usage_records
             WHERE id IN (
                 SELECT id FROM usage_records
-                WHERE user_id = ${userId} AND size = 75 AND timestamp::date = CURRENT_DATE
+                WHERE user_id = ${userId} AND size = 75 AND timestamp::date = ${dateStr}::date
                 ORDER BY timestamp DESC
                 LIMIT ${limit}
             )
@@ -559,8 +563,8 @@ export async function manageUsageDelta(
   }
 
   const records = await getRecords();
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  // For file system, use dateStr as prefix for matching
+  const targetDatePrefix = dateStr;
 
   // We can just construct the new list.
   const newRecordsList = [...records];
@@ -573,7 +577,7 @@ export async function manageUsageDelta(
     // First pass: remove 50L
     for (let i = newRecordsList.length - 1; i >= 0 && removed < countToRemove; i--) {
       const r = newRecordsList[i];
-      if (r.userId === userId && r.size === 50 && r.timestamp.startsWith(todayStr)) {
+      if (r.userId === userId && r.size === 50 && r.timestamp.startsWith(targetDatePrefix)) {
         newRecordsList.splice(i, 1);
         removed++;
       }
@@ -583,7 +587,7 @@ export async function manageUsageDelta(
     if (removed < countToRemove) {
       for (let i = newRecordsList.length - 1; i >= 0 && removed < countToRemove; i--) {
         const r = newRecordsList[i];
-        if (r.userId === userId && r.size === 45 && r.timestamp.startsWith(todayStr)) {
+        if (r.userId === userId && r.size === 45 && r.timestamp.startsWith(targetDatePrefix)) {
           newRecordsList.splice(i, 1);
           removed++;
         }
@@ -597,7 +601,7 @@ export async function manageUsageDelta(
     let removed = 0;
     for (let i = newRecordsList.length - 1; i >= 0 && removed < countToRemove; i--) {
       const r = newRecordsList[i];
-      if (r.userId === userId && r.size === 75 && r.timestamp.startsWith(todayStr)) {
+      if (r.userId === userId && r.size === 75 && r.timestamp.startsWith(targetDatePrefix)) {
         newRecordsList.splice(i, 1);
         removed++;
       }
@@ -610,7 +614,7 @@ export async function manageUsageDelta(
       newRecordsList.push({
         id: crypto.randomUUID(),
         size: 50,
-        timestamp: new Date().toISOString(),
+        timestamp: targetDate ? `${targetDate}T12:00:00.000Z` : new Date().toISOString(),
         userId,
         userName
       });
@@ -622,7 +626,7 @@ export async function manageUsageDelta(
       newRecordsList.push({
         id: crypto.randomUUID(),
         size: 75,
-        timestamp: new Date().toISOString(),
+        timestamp: targetDate ? `${targetDate}T12:00:00.000Z` : new Date().toISOString(),
         userId,
         userName
       });
