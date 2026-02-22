@@ -104,19 +104,19 @@ export default function MyStatsEditCalendar() {
     };
 
     return (
-        <div className={styles.card}>
-            <h1 className={styles.title} style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.5rem' }}>
+        <div className={styles.card} style={{ padding: '1.5rem 0.5rem' }}>
+            <h1 className={styles.title} style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.4rem' }}>
                 배출량 수정 ({month}월)
             </h1>
 
-            <div style={{ width: '100%', background: 'rgba(0, 0, 0, 0.2)', padding: '1rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ width: '100%', background: 'rgba(0, 0, 0, 0.2)', padding: '0.75rem 0.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0 0.5rem' }}>
                     <button onClick={handlePrevMonth} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#fff' }}>◀</button>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: '#fff' }}>{year}년 {month}월</h2>
                     <button onClick={handleNextMonth} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#fff', opacity: (year === new Date().getFullYear() && month === new Date().getMonth() + 1) ? 0.3 : 1 }} disabled={year === new Date().getFullYear() && month === new Date().getMonth() + 1}>▶</button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '0.5rem', fontWeight: 'bold', color: '#9ca3af', fontSize: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center', marginBottom: '0.5rem', fontWeight: 'bold', color: '#9ca3af', fontSize: '0.8rem' }}>
                     <div style={{ color: '#ef4444' }}>일</div>
                     <div>월</div>
                     <div>화</div>
@@ -126,7 +126,7 @@ export default function MyStatsEditCalendar() {
                     <div style={{ color: '#3b82f6' }}>토</div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
                     {days.map((day, idx) => {
                         if (day === null) return <div key={`empty-${idx}`} style={{ padding: '0.5rem' }} />;
 
@@ -141,23 +141,23 @@ export default function MyStatsEditCalendar() {
                                 key={day}
                                 onClick={() => handleDateClick(day)}
                                 style={{
-                                    padding: '0.25rem',
+                                    padding: '0.15rem',
                                     border: isToday ? '2px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '8px',
+                                    borderRadius: '6px',
                                     background: hasData ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255,255,255,0.02)',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    minHeight: '60px',
+                                    minHeight: '55px',
                                     opacity: dateStr > new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0] ? 0.5 : 1
                                 }}
                             >
-                                <span style={{ fontSize: '0.85rem', fontWeight: isToday ? 'bold' : 'normal', marginBottom: '4px', color: '#e5e7eb' }}>{day}</span>
+                                <span style={{ fontSize: '0.8rem', fontWeight: isToday ? 'bold' : 'normal', marginBottom: '2px', color: '#e5e7eb' }}>{day}</span>
                                 {hasData && (
-                                    <div style={{ fontSize: '0.7rem', display: 'flex', flexDirection: 'column', gap: '2px', width: '100%' }}>
-                                        {data.count50 > 0 && <div style={{ background: 'rgba(59, 130, 246, 0.5)', color: '#fff', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>50L: {data.count50}</div>}
-                                        {data.count75 > 0 && <div style={{ background: 'rgba(245, 158, 11, 0.5)', color: '#fff', padding: '2px 4px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>75L: {data.count75}</div>}
+                                    <div style={{ fontSize: '0.65rem', display: 'flex', flexDirection: 'column', gap: '1px', width: '100%' }}>
+                                        {data.count50 > 0 && <div style={{ background: 'rgba(59, 130, 246, 0.5)', color: '#fff', padding: '1px 2px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'clip', letterSpacing: '-0.5px' }}>50<span style={{ fontSize: '0.5rem' }}>L</span> {data.count50}</div>}
+                                        {data.count75 > 0 && <div style={{ background: 'rgba(245, 158, 11, 0.5)', color: '#fff', padding: '1px 2px', borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'clip', letterSpacing: '-0.5px' }}>75<span style={{ fontSize: '0.5rem' }}>L</span> {data.count75}</div>}
                                     </div>
                                 )}
                             </div>
