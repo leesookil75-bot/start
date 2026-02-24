@@ -102,6 +102,8 @@ export async function initializeDB() {
 
         await sql`ALTER TABLE notices ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;`;
 
+        await sql`ALTER TABLE workplaces ADD COLUMN IF NOT EXISTS dong VARCHAR(255);`;
+
         // Attempt to create extension, might fail if not superuser but usually fine on Vercel
         try {
             await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`;

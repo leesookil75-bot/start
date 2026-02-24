@@ -18,6 +18,7 @@ export type User = {
 export type Workplace = {
     id: string;
     name: string;
+    dong?: string;
     address: string;
     lat: number;
     lng: number;

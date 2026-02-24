@@ -87,7 +87,7 @@ export default function MobileUserManagement({ initialUsers, workplaces }: { ini
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <span style={{ color: '#888' }}>근무지</span>
-                                    <span>{wp ? wp.name : (user.workAddress ? '개별 설정' : '-')}</span>
+                                    <span>{wp ? `${wp.dong ? `[${wp.dong}] ` : ''}${wp.name}` : (user.workAddress ? '개별 설정' : '-')}</span>
                                 </div>
                             </div>
 
@@ -217,7 +217,7 @@ function UserFormModal({ title, user, workplaces, onClose, onSubmit, isPending }
                         <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '0.5rem' }}>근무지 지정</label>
                         <select name="workplaceId" value={selectedWp} onChange={e => setSelectedWp(e.target.value)} style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }}>
                             <option value="">- 미지정 (또는 개별 주소) -</option>
-                            {workplaces.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                            {workplaces.map(w => <option key={w.id} value={w.id}>{w.dong ? `[${w.dong}] ` : ''}{w.name}</option>)}
                         </select>
                     </div>
 

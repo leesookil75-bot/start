@@ -194,7 +194,7 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                                                 {user.role === 'admin' ? '관리자' : '청소부'}
                                             </span>
                                         </td>
-                                        <td>{userWorkplace ? userWorkplace.name : (user.workAddress ? '개별 설정' : '-')}</td>
+                                        <td>{userWorkplace ? `${userWorkplace.dong ? `[${userWorkplace.dong}] ` : ''}${userWorkplace.name}` : (user.workAddress ? '개별 설정' : '-')}</td>
                                         <td>
                                             {/* ... buttons ... */}
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -387,7 +387,7 @@ function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: Use
                             <option value="">- 개별 설정 (아래에서 직접 지정) -</option>
                             {workplaces.map(wp => (
                                 <option key={wp.id} value={wp.id}>
-                                    {wp.name} ({wp.address})
+                                    {wp.dong ? `[${wp.dong}] ` : ''}{wp.name} ({wp.address})
                                 </option>
                             ))}
                         </select>

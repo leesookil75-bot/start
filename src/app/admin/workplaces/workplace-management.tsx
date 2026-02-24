@@ -6,7 +6,7 @@ import { addWorkplaceAction, updateWorkplaceAction, deleteWorkplaceAction, searc
 import { Workplace } from '@/lib/data';
 
 export default function WorkplaceManagement({ workplaces }: { workplaces: Workplace[] }) {
-    const [newWorkplace, setNewWorkplace] = useState({ name: '', address: '', lat: 0, lng: 0, radius: 100 });
+    const [newWorkplace, setNewWorkplace] = useState({ name: '', dong: '', address: '', lat: 0, lng: 0, radius: 100 });
     const [editingWorkplace, setEditingWorkplace] = useState<Workplace | null>(null);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
@@ -22,7 +22,7 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
         startTransition(async () => {
             const result = await addWorkplaceAction(newWorkplace);
             if (result.success) {
-                setNewWorkplace({ name: '', address: '', lat: 0, lng: 0, radius: 100 });
+                setNewWorkplace({ name: '', dong: '', address: '', lat: 0, lng: 0, radius: 100 });
             } else {
                 setError(result.error || 'Failed to add workplace');
             }
@@ -48,15 +48,26 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
             <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>새 근무지 등록</h2>
                 <form onSubmit={handleAdd} className={styles.form}>
-                    <div className={styles.inputGroup}>
-                        <label className={styles.label}>근무지 명칭</label>
-                        <input
-                            className={styles.input}
-                            value={newWorkplace.name}
-                            onChange={e => setNewWorkplace({ ...newWorkplace, name: e.target.value })}
-                            placeholder="예: 본사, 1공장"
-                            required
-                        />
+                    <div className={styles.inputGroup} style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                            <label className={styles.label}>동 (선택)</label>
+                            <input
+                                className={styles.input}
+                                value={newWorkplace.dong}
+                                onChange={e => setNewWorkplace({ ...newWorkplace, dong: e.target.value })}
+                                placeholder="예: 구미동"
+                            />
+                        </div>
+                        <div style={{ flex: 2 }}>
+                            <label className={styles.label}>근무지 명칭</label>
+                            <input
+                                className={styles.input}
+                                value={newWorkplace.name}
+                                onChange={e => setNewWorkplace({ ...newWorkplace, name: e.target.value })}
+                                placeholder="예: 본사, 1공장, 1구역"
+                                required
+                            />
+                        </div>
                     </div>
 
                     {/* Address Search spans 2 columns or full width depending on layout, but let's keep it simple */}
@@ -104,7 +115,7 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
                         <tbody>
                             {workplaces.map(wp => (
                                 <tr key={wp.id}>
-                                    <td>{wp.name}</td>
+                                    <td>{wp.dong ? `[${wp.dong}] ` : ''}{wp.name}</td>
                                     <td>{wp.address}</td>
                                     <td>{wp.radius}m</td>
                                     <td>
@@ -178,14 +189,24 @@ function EditModal({ workplace, onClose, onSave, isPending }: { workplace: Workp
                     e.preventDefault();
                     onSave(workplace.id, updates);
                 }}>
-                    <div className={styles.inputGroup} style={{ marginBottom: '1rem' }}>
-                        <label className={styles.label}>근무지 명칭</label>
-                        <input
-                            className={styles.input}
-                            value={updates.name}
-                            onChange={e => setUpdates({ ...updates, name: e.target.value })}
-                            required
-                        />
+                    <div className={styles.inputGroup} style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                            <label className={styles.label}>동 (선택)</label>
+                            <input
+                                className={styles.input}
+                                value={updates.dong || ''}
+                                onChange={e => setUpdates({ ...updates, dong: e.target.value })}
+                            />
+                        </div>
+                        <div style={{ flex: 2 }}>
+                            <label className={styles.label}>근무지 명칭</label>
+                            <input
+                                className={styles.input}
+                                value={updates.name}
+                                onChange={e => setUpdates({ ...updates, name: e.target.value })}
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div style={{ marginBottom: '1rem' }}>
