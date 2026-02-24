@@ -168,6 +168,7 @@ export default function MobileUserManagement({ initialUsers, workplaces }: { ini
 // Reusable Modal Form for Add/Edit
 function UserFormModal({ title, user, workplaces, onClose, onSubmit, isPending }: { title: string, user?: User, workplaces: Workplace[], onClose: () => void, onSubmit: (data: any) => void, isPending: boolean }) {
     const [selectedWp, setSelectedWp] = useState(user?.workplaceId || '');
+    const [cleaningArea, setCleaningArea] = useState(user?.cleaningArea || '');
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 100, display: 'flex', alignItems: 'flex-end', backdropFilter: 'blur(2px)' }} onClick={onClose}>
@@ -197,8 +198,48 @@ function UserFormModal({ title, user, workplaces, onClose, onSubmit, isPending }
                         <input name="phoneNumber" defaultValue={user?.phoneNumber} required style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }} />
                     </div>
                     <div>
+                        <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '0.5rem' }}>근무지 지정</label>
+                        <select
+                            name="workplaceId"
+                            value={selectedWp}
+                            onChange={e => {
+                                setSelectedWp(e.target.value);
+                                setCleaningArea('');
+                            }}
+                            style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }}
+                        >
+                            <option value="">- 미지정 (또는 개별 주소) -</option>
+                            {workplaces.map(w => <option key={w.id} value={w.id}>{w.dong ? `[${w.dong}] ` : ''}{w.name}</option>)}
+                        </select>
+                    </div>
+                    <div>
                         <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '0.5rem' }}>담당 구역</label>
-                        <input name="cleaningArea" defaultValue={user?.cleaningArea} required style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }} />
+                        {(() => {
+                            const selectedWpObj = workplaces.find(wp => wp.id === selectedWp);
+                            if (selectedWpObj && selectedWpObj.subAreas && selectedWpObj.subAreas.length > 0) {
+                                return (
+                                    <select
+                                        name="cleaningArea"
+                                        value={cleaningArea}
+                                        onChange={e => setCleaningArea(e.target.value)}
+                                        required
+                                        style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }}
+                                    >
+                                        <option value="">- 구역 선택 -</option>
+                                        {selectedWpObj.subAreas.map((sa, idx) => <option key={idx} value={sa}>{sa}</option>)}
+                                    </select>
+                                );
+                            }
+                            return (
+                                <input
+                                    name="cleaningArea"
+                                    value={cleaningArea}
+                                    onChange={e => setCleaningArea(e.target.value)}
+                                    required
+                                    style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }}
+                                />
+                            );
+                        })()}
                     </div>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <div style={{ flex: 1 }}>
@@ -212,13 +253,6 @@ function UserFormModal({ title, user, workplaces, onClose, onSubmit, isPending }
                             <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '0.5rem' }}>연차 (15일 기본)</label>
                             <input type="number" name="totalLeaves" defaultValue={user?.totalLeaves ?? 15} min="0" required style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }} />
                         </div>
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '0.85rem', color: '#aaa', marginBottom: '0.5rem' }}>근무지 지정</label>
-                        <select name="workplaceId" value={selectedWp} onChange={e => setSelectedWp(e.target.value)} style={{ width: '100%', background: '#121212', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.8rem', borderRadius: '8px' }}>
-                            <option value="">- 미지정 (또는 개별 주소) -</option>
-                            {workplaces.map(w => <option key={w.id} value={w.id}>{w.dong ? `[${w.dong}] ` : ''}{w.name}</option>)}
-                        </select>
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>

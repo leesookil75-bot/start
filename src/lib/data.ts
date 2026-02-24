@@ -201,16 +201,24 @@ export async function getWorkplaces(): Promise<Workplace[]> {
   if (isPostgresEnabled()) {
     try {
       const { rows } = await sql`SELECT * FROM workplaces ORDER BY created_at DESC`;
-      return rows.map(r => ({
-        id: r.id,
-        name: r.name,
-        dong: r.dong || '',
-        address: r.address,
-        lat: r.lat,
-        lng: r.lng,
-        radius: r.radius,
-        createdAt: r.created_at.toString()
-      }));
+      return rows.map(r => {
+        let parsedSubAreas: string[] = [];
+        try {
+          parsedSubAreas = typeof r.sub_areas === 'string' ? JSON.parse(r.sub_areas) : (r.sub_areas || []);
+        } catch (e) { /* ignore parse error */ }
+
+        return {
+          id: r.id,
+          name: r.name,
+          dong: r.dong || '',
+          subAreas: parsedSubAreas,
+          address: r.address,
+          lat: r.lat,
+          lng: r.lng,
+          radius: r.radius,
+          createdAt: r.created_at.toString()
+        };
+      });
     } catch (e) {
       console.warn('DB Error getting workplaces:', e);
       return [];
@@ -231,11 +239,12 @@ export async function addWorkplace(data: Omit<Workplace, 'id' | 'createdAt'>): P
   if (isPostgresEnabled()) {
     const id = crypto.randomUUID();
     const dong = data.dong || '';
+    const subAreasJson = JSON.stringify(data.subAreas || []);
     await sql`
-            INSERT INTO workplaces (id, name, dong, address, lat, lng, radius, created_at)
-            VALUES (${id}, ${data.name}, ${dong}, ${data.address}, ${data.lat}, ${data.lng}, ${data.radius}, NOW())
+            INSERT INTO workplaces (id, name, dong, sub_areas, address, lat, lng, radius, created_at)
+            VALUES (${id}, ${data.name}, ${dong}, ${subAreasJson}, ${data.address}, ${data.lat}, ${data.lng}, ${data.radius}, NOW())
         `;
-    return { ...data, id, dong, createdAt: new Date().toISOString() };
+    return { ...data, id, dong, subAreas: data.subAreas || [], createdAt: new Date().toISOString() };
   }
 
   const workplaces = await getWorkplaces();
@@ -259,6 +268,7 @@ export async function updateWorkplace(id: string, updates: Partial<Workplace>): 
     // Ensure we handle potentially undefined updates correctly or rely on SQL existing value logic
     const newName = updates.name ?? existing.name;
     const newDong = updates.dong !== undefined ? updates.dong : (existing.dong || '');
+    const newSubAreasStr = updates.subAreas !== undefined ? JSON.stringify(updates.subAreas) : (existing.sub_areas || '[]');
     const newAddress = updates.address ?? existing.address;
     const newLat = updates.lat ?? existing.lat;
     const newLng = updates.lng ?? existing.lng;
@@ -268,6 +278,7 @@ export async function updateWorkplace(id: string, updates: Partial<Workplace>): 
             UPDATE workplaces
             SET name = ${newName},
                 dong = ${newDong},
+                sub_areas = ${newSubAreasStr},
                 address = ${newAddress},
                 lat = ${newLat},
                 lng = ${newLng},

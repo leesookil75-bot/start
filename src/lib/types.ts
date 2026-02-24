@@ -19,6 +19,7 @@ export type Workplace = {
     id: string;
     name: string;
     dong?: string;
+    subAreas?: string[]; // newly added for distinct sub-areas/zones under a single workplace (dong)
     address: string;
     lat: number;
     lng: number;

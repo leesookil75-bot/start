@@ -47,6 +47,10 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
         });
     };
 
+    const setNewWorkplaceIdWithAreaReset = (wpId: string) => {
+        setNewUser(prev => ({ ...prev, workplaceId: wpId, cleaningArea: '' }));
+    };
+
     // ... handleDelete ... (keep as is)
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this user?')) return;
@@ -84,14 +88,55 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                         />
                     </div>
                     <div className={styles.inputGroup}>
-                        <label className={styles.label}>담당 구역</label>
-                        <input
+                        <label className={styles.label}>근무지 선택 (선택 사항)</label>
+                        <select
                             className={styles.input}
-                            value={newUser.cleaningArea}
-                            onChange={e => setNewUser({ ...newUser, cleaningArea: e.target.value })}
-                            required
-                            placeholder="A동 1층"
-                        />
+                            value={newUser.workplaceId}
+                            onChange={e => setNewWorkplaceIdWithAreaReset(e.target.value)}
+                            style={{ background: '#333', color: 'white', border: '1px solid #444' }}
+                        >
+                            <option value="">- 근무지 미지정 (또는 개별 설정) -</option>
+                            {workplaces.map(wp => (
+                                <option key={wp.id} value={wp.id}>
+                                    {wp.dong ? `[${wp.dong}] ` : ''}{wp.name} ({wp.address})
+                                </option>
+                            ))}
+                        </select>
+                        <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.3rem' }}>
+                            * 근무지를 선택하면 해당 위치로 출퇴근 지역이 설정됩니다.
+                        </p>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>담당 구역</label>
+                        {(() => {
+                            const selectedWp = workplaces.find(wp => wp.id === newUser.workplaceId);
+                            if (selectedWp && selectedWp.subAreas && selectedWp.subAreas.length > 0) {
+                                return (
+                                    <select
+                                        className={styles.input}
+                                        value={newUser.cleaningArea}
+                                        onChange={e => setNewUser({ ...newUser, cleaningArea: e.target.value })}
+                                        required
+                                        style={{ background: '#333', color: 'white', border: '1px solid #444' }}
+                                    >
+                                        <option value="">- 구역 선택 -</option>
+                                        {selectedWp.subAreas.map((sa, idx) => (
+                                            <option key={idx} value={sa}>{sa}</option>
+                                        ))}
+                                    </select>
+                                );
+                            }
+                            return (
+                                <input
+                                    className={styles.input}
+                                    value={newUser.cleaningArea}
+                                    onChange={e => setNewUser({ ...newUser, cleaningArea: e.target.value })}
+                                    required
+                                    placeholder="A동 1층"
+                                />
+                            );
+                        })()}
                     </div>
                     <div className={styles.inputGroup}>
                         <label className={styles.label}>연차 일수</label>
@@ -274,6 +319,7 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
 
 function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: User, workplaces: Workplace[], onClose: () => void, onSave: (id: string, updates: any) => void, isPending: boolean }) {
     const [selectedWorkplaceId, setSelectedWorkplaceId] = useState(user.workplaceId || '');
+    const [cleaningArea, setCleaningArea] = useState(user.cleaningArea || '');
 
     return (
         <div style={{
@@ -340,12 +386,35 @@ function EditModal({ user, workplaces, onClose, onSave, isPending }: { user: Use
                     </div>
                     <div className={styles.inputGroup}>
                         <label className={styles.label}>담당 구역</label>
-                        <input
-                            name="cleaningArea"
-                            defaultValue={user.cleaningArea}
-                            className={styles.input}
-                            required
-                        />
+                        {(() => {
+                            const selectedWp = workplaces.find(wp => wp.id === selectedWorkplaceId);
+                            if (selectedWp && selectedWp.subAreas && selectedWp.subAreas.length > 0) {
+                                return (
+                                    <select
+                                        name="cleaningArea"
+                                        value={cleaningArea}
+                                        onChange={e => setCleaningArea(e.target.value)}
+                                        className={styles.input}
+                                        required
+                                        style={{ background: '#333', color: 'white', border: '1px solid #444' }}
+                                    >
+                                        <option value="">- 구역 선택 -</option>
+                                        {selectedWp.subAreas.map((sa, idx) => (
+                                            <option key={idx} value={sa}>{sa}</option>
+                                        ))}
+                                    </select>
+                                );
+                            }
+                            return (
+                                <input
+                                    name="cleaningArea"
+                                    value={cleaningArea}
+                                    onChange={e => setCleaningArea(e.target.value)}
+                                    className={styles.input}
+                                    required
+                                />
+                            );
+                        })()}
                     </div>
                     <div className={styles.inputGroup}>
                         <label className={styles.label}>역할</label>

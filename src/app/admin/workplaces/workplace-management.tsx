@@ -6,7 +6,8 @@ import { addWorkplaceAction, updateWorkplaceAction, deleteWorkplaceAction, searc
 import { Workplace } from '@/lib/data';
 
 export default function WorkplaceManagement({ workplaces }: { workplaces: Workplace[] }) {
-    const [newWorkplace, setNewWorkplace] = useState({ name: '', dong: '', address: '', lat: 0, lng: 0, radius: 100 });
+    const [newWorkplace, setNewWorkplace] = useState<{ name: string, dong: string, subAreas: string[], address: string, lat: number, lng: number, radius: number }>({ name: '', dong: '', subAreas: [], address: '', lat: 0, lng: 0, radius: 100 });
+    const [subAreaInput, setSubAreaInput] = useState('');
     const [editingWorkplace, setEditingWorkplace] = useState<Workplace | null>(null);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState('');
@@ -22,7 +23,8 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
         startTransition(async () => {
             const result = await addWorkplaceAction(newWorkplace);
             if (result.success) {
-                setNewWorkplace({ name: '', dong: '', address: '', lat: 0, lng: 0, radius: 100 });
+                setNewWorkplace({ name: '', dong: '', subAreas: [], address: '', lat: 0, lng: 0, radius: 100 });
+                setSubAreaInput('');
             } else {
                 setError(result.error || 'Failed to add workplace');
             }
@@ -70,6 +72,55 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
                         </div>
                     </div>
 
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>구역명 추가 (선택)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <input
+                                className={styles.input}
+                                value={subAreaInput}
+                                onChange={e => setSubAreaInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        if (subAreaInput.trim()) {
+                                            setNewWorkplace(prev => ({ ...prev, subAreas: [...prev.subAreas, subAreaInput.trim()] }));
+                                            setSubAreaInput('');
+                                        }
+                                    }
+                                }}
+                                placeholder="예: 1구역, 2구역 (엔터로 추가)"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (subAreaInput.trim()) {
+                                        setNewWorkplace(prev => ({ ...prev, subAreas: [...prev.subAreas, subAreaInput.trim()] }));
+                                        setSubAreaInput('');
+                                    }
+                                }}
+                                style={{ padding: '0 1rem', background: '#4b5563', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                                추가
+                            </button>
+                        </div>
+                        {newWorkplace.subAreas.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                {newWorkplace.subAreas.map((sa, idx) => (
+                                    <div key={idx} style={{ padding: '0.25rem 0.5rem', background: '#dbeafe', color: '#1e40af', borderRadius: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                        {sa}
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewWorkplace(prev => ({ ...prev, subAreas: prev.subAreas.filter((_, i) => i !== idx) }))}
+                                            style={{ background: 'none', border: 'none', color: '#1e3a8a', cursor: 'pointer', padding: 0, fontSize: '1rem', lineHeight: 1 }}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Address Search spans 2 columns or full width depending on layout, but let's keep it simple */}
                     <div style={{ gridColumn: '1 / -1' }}>
                         <AddressSearch
@@ -115,7 +166,18 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
                         <tbody>
                             {workplaces.map(wp => (
                                 <tr key={wp.id}>
-                                    <td>{wp.dong ? `[${wp.dong}] ` : ''}{wp.name}</td>
+                                    <td>
+                                        <div style={{ fontWeight: 'bold' }}>{wp.dong ? `[${wp.dong}] ` : ''}{wp.name}</div>
+                                        {wp.subAreas && wp.subAreas.length > 0 && (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
+                                                {wp.subAreas.map((sa, idx) => (
+                                                    <span key={idx} style={{ padding: '0.1rem 0.3rem', background: '#f3f4f6', color: '#374151', borderRadius: '4px', fontSize: '0.75rem', border: '1px solid #e5e7eb' }}>
+                                                        {sa}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </td>
                                     <td>{wp.address}</td>
                                     <td>{wp.radius}m</td>
                                     <td>
@@ -170,7 +232,8 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
 }
 
 function EditModal({ workplace, onClose, onSave, isPending }: { workplace: Workplace, onClose: () => void, onSave: (id: string, updates: Partial<Workplace>) => void, isPending: boolean }) {
-    const [updates, setUpdates] = useState(workplace);
+    const [updates, setUpdates] = useState<Workplace>({ ...workplace, subAreas: workplace.subAreas || [] });
+    const [subAreaInput, setSubAreaInput] = useState('');
 
     return (
         <div style={{
@@ -207,6 +270,55 @@ function EditModal({ workplace, onClose, onSave, isPending }: { workplace: Workp
                                 required
                             />
                         </div>
+                    </div>
+
+                    <div className={styles.inputGroup} style={{ marginBottom: '1rem' }}>
+                        <label className={styles.label}>구역명 추가 (선택)</label>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <input
+                                className={styles.input}
+                                value={subAreaInput}
+                                onChange={e => setSubAreaInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        if (subAreaInput.trim()) {
+                                            setUpdates(prev => ({ ...prev, subAreas: [...(prev.subAreas || []), subAreaInput.trim()] }));
+                                            setSubAreaInput('');
+                                        }
+                                    }
+                                }}
+                                placeholder="예: 1구역, 2구역 (엔터로 추가)"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (subAreaInput.trim()) {
+                                        setUpdates(prev => ({ ...prev, subAreas: [...(prev.subAreas || []), subAreaInput.trim()] }));
+                                        setSubAreaInput('');
+                                    }
+                                }}
+                                style={{ padding: '0 1rem', background: '#4b5563', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                                추가
+                            </button>
+                        </div>
+                        {updates.subAreas && updates.subAreas.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                {updates.subAreas.map((sa, idx) => (
+                                    <div key={idx} style={{ padding: '0.25rem 0.5rem', background: '#dbeafe', color: '#1e40af', borderRadius: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                        {sa}
+                                        <button
+                                            type="button"
+                                            onClick={() => setUpdates(prev => ({ ...prev, subAreas: (prev.subAreas || []).filter((_, i) => i !== idx) }))}
+                                            style={{ background: 'none', border: 'none', color: '#1e3a8a', cursor: 'pointer', padding: 0, fontSize: '1rem', lineHeight: 1 }}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ marginBottom: '1rem' }}>
