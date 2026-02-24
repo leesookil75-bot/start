@@ -1,7 +1,10 @@
 import { getMonthlyAttendanceAction } from '../../actions';
 import { redirect } from 'next/navigation';
 import AttendanceMatrix from './attendance-matrix';
+import MobileAttendance from './MobileAttendance';
 import { getCurrentUser } from '../../actions';
+import { getVacationRequests } from '@/app/vacations/actions';
+import adminStyles from '../admin.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,12 +35,29 @@ export default async function AdminAttendancePage({
     const month = qMonth ? parseInt(Array.isArray(qMonth) ? qMonth[0] : qMonth) : nowKst.getUTCMonth() + 1;
 
     const data = await getMonthlyAttendanceAction(year, month);
+    const vacationResult = await getVacationRequests(true);
+    const vacations = vacationResult.data || [];
 
     return (
-        <AttendanceMatrix
-            year={year}
-            month={month}
-            data={data}
-        />
+        <>
+            {/* Mobile View */}
+            <div className={adminStyles.mobileOnlyWrapper}>
+                <MobileAttendance
+                    year={year}
+                    month={month}
+                    data={data}
+                    vacations={vacations}
+                />
+            </div>
+
+            {/* PC View */}
+            <div className={adminStyles.pcOnlyWrapper}>
+                <AttendanceMatrix
+                    year={year}
+                    month={month}
+                    data={data}
+                />
+            </div>
+        </>
     );
 }

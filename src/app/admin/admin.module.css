@@ -936,3 +936,24 @@
     background: #1a1a1a;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* PC vs Mobile Wrapper Classes */
+@media (min-width: 769px) {
+    .mobileOnlyWrapper {
+        display: none !important;
+    }
+
+    .pcOnlyWrapper {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .pcOnlyWrapper {
+        display: none !important;
+    }
+
+    .mobileOnlyWrapper {
+        display: block;
+    }
+}

@@ -4,6 +4,7 @@ import { getUsageStats, logout, getCurrentUser } from '../actions';
 import { getExcelData, getMonthlyUserStats, getDailyUserStats } from '@/lib/statistics';
 import { getNotices } from '@/lib/data';
 import AdminDashboardClient from './dashboard-client';
+import MobileAdminHome from './components/MobileAdminHome';
 import { redirect } from 'next/navigation';
 import VacationNotification from './components/VacationNotification';
 
@@ -52,23 +53,34 @@ export default async function AdminPage({
     // Header moved to Client component for conditional page visibility
     return (
         <>
-            <AdminDashboardClient
-                records={records}
-                stats={{
-                    daily: [],
-                    weekly: [],
-                    monthly: [],
-                    yearly: [],
-                    area: [],
-                    monthlyUser: monthlyUserStats,
-                    dailyUser: dailyUserStats
-                }}
-                currentDate={{ year: queryYear, month: queryMonth }}
-                summaryStats={stats}
-                excelData={excelData}
-                notices={notices}
-            />
-            <VacationNotification count={pendingVacations} />
+            {/* Mobile View */}
+            <div className={styles.mobileOnlyWrapper}>
+                <MobileAdminHome
+                    userName={user.name}
+                    onLogout={logout}
+                />
+            </div>
+
+            {/* PC View */}
+            <div className={styles.pcOnlyWrapper}>
+                <AdminDashboardClient
+                    records={records}
+                    stats={{
+                        daily: [],
+                        weekly: [],
+                        monthly: [],
+                        yearly: [],
+                        area: [],
+                        monthlyUser: monthlyUserStats,
+                        dailyUser: dailyUserStats
+                    }}
+                    currentDate={{ year: queryYear, month: queryMonth }}
+                    summaryStats={stats}
+                    excelData={excelData}
+                    notices={notices}
+                />
+                <VacationNotification count={pendingVacations} />
+            </div>
         </>
     );
 }
