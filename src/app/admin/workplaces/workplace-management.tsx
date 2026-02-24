@@ -50,26 +50,15 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
             <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>새 근무지 등록</h2>
                 <form onSubmit={handleAdd} className={styles.form}>
-                    <div className={styles.inputGroup} style={{ display: 'flex', gap: '1rem' }}>
-                        <div style={{ flex: 1 }}>
-                            <label className={styles.label}>동 (선택)</label>
-                            <input
-                                className={styles.input}
-                                value={newWorkplace.dong}
-                                onChange={e => setNewWorkplace({ ...newWorkplace, dong: e.target.value })}
-                                placeholder="예: 구미동"
-                            />
-                        </div>
-                        <div style={{ flex: 2 }}>
-                            <label className={styles.label}>근무지 명칭</label>
-                            <input
-                                className={styles.input}
-                                value={newWorkplace.name}
-                                onChange={e => setNewWorkplace({ ...newWorkplace, name: e.target.value })}
-                                placeholder="예: 본사, 1공장, 1구역"
-                                required
-                            />
-                        </div>
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>근무지 명칭 (예: 본사, 1공장, 가동)</label>
+                        <input
+                            className={styles.input}
+                            value={newWorkplace.name}
+                            onChange={e => setNewWorkplace({ ...newWorkplace, name: e.target.value })}
+                            placeholder="예: 구미동 1구역"
+                            required
+                        />
                     </div>
 
                     <div className={styles.inputGroup}>
@@ -167,7 +156,7 @@ export default function WorkplaceManagement({ workplaces }: { workplaces: Workpl
                             {workplaces.map(wp => (
                                 <tr key={wp.id}>
                                     <td>
-                                        <div style={{ fontWeight: 'bold' }}>{wp.dong ? `[${wp.dong}] ` : ''}{wp.name}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{wp.name}</div>
                                         {wp.subAreas && wp.subAreas.length > 0 && (
                                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.25rem' }}>
                                                 {wp.subAreas.map((sa, idx) => (
@@ -252,24 +241,14 @@ function EditModal({ workplace, onClose, onSave, isPending }: { workplace: Workp
                     e.preventDefault();
                     onSave(workplace.id, updates);
                 }}>
-                    <div className={styles.inputGroup} style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
-                        <div style={{ flex: 1 }}>
-                            <label className={styles.label}>동 (선택)</label>
-                            <input
-                                className={styles.input}
-                                value={updates.dong || ''}
-                                onChange={e => setUpdates({ ...updates, dong: e.target.value })}
-                            />
-                        </div>
-                        <div style={{ flex: 2 }}>
-                            <label className={styles.label}>근무지 명칭</label>
-                            <input
-                                className={styles.input}
-                                value={updates.name}
-                                onChange={e => setUpdates({ ...updates, name: e.target.value })}
-                                required
-                            />
-                        </div>
+                    <div className={styles.inputGroup} style={{ marginBottom: '1rem' }}>
+                        <label className={styles.label}>근무지 명칭</label>
+                        <input
+                            className={styles.input}
+                            value={updates.name}
+                            onChange={e => setUpdates({ ...updates, name: e.target.value })}
+                            required
+                        />
                     </div>
 
                     <div className={styles.inputGroup} style={{ marginBottom: '1rem' }}>

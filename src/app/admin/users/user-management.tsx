@@ -98,7 +98,7 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                             <option value="">- 근무지 미지정 (또는 개별 설정) -</option>
                             {workplaces.map(wp => (
                                 <option key={wp.id} value={wp.id}>
-                                    {wp.dong ? `[${wp.dong}] ` : ''}{wp.name} ({wp.address})
+                                    {wp.name} ({wp.address})
                                 </option>
                             ))}
                         </select>
@@ -239,7 +239,7 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                                                 {user.role === 'admin' ? '관리자' : '청소부'}
                                             </span>
                                         </td>
-                                        <td>{userWorkplace ? `${userWorkplace.dong ? `[${userWorkplace.dong}] ` : ''}${userWorkplace.name}` : (user.workAddress ? '개별 설정' : '-')}</td>
+                                        <td>{userWorkplace ? userWorkplace.name : (user.workAddress ? '개별 설정' : '-')}</td>
                                         <td>
                                             {/* ... buttons ... */}
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
