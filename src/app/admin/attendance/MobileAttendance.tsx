@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { User, LeaveRequest } from '@/lib/data';
 import { upsertDailyAttendanceAction } from '../../actions';
 
@@ -46,6 +46,14 @@ export default function MobileAttendance({ year, month, data, vacations }: Mobil
     const [editInTime, setEditInTime] = useState('');
     const [editOutTime, setEditOutTime] = useState('');
     const [isPending, startTransition] = useTransition();
+
+    const activeItemRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (activeItemRef.current) {
+            activeItemRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+    }, [selectedDay]);
 
     const toggleArea = (area: string) => {
         setExpandedAreas(prev => ({ ...prev, [area]: !prev[area] }));
@@ -147,6 +155,7 @@ export default function MobileAttendance({ year, month, data, vacations }: Mobil
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
                     <button
                         key={day}
+                        ref={selectedDay === day ? activeItemRef : null}
                         onClick={() => setSelectedDay(day)}
                         style={{
                             minWidth: '3.5rem',
