@@ -9,6 +9,7 @@ import styles from './attendance-matrix.module.css';
 interface MonthlyData {
     users: User[];
     records: any[];
+    workplaces?: any[];
 }
 
 interface AttendanceMatrixProps {
@@ -20,6 +21,7 @@ interface AttendanceMatrixProps {
 export default function AttendanceMatrix({ year, month, data }: AttendanceMatrixProps) {
     const [editingCell, setEditingCell] = useState<{ userId: string, day: number } | null>(null);
     const [editValue, setEditValue] = useState('');
+    const [selectedWorkplace, setSelectedWorkplace] = useState<string>('');
     const [isPending, startTransition] = useTransition();
 
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -139,8 +141,13 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
         const header = ['이름', '담당구역', ...days.map(d => `${month}/${d}`)];
         wsData.push(header);
 
-        data.users.forEach(user => {
-            const row = [user.name, user.cleaningArea];
+        // Apply filter before export as well, if desired.
+        const usersToExport = selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users;
+
+        usersToExport.forEach(user => {
+            const wp = data.workplaces?.find(w => w.id === user.workplaceId);
+            const areaDisplay = wp ? `${wp.name} ${user.cleaningArea}` : user.cleaningArea;
+            const row = [user.name, areaDisplay];
             days.forEach(day => {
                 const cell = getCellContent(user.id, day);
                 row.push(cell.isEmpty ? '' : cell.text);
@@ -165,9 +172,23 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                     <span className={styles.currentMonth}>{year}년 {month}월</span>
                     <button onClick={() => window.location.href = `?year=${month === 12 ? year + 1 : year}&month=${month === 12 ? 1 : month + 1}`}>&gt;</button>
                 </div>
-                <button className={styles.exportButton} onClick={handleExport}>
-                    Excel 다운로드
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {data.workplaces && data.workplaces.length > 0 && (
+                        <select
+                            value={selectedWorkplace}
+                            onChange={(e) => setSelectedWorkplace(e.target.value)}
+                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                        >
+                            <option value="">전체 근무지</option>
+                            {data.workplaces.map(wp => (
+                                <option key={wp.id} value={wp.id}>{wp.name}</option>
+                            ))}
+                        </select>
+                    )}
+                    <button className={styles.exportButton} onClick={handleExport}>
+                        Excel 다운로드
+                    </button>
+                </div>
             </div>
 
             <div className={styles.tableWrapper}>
@@ -191,50 +212,53 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                         </tr>
                     </thead>
                     <tbody>
-                        {data.users.map(user => (
-                            <tr key={user.id}>
-                                <td className={styles.stickyCol}>
-                                    <div className={styles.name}>{user.name}</div>
-                                    <div className={styles.area}>{user.cleaningArea}</div>
-                                </td>
-                                {days.map(day => {
-                                    const cell = getCellContent(user.id, day);
-                                    const date = new Date(year, month - 1, day);
-                                    const isSunday = date.getDay() === 0;
-                                    const isSaturday = date.getDay() === 6;
-                                    const isEditing = editingCell?.userId === user.id && editingCell?.day === day;
+                        {(selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users).map(user => {
+                            const wp = data.workplaces?.find(w => w.id === user.workplaceId);
+                            return (
+                                <tr key={user.id}>
+                                    <td className={styles.stickyCol}>
+                                        <div className={styles.name}>{user.name}</div>
+                                        <div className={styles.area}>{wp ? `${wp.name} ` : ''}{user.cleaningArea}</div>
+                                    </td>
+                                    {days.map(day => {
+                                        const cell = getCellContent(user.id, day);
+                                        const date = new Date(year, month - 1, day);
+                                        const isSunday = date.getDay() === 0;
+                                        const isSaturday = date.getDay() === 6;
+                                        const isEditing = editingCell?.userId === user.id && editingCell?.day === day;
 
-                                    return (
-                                        <td
-                                            key={day}
-                                            className={`
-                                                ${styles.cell} 
-                                                ${cell.isLate ? styles.late : ''}
-                                                ${isSunday ? styles.weekend : ''}
-                                                ${isSaturday ? styles.saturday : ''}
-                                            `}
-                                            onClick={() => !isEditing && handleCellClick(user.id, day, cell.text)}
-                                        >
-                                            {isEditing ? (
-                                                <input
-                                                    autoFocus
-                                                    className={styles.inlineInput}
-                                                    value={editValue}
-                                                    onChange={(e) => setEditValue(e.target.value)}
-                                                    onBlur={handleBlur}
-                                                    onKeyDown={handleKeyDown}
-                                                    placeholder="09:00 / 18:00"
-                                                />
-                                            ) : (
-                                                <div className={styles.cellContent}>
-                                                    {cell.text || <span className={styles.empty}>-</span>}
-                                                </div>
-                                            )}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
+                                        return (
+                                            <td
+                                                key={day}
+                                                className={`
+                                                    ${styles.cell} 
+                                                    ${cell.isLate ? styles.late : ''}
+                                                    ${isSunday ? styles.weekend : ''}
+                                                    ${isSaturday ? styles.saturday : ''}
+                                                `}
+                                                onClick={() => !isEditing && handleCellClick(user.id, day, cell.text)}
+                                            >
+                                                {isEditing ? (
+                                                    <input
+                                                        autoFocus
+                                                        className={styles.inlineInput}
+                                                        value={editValue}
+                                                        onChange={(e) => setEditValue(e.target.value)}
+                                                        onBlur={handleBlur}
+                                                        onKeyDown={handleKeyDown}
+                                                        placeholder="09:00 / 18:00"
+                                                    />
+                                                ) : (
+                                                    <div className={styles.cellContent}>
+                                                        {cell.text || <span className={styles.empty}>-</span>}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

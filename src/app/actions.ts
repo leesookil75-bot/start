@@ -616,8 +616,9 @@ export async function getMonthlyAttendanceAction(year: number, month: number) {
     // We want all records that fall within the month in KST.
     // Simplest: Fetch all, filter in JS. For < 10k records this is fine.
 
-    // 1. Get All Users
+    // 1. Get All Users and Workplaces
     const users = await getUsers();
+    const workplaces = await getWorkplaces();
 
     // 2. Get All Records (or range query if implemented)
     // Currently getAttendanceRecords fetches all.
@@ -634,7 +635,7 @@ export async function getMonthlyAttendanceAction(year: number, month: number) {
         return kstDate.getUTCFullYear() === year && (kstDate.getUTCMonth() + 1) === month;
     });
 
-    return { users, records: filteredRecords };
+    return { users, records: filteredRecords, workplaces };
 }
 
 export async function updateAttendanceRecordAction(

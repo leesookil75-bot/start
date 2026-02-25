@@ -7,6 +7,7 @@ import { upsertDailyAttendanceAction } from '../../actions';
 interface MonthlyData {
     users: User[];
     records: any[];
+    workplaces?: any[];
 }
 
 interface MobileAttendanceProps {
@@ -24,12 +25,16 @@ export default function MobileAttendance({ year, month, data, vacations }: Mobil
     // If we only have monthly data, we should restrict to days in this month.
     // For simplicity, just use a state for the selected day of the current month.
     const [selectedDay, setSelectedDay] = useState(todayKst.getUTCFullYear() === year && (todayKst.getUTCMonth() + 1) === month ? todayKst.getUTCDate() : 1);
+    const [selectedWorkplace, setSelectedWorkplace] = useState<string>('');
 
     // Group users by Area
-    const usersByArea = data.users.reduce((acc, user) => {
-        const area = user.cleaningArea || '미지정';
-        if (!acc[area]) acc[area] = [];
-        acc[area].push(user);
+    const filteredUsers = selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users;
+
+    const usersByArea = filteredUsers.reduce((acc, user) => {
+        const wp = data.workplaces?.find(w => w.id === user.workplaceId);
+        const areaName = wp ? `${wp.name} ${user.cleaningArea || '미지정'}` : (user.cleaningArea || '미지정');
+        if (!acc[areaName]) acc[areaName] = [];
+        acc[areaName].push(user);
         return acc;
     }, {} as Record<string, User[]>);
 
@@ -120,6 +125,22 @@ export default function MobileAttendance({ year, month, data, vacations }: Mobil
                     <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{year}년 {month}월 {selectedDay}일</div>
                 </div>
             </header>
+
+            {data.workplaces && data.workplaces.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                    <select
+                        value={selectedWorkplace}
+                        onChange={e => setSelectedWorkplace(e.target.value)}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: '#1e1e1e', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                        <option value="">전체 근무지</option>
+                        {data.workplaces.map(wp => (
+                            <option key={wp.id} value={wp.id}>{wp.name}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
 
             {/* Date Slider */}
             <div style={{ display: 'flex', overflowX: 'auto', gap: '0.5rem', paddingBottom: '1rem', marginBottom: '1rem', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
