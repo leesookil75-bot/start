@@ -43,7 +43,7 @@ export async function login(phoneNumber: string, password?: string): Promise<{ s
     (await cookies()).set(COOKIE_NAME, user.id, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+        maxAge: 60 * 60 * 24 * 365 * 10, // 10년 (사실상 영구 로그인 유지)
         path: '/',
     });
 
