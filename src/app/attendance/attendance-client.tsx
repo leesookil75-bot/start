@@ -13,9 +13,10 @@ interface AttendanceClientProps {
     workLat?: number;
     workLng?: number;
     allowedRadius?: number;
+    workplaces?: { lat: number, lng: number, radius: number, name: string }[];
 }
 
-export default function AttendanceClient({ isWorking: initialIsWorking, todayDate, workLat, workLng, allowedRadius = 100 }: AttendanceClientProps) {
+export default function AttendanceClient({ isWorking: initialIsWorking, todayDate, workLat, workLng, allowedRadius = 100, workplaces }: AttendanceClientProps) {
     const [isPending, startTransition] = useTransition();
     const [message, setMessage] = useState<string | null>(null);
     const [locationStatus, setLocationStatus] = useState<'checking' | 'allowed' | 'denied' | 'error'>('checking');
@@ -44,16 +45,44 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
                     const currentLat = position.coords.latitude;
                     const currentLng = position.coords.longitude;
                     setMyLocation({ lat: currentLat, lng: currentLng });
-                    const dist = getDistanceFromLatLonInM(workLat, workLng, currentLat, currentLng);
 
-                    setDistance(Math.round(dist));
+                    let isAllowed = false;
+                    let minDistance = Infinity;
+                    let closestName = '';
 
-                    if (dist <= (allowedRadius || 100)) {
+                    if (workplaces && workplaces.length > 0) {
+                        for (const wp of workplaces) {
+                            if (!wp.lat || !wp.lng) continue;
+                            const dist = getDistanceFromLatLonInM(wp.lat, wp.lng, currentLat, currentLng);
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                closestName = wp.name;
+                            }
+                            if (dist <= wp.radius) {
+                                isAllowed = true;
+                                break;
+                            }
+                        }
+                    } else if (workLat && workLng) {
+                        const dist = getDistanceFromLatLonInM(workLat, workLng, currentLat, currentLng);
+                        minDistance = dist;
+                        if (dist <= (allowedRadius || 100)) isAllowed = true;
+                    }
+
+                    if (minDistance !== Infinity) {
+                        setDistance(Math.round(minDistance));
+                    }
+
+                    if (isAllowed) {
                         setLocationStatus('allowed');
                         setMessage(null); // Clear any previous error
                     } else {
                         setLocationStatus('denied');
-                        setMessage(`근무지에서 너무 멉니다. (거리: ${Math.round(dist)}m, 허용: ${allowedRadius}m)`);
+                        if (closestName) {
+                            setMessage(`가장 가까운 근무지(${closestName})에서 멉니다. (거리: ${Math.round(minDistance)}m)`);
+                        } else {
+                            setMessage(`근무지에서 너무 멉니다. (거리: ${Math.round(minDistance)}m, 허용: ${allowedRadius}m)`);
+                        }
                     }
                 },
                 (error) => {
@@ -74,7 +103,7 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
         };
 
         // User might move, so adding a "Retry Location" button might be good or auto-refresh.
-    }, [workLat, workLng, allowedRadius]);
+    }, [workLat, workLng, allowedRadius, workplaces]);
 
 
     const handleAction = async (action: 'checkIn' | 'checkOut') => {

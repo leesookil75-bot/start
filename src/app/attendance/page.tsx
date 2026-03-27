@@ -2,6 +2,7 @@
 import styles from './attendance.module.css';
 import Link from 'next/link';
 import { getMyAttendanceAction, getCurrentUser } from '../actions';
+import { getWorkplaces } from '@/lib/data';
 import { redirect } from 'next/navigation';
 import AttendanceClient from './attendance-client';
 import { HomeIcon } from '@/components/icons';
@@ -13,6 +14,8 @@ export default async function AttendancePage() {
     if (!user) {
         redirect('/login');
     }
+
+    const workplaces = await getWorkplaces();
 
     const records = await getMyAttendanceAction();
     // Sort descending
@@ -62,6 +65,7 @@ export default async function AttendancePage() {
             <AttendanceClient
                 isWorking={isWorking}
                 todayDate={todayDate}
+                workplaces={workplaces}
                 workLat={user.workLat}
                 workLng={user.workLng}
                 allowedRadius={user.allowedRadius}
