@@ -116,6 +116,7 @@ export default function LoginPage() {
                             }
                         }}
                         style={{
+                            display: 'none', // 사용자가 실수로 누르는 것을 방지하기 위해 숨김 처리
                             background: 'none',
                             border: 'none',
                             color: '#ccc',
