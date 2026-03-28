@@ -71,7 +71,8 @@ export default function MapClient({ user }: MapClientProps) {
     };
 
     useEffect(() => {
-        const options = { enableHighAccuracy: true, timeout: 30000, maximumAge: 1000 };
+        // Change maximumAge to 0 to completely prevent caching of old locations.
+        const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
 
         const updatePosition = (pos: GeolocationPosition) => {
             const { latitude, longitude, accuracy } = pos.coords;
@@ -84,7 +85,8 @@ export default function MapClient({ user }: MapClientProps) {
             if (user.workLat && user.workLng) {
                 const dist = getDistanceFromLatLonInM(latitude, longitude, user.workLat, user.workLng);
                 setDistance(dist);
-                const radius = user.allowedRadius || 50;
+                // Increased default radius to 100 for better margin of error on mobile web
+                const radius = user.allowedRadius || 100;
                 setIsWithinRadius(dist <= radius);
             } else if (!user.workLat) {
                 setIsWithinRadius(true);
@@ -99,7 +101,18 @@ export default function MapClient({ user }: MapClientProps) {
             }
         };
 
-        const watchId = navigator.geolocation.watchPosition(updatePosition, handleError, options);
+        // First do an initial getCurrentPosition to warm up GPS
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { updatePosition(pos); },
+            (err) => { console.warn('Initial position fetch failed, falling back to watchPosition', err); },
+            options
+        );
+
+        // Then continue watching
+        const watchId = navigator.geolocation.watchPosition(updatePosition, handleError, {
+            ...options,
+            timeout: 30000 // slightly longer timeout for continuous watching
+        });
 
         return () => navigator.geolocation.clearWatch(watchId);
     }, [user.workLat, user.workLng, user.allowedRadius]);
@@ -134,7 +147,7 @@ export default function MapClient({ user }: MapClientProps) {
 
         navigator.geolocation.getCurrentPosition(onRefreshSuccess, onRefreshError, {
             enableHighAccuracy: true,
-            timeout: 20000,
+            timeout: 10000,
             maximumAge: 0
         });
     };
@@ -142,6 +155,11 @@ export default function MapClient({ user }: MapClientProps) {
     const handleConfirm = () => {
         if (!isWithinRadius && user.workLat) {
             alert('근무지 반경을 벗어났습니다. 근무지 근처에서 다시 시도해주세요.');
+            return;
+        }
+
+        if (accuracy !== null && accuracy >= 100) {
+            alert('위치 정보가 부정확합니다. 잠시 후 다시 시도해주세요');
             return;
         }
 
@@ -263,22 +281,29 @@ export default function MapClient({ user }: MapClientProps) {
                     position: 'absolute',
                     top: '10px',
                     left: '10px',
-                    background: 'rgba(0,0,0,0.7)',
+                    background: accuracy && accuracy > 60 ? 'rgba(239,68,68,0.95)' : 'rgba(0,0,0,0.7)',
                     color: '#fff',
                     padding: '0.6rem 0.8rem',
                     borderRadius: '12px',
                     fontSize: '0.75rem',
                     zIndex: 1000,
-                    maxWidth: '150px',
+                    maxWidth: accuracy && accuracy > 60 ? '220px' : '150px',
                     border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s ease-in-out'
                 }}>
                     <div style={{ marginBottom: '0.4rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        정확도: <span style={{ color: accuracyGrade?.color || '#fff' }}>{accuracyGrade?.label || '확인 중...'}</span>
+                        정확도: <span style={{ color: accuracy && accuracy > 60 ? '#fff' : (accuracyGrade?.color || '#fff') }}>{accuracyGrade?.label || '확인 중...'}</span>
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#ccc', lineHeight: '1.3' }}>
-                        💡 원이 클수록 부정확합니다. 창가로 이동해 🔄 버튼을 눌러보세요.
-                    </div>
+                    {accuracy && accuracy > 60 ? (
+                        <div style={{ fontSize: '0.75rem', color: '#fff', lineHeight: '1.4', fontWeight: 'bold' }}>
+                            🔴 GPS 확인 중 (오차 {Math.round(accuracy)}m)<br/>반경 원이 줄어들 때까지 탁 트인 곳에서 잠시 기다려주세요!
+                        </div>
+                    ) : (
+                        <div style={{ fontSize: '0.7rem', color: '#ccc', lineHeight: '1.3' }}>
+                            💡 원이 클수록 부정확합니다. 창가로 이동해 🔄 버튼을 눌러보세요.
+                        </div>
+                    )}
                 </div>
             </div>
 
