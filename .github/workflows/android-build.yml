@@ -1,0 +1,47 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch: # 수동으로 언제든 빌드 버튼을 누를 수 있게 함
+  push:
+    branches:
+      - main # 메인 브랜치에 코드가 올라갈때마다 자동 빌드
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Next.js (Export)
+        run: |
+          # Vercel 환경에서는 정상 동작하지만 빈 out 폴더가 필요할 수 있으므로 생성
+          mkdir -p out
+        
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Capacitor Sync
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: ./android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CleanTrack-App-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
