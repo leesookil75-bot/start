@@ -1,0 +1,15 @@
+{
+  "appId": "com.cleantrack.live",
+  "appName": "가로청소 출퇴근",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://clean-track-leesookils-projects.vercel.app",
+    "cleartext": true
+  },
+  "plugins": {
+    "Geolocation": {
+      "androidLocationAccessMessage": "출퇴근 정확도를 높이기 위해 기기의 위치 기능을 활성화해야 합니다."
+    }
+  }
+}
