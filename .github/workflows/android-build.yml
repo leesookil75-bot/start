@@ -41,7 +41,11 @@ jobs:
           chmod +x android/gradlew
           if ! npx cap sync android > sync_log.txt 2>&1; then
             cat sync_log.txt
-            gh api repos/${{ github.repository }}/issues -f title="Build Error Log" -f body="$(cat sync_log.txt)"
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            git add sync_log.txt
+            git commit -m "chore: push sync_log.txt for debugging"
+            git push origin HEAD:main || true
             exit 1
           fi
       - name: Build APK
