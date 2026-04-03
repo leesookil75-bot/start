@@ -5,6 +5,7 @@ import { useState, useEffect, useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { checkInAction, checkOutAction } from '../../actions';
 import { User } from '@/lib/types';
+import { Geolocation, Position } from '@capacitor/geolocation';
 
 const Map = dynamic(() => import('@/components/Map'), { ssr: false });
 
@@ -57,24 +58,27 @@ export default function MapClient({ user }: MapClientProps) {
         return { label: '낮음 (실내/기상)', color: '#f87171' };
     };
 
-    const getAdvice = (error: GeolocationPositionError) => {
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                return '위치 정보 권한이 거부되었습니다. 설정에서 브라우저의 위치 권한을 허용해 주세요.';
-            case error.POSITION_UNAVAILABLE:
-                return '위치 정보를 사용할 수 없습니다. GPS가 켜져 있는지 확인하고 창가나 실외로 이동해 주세요.';
-            case error.TIMEOUT:
-                return '위치 확인 시간이 초과되었습니다. 신호가 약한 지역일 수 있으니 자리를 옮겨 다시 시도해 주세요.';
-            default:
-                return '알 수 없는 오류가 발생했습니다: ' + error.message;
+    const getAdvice = (error: any) => {
+        const code = error?.code;
+        const message = error?.message?.toLowerCase() || '';
+
+        if (code === 1 || message.includes('denied') || message.includes('permission')) {
+            return '위치 정보 권한이 거부되었습니다. 기기 설정에서 앱/브라우저의 위치 권한을 허용해 주세요.';
         }
+        if (code === 2 || message.includes('unavailable')) {
+            return '위치 정보를 사용할 수 없습니다. GPS가 켜져 있는지 확인하고 창가나 실외로 이동해 주세요.';
+        }
+        if (code === 3 || message.includes('timeout')) {
+            return '위치 확인 시간이 초과되었습니다. 신호가 약한 지역일 수 있으니 자리를 옮겨 다시 시도해 주세요.';
+        }
+        return '알 수 없는 오류가 발생했습니다: ' + (error?.message || JSON.stringify(error));
     };
 
     useEffect(() => {
-        // Change maximumAge to 0 to completely prevent caching of old locations.
         const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+        let watchId: string | null = null;
 
-        const updatePosition = (pos: GeolocationPosition) => {
+        const updatePosition = (pos: Position) => {
             const { latitude, longitude, accuracy } = pos.coords;
             setUserLoc([latitude, longitude]);
             setAccuracy(accuracy);
@@ -85,7 +89,6 @@ export default function MapClient({ user }: MapClientProps) {
             if (user.workLat && user.workLng) {
                 const dist = getDistanceFromLatLonInM(latitude, longitude, user.workLat, user.workLng);
                 setDistance(dist);
-                // Increased default radius to 100 for better margin of error on mobile web
                 const radius = user.allowedRadius || 100;
                 setIsWithinRadius(dist <= radius);
             } else if (!user.workLat) {
@@ -93,35 +96,57 @@ export default function MapClient({ user }: MapClientProps) {
             }
         };
 
-        const handleError = (err: GeolocationPositionError) => {
+        const handleError = (err: any) => {
             console.error('WatchPosition Error:', err);
-            if (status === 'LOADING') {
-                setStatus('ERROR');
-                setErrorMsg(getAdvice(err));
+            setStatus((prevStatus) => {
+                if (prevStatus === 'LOADING') {
+                    setErrorMsg(getAdvice(err));
+                    return 'ERROR';
+                }
+                return prevStatus;
+            });
+        };
+
+        const initGeolocation = async () => {
+            try {
+                const pos = await Geolocation.getCurrentPosition(options);
+                updatePosition(pos);
+            } catch (err) {
+                console.warn('Initial position fetch failed, falling back to watchPosition', err);
+            }
+
+            try {
+                watchId = await Geolocation.watchPosition(
+                    { ...options, timeout: 30000 },
+                    (position, err) => {
+                        if (err) {
+                            handleError(err);
+                            return;
+                        }
+                        if (position) {
+                            updatePosition(position);
+                        }
+                    }
+                );
+            } catch (err) {
+                console.error('Failed to start watchPosition:', err);
+                handleError(err);
             }
         };
 
-        // First do an initial getCurrentPosition to warm up GPS
-        navigator.geolocation.getCurrentPosition(
-            (pos) => { updatePosition(pos); },
-            (err) => { console.warn('Initial position fetch failed, falling back to watchPosition', err); },
-            options
-        );
+        initGeolocation();
 
-        // Then continue watching
-        const watchId = navigator.geolocation.watchPosition(updatePosition, handleError, {
-            ...options,
-            timeout: 30000 // slightly longer timeout for continuous watching
-        });
-
-        return () => navigator.geolocation.clearWatch(watchId);
+        return () => {
+            if (watchId) {
+                Geolocation.clearWatch({ id: watchId }).catch(console.error);
+            }
+        };
     }, [user.workLat, user.workLng, user.allowedRadius]);
 
     const refreshLocation = () => {
-        if (!navigator.geolocation) return;
         setIsRefreshing(true);
 
-        const onRefreshSuccess = (pos: GeolocationPosition) => {
+        const onRefreshSuccess = (pos: Position) => {
             const { latitude, longitude, accuracy } = pos.coords;
             setUserLoc([latitude, longitude]);
             setAccuracy(accuracy);
@@ -130,14 +155,19 @@ export default function MapClient({ user }: MapClientProps) {
             setIsRefreshing(false);
         };
 
-        const onRefreshError = (err: GeolocationPositionError) => {
-            if (err.code === err.TIMEOUT) {
+        const onRefreshError = (err: any) => {
+            const code = err?.code;
+            const message = err?.message?.toLowerCase() || '';
+
+            if (code === 3 || message.includes('timeout')) {
                 // One last try with highAccuracy: false on timeout
-                navigator.geolocation.getCurrentPosition(onRefreshSuccess, (finalErr) => {
-                    console.error('Refresh Error (Final):', finalErr);
-                    setIsRefreshing(false);
-                    alert(getAdvice(finalErr));
-                }, { enableHighAccuracy: false, timeout: 10000 });
+                Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 })
+                    .then(onRefreshSuccess)
+                    .catch((finalErr) => {
+                        console.error('Refresh Error (Final):', finalErr);
+                        setIsRefreshing(false);
+                        alert(getAdvice(finalErr));
+                    });
             } else {
                 console.error('Refresh Error:', err);
                 setIsRefreshing(false);
@@ -145,11 +175,11 @@ export default function MapClient({ user }: MapClientProps) {
             }
         };
 
-        navigator.geolocation.getCurrentPosition(onRefreshSuccess, onRefreshError, {
+        Geolocation.getCurrentPosition({
             enableHighAccuracy: true,
             timeout: 10000,
             maximumAge: 0
-        });
+        }).then(onRefreshSuccess).catch(onRefreshError);
     };
 
     const handleConfirm = () => {
