@@ -26,6 +26,7 @@ jobs:
         run: |
           # Vercel 환경에서는 정상 동작하지만 빈 out 폴더가 필요할 수 있으므로 생성
           mkdir -p out
+          echo "<html><head><meta http-equiv=\"refresh\" content=\"0;url=https://clean-track-leesookils-projects.vercel.app\"></head><body>Loading...</body></html>" > out/index.html
         
       - name: Setup Java
         uses: actions/setup-java@v4
