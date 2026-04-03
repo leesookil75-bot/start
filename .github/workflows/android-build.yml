@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Dependencies
         run: npm ci || npm install
@@ -37,19 +37,10 @@ jobs:
           java-version: '17'
 
       - name: Capacitor Sync
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x android/gradlew
-          if ! npx cap sync android > sync_log.txt 2>&1; then
-            cat sync_log.txt
-            git config --global user.name 'github-actions[bot]'
-            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-            git add sync_log.txt
-            git commit -m "chore: push sync_log.txt for debugging"
-            git push origin HEAD:main || true
-            exit 1
-          fi
+          npx cap sync android
+
       - name: Build APK
         working-directory: ./android
         run: ./gradlew assembleDebug
