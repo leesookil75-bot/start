@@ -4,11 +4,10 @@
   "webDir": "out",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://clean-track-leesookils-projects.vercel.app",
+    "url": "https://clean-track.vercel.app",
     "cleartext": true,
     "allowNavigation": [
-      "clean-track-leesookils-projects.vercel.app",
-      "*.vercel.app"
+      "clean-track.vercel.app"
     ]
   },
   "plugins": {
