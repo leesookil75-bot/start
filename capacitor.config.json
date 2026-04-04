@@ -5,7 +5,11 @@
   "bundledWebRuntime": false,
   "server": {
     "url": "https://clean-track-leesookils-projects.vercel.app",
-    "cleartext": true
+    "cleartext": true,
+    "allowNavigation": [
+      "clean-track-leesookils-projects.vercel.app",
+      "*.vercel.app"
+    ]
   },
   "plugins": {
     "Geolocation": {
