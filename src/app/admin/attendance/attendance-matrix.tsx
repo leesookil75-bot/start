@@ -138,26 +138,84 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
     const handleExport = () => {
         const wb = XLSX.utils.book_new();
         const wsData: any[][] = [];
-        const header = ['이름', '담당구역', ...days.map(d => `${month}/${d}`)];
-        wsData.push(header);
+        const merges: XLSX.Range[] = [];
+        
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-        // Apply filter before export as well, if desired.
+        // 1. Title Row
+        const wpTitleText = selectedWorkplace 
+            ? data.workplaces?.find(w => w.id === selectedWorkplace)?.name || '' 
+            : '동지역 등 가로청소 용역 전체';
+        const title = `${year}년 ${wpTitleText} 출퇴근 기록부`;
+        
+        const titleRow = [title];
+        for (let i = 0; i < days.length + 2; i++) {
+            titleRow.push('');
+        }
+        wsData.push(titleRow);
+        // Merge title across all columns
+        merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: days.length + 2 } });
+
+        // 2. Header Row
+        const headerRow = ['직원', '사원번호', ''];
+        days.forEach(d => {
+            const date = new Date(year, month - 1, d);
+            headerRow.push(`${d}/${dayNames[date.getDay()]}`);
+        });
+        wsData.push(headerRow);
+
+        // 3. User Data Rows (2 rows per user)
         const usersToExport = selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users;
+        
+        let currentRowIdx = 2; // Row 0 is Title, Row 1 is Header
 
         usersToExport.forEach(user => {
             const wp = data.workplaces?.find(w => w.id === user.workplaceId);
             const areaDisplay = wp ? `${wp.name} ${user.cleaningArea}` : user.cleaningArea;
-            const row = [user.name, areaDisplay];
+
+            const rowIn = [user.name, areaDisplay, '출근'];
+            const rowOut = ['', '', '퇴근'];
+
             days.forEach(day => {
-                const cell = getCellContent(user.id, day);
-                row.push(cell.isEmpty ? '' : cell.text);
+                const records = recordMap.get(user.id)?.get(day) || [];
+                if (records.length === 0) {
+                    rowIn.push('');
+                    rowOut.push('');
+                    return;
+                }
+
+                records.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                const checkIns = records.filter(r => r.type === 'CHECK_IN');
+                const checkOuts = records.filter(r => r.type === 'CHECK_OUT');
+
+                const firstIn = checkIns.length > 0 ? checkIns[0] : null;
+                const lastOut = checkOuts.length > 0 ? checkOuts[checkOuts.length - 1] : null;
+
+                const format = (d: string) => {
+                    const date = new Date(d);
+                    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+                };
+
+                rowIn.push(firstIn ? format(firstIn.timestamp) : '');
+                rowOut.push(lastOut ? format(lastOut.timestamp) : '');
             });
-            wsData.push(row);
+
+            wsData.push(rowIn);
+            wsData.push(rowOut);
+
+            // Merge Name (col 0) and Area (col 1) vertically for the 2 rows
+            merges.push({ s: { r: currentRowIdx, c: 0 }, e: { r: currentRowIdx + 1, c: 0 } });
+            merges.push({ s: { r: currentRowIdx, c: 1 }, e: { r: currentRowIdx + 1, c: 1 } });
+
+            currentRowIdx += 2;
         });
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wscols = [{ wch: 10 }, { wch: 15 }];
-        days.forEach(() => wscols.push({ wch: 15 }));
+        ws['!merges'] = merges;
+        
+        // Adjust column widths
+        const wscols = [{ wch: 8 }, { wch: 12 }, { wch: 5 }];
+        days.forEach(() => wscols.push({ wch: 7 }));
         ws['!cols'] = wscols;
 
         XLSX.utils.book_append_sheet(wb, ws, `${month}월 출퇴근기록`);
