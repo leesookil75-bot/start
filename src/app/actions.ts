@@ -452,20 +452,46 @@ export async function getMyStats() {
     if (!user) return null;
 
     const records = await getRecords();
+    const overrides = await getDailyOverrides();
     const userRecords = records.filter(r => r.userId === user.id);
+    const userOverrides = overrides.filter(o => o.userId === user.id);
 
-    const todayStart = getStartOfTodayKST();
-
-    // Start of this week (Sunday is 0) - Calculated based on KST today
-    // We treat "Today KST" as the anchor
+    // 기준 KST 시각
     const kstNow = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
-    const dayOfWeek = kstNow.getUTCDay(); // 0-6
-    const weekStart = new Date(todayStart);
-    weekStart.setDate(todayStart.getDate() - dayOfWeek);
+    const yyyy = kstNow.getUTCFullYear();
+    const mm = String(kstNow.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(kstNow.getUTCDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    const thisMonthStrPrefix = `${yyyy}-${mm}-`;
+    
+    // 월요일 시작 주간 일자 구하기
+    const dayOfWeek = kstNow.getUTCDay();
+    const shiftedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 월=0, 일=6
+    
+    const thisWeekDates: string[] = [];
+    for(let i=0; i<7; i++) {
+        const d = new Date(kstNow.getTime());
+        d.setUTCDate(d.getUTCDate() + (i - shiftedDay));
+        
+        const dy = d.getUTCFullYear();
+        const dm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const ddd = String(d.getUTCDate()).padStart(2, '0');
+        thisWeekDates.push(`${dy}-${dm}-${ddd}`);
+    }
 
-    // Start of this month - Based on KST
-    const monthStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1));
-    monthStart.setHours(monthStart.getHours() - 9); // Shift back to real UTC
+    // 일자별 로우 데이터 합산
+    const dailyRawCounts: Record<string, { count50: number, count75: number }> = {};
+    userRecords.forEach(r => {
+        const kstDate = new Date(new Date(r.timestamp).getTime() + 9 * 60 * 60 * 1000);
+        const ry = kstDate.getUTCFullYear();
+        const rm = String(kstDate.getUTCMonth() + 1).padStart(2, '0');
+        const rd = String(kstDate.getUTCDate()).padStart(2, '0');
+        const key = `${ry}-${rm}-${rd}`;
+        
+        if(!dailyRawCounts[key]) dailyRawCounts[key] = { count50: 0, count75: 0 };
+        if (r.size === 45 || r.size === 50) dailyRawCounts[key].count50++;
+        else if (r.size === 75) dailyRawCounts[key].count75++;
+    });
 
     const stats = {
         daily: { count50: 0, count75: 0 },
@@ -473,22 +499,67 @@ export async function getMyStats() {
         monthly: { count50: 0, count75: 0 }
     };
 
-    userRecords.forEach(r => {
-        const rDate = new Date(r.timestamp);
+    // Override(관리자 수정 데이터) 적용하며 최종 합산
+    // Raw 데이터 기준 순회
+    Object.keys(dailyRawCounts).forEach(dateStr => {
+        let final50 = dailyRawCounts[dateStr].count50;
+        let final75 = dailyRawCounts[dateStr].count75;
 
-        if (rDate >= todayStart) {
-            if (r.size === 45 || r.size === 50) stats.daily.count50++;
-            else if (r.size === 75) stats.daily.count75++;
+        const over50 = userOverrides.find(o => o.date === dateStr && o.type === '50');
+        const over45 = userOverrides.find(o => o.date === dateStr && o.type === '45');
+        const over75 = userOverrides.find(o => o.date === dateStr && o.type === '75');
+
+        if (over50 && typeof over50.value === 'number') final50 = over50.value;
+        else if (over45 && typeof over45.value === 'number') final50 = over45.value;
+
+        if (over75 && typeof over75.value === 'number') final75 = over75.value;
+
+        if (dateStr === todayStr) {
+            stats.daily.count50 += final50;
+            stats.daily.count75 += final75;
         }
-
-        if (rDate >= weekStart) {
-            if (r.size === 45 || r.size === 50) stats.weekly.count50++;
-            else if (r.size === 75) stats.weekly.count75++;
+        if (thisWeekDates.includes(dateStr)) {
+            stats.weekly.count50 += final50;
+            stats.weekly.count75 += final75;
         }
+        if (dateStr.startsWith(thisMonthStrPrefix)) {
+            stats.monthly.count50 += final50;
+            stats.monthly.count75 += final75;
+        }
+    });
 
-        if (rDate >= monthStart) {
-            if (r.size === 45 || r.size === 50) stats.monthly.count50++;
-            else if (r.size === 75) stats.monthly.count75++;
+    // 앱 통계가 없고 관리자가 100% 수기로만 입력한 날(Overrides only days)
+    userOverrides.forEach(o => {
+        if (!dailyRawCounts[o.date] && typeof o.value === 'number') {
+            const dateStr = o.date;
+            
+            // 이미 다른 타입으로 처리되었을 수 있으므로 중복 방지 필요
+            // 여기서는 단순화하여 하나라도 있으면 그냥 오버라이드 값 가져오기
+            const over50 = userOverrides.find(x => x.date === dateStr && x.type === '50');
+            const over45 = userOverrides.find(x => x.date === dateStr && x.type === '45');
+            const over75 = userOverrides.find(x => x.date === dateStr && x.type === '75');
+
+            let final50 = 0;
+            let final75 = 0;
+            if (over50 && typeof over50.value === 'number') final50 = over50.value;
+            else if (over45 && typeof over45.value === 'number') final50 = over45.value;
+            if (over75 && typeof over75.value === 'number') final75 = over75.value;
+
+            // 중복 합산 방지를 위해 키를 임시 기록
+            dailyRawCounts[dateStr] = { count50: final50, count75: final75 };
+
+            if (dateStr === todayStr) {
+                stats.daily.count50 += final50;
+                stats.daily.count75 += final75;
+            }
+            if (thisWeekDates.includes(dateStr)) {
+                stats.weekly.count50 += final50;
+                stats.weekly.count75 += final75;
+            }
+            if (dateStr.startsWith(thisMonthStrPrefix)) {
+                stats.monthly.count50 += final50;
+                stats.monthly.count75 += final75;
+            }
         }
     });
 
