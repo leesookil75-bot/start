@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import styles from '../app/page.module.css';
+
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -86,33 +86,6 @@ export default function InstallPrompt() {
         }
     };
 
-    if (!isVisible) return null;
-
-    return (
-        <div
-            style={{
-                zIndex: 99999,
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                background: 'rgba(20, 20, 20, 0.95)', // Slightly cleaner dark bg
-                padding: '12px',
-                display: 'flex',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(5px)'
-            }}
-        >
-            <button
-                className={styles.installButton}
-                onClick={handleInstallClick}
-                disabled={redirecting}
-                style={{ margin: 0 }} // Override any external margin
-            >
-                {redirecting ? '크롬으로 이동 중...' : '홈화면 바로가기 설치'}
-            </button>
-        </div>
-    );
+    return null;
 }
 
