@@ -11,6 +11,11 @@
     ]
   },
   "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0d1117"
+    },
     "Geolocation": {
       "androidLocationAccessMessage": "출퇴근 정확도를 높이기 위해 기기의 위치 기능을 활성화해야 합니다."
     }
