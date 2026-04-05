@@ -44,11 +44,14 @@ const resolvedIssueIcon = new L.Icon({
     iconAnchor: [12, 41]
 });
 
-// Fit bounds to visible data
+// Fit bounds to visible data only on initial load to prevent hijacking user zoom/pan
 function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) {
     const map = useMap();
+    const hasFitted = useRef(false);
     
     useEffect(() => {
+        if (hasFitted.current) return;
+
         const bounds = new L.LatLngBounds([]);
         let hasPoints = false;
 
@@ -66,8 +69,9 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
 
         if (hasPoints && bounds.isValid()) {
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+            hasFitted.current = true;
         }
-    }, [zones, issues, map]); // Trigger whenever visible zones or issues change
+    }, [zones, issues, map]); 
 
     return null;
 }
