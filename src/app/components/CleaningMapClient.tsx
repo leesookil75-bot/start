@@ -336,7 +336,7 @@ export default function CleaningMapClient({
                 const workerDetail = workers.find(w => w.id === workerId) || { id: workerId, name: currentWorkerName };
                 
                 const newZone: Omit<Zone, 'workerName' | 'createdAt'> = {
-                    id: Date.now().toString(),
+                    id: crypto.randomUUID(),
                     path: pathCoords,
                     isCleaned: false,
                     workerId: workerDetail.id,
@@ -344,7 +344,11 @@ export default function CleaningMapClient({
                 
                 // Optimistic UI
                 setZones(prev => [...prev, { ...newZone, workerName: workerDetail.name, createdAt: new Date().toISOString() }]);
-                await addZoneAction(newZone);
+                const result = await addZoneAction(newZone);
+                if (!result.success) {
+                    alert('구역 저장 실패: ' + result.error);
+                }
+                
                 getZonesAction().then(setZones);
             } else {
                 alert("해당 위치 근처에서 차량 도로망을 찾을 수 없거나 연결할 수 없습니다.");
@@ -361,7 +365,7 @@ export default function CleaningMapClient({
     const confirmIssue = async () => {
         if (!pendingIssuePoint || !suggestedWorker) return;
         const newIssue: Omit<Issue, 'workerName'> = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
             lat: pendingIssuePoint.lat,
             lng: pendingIssuePoint.lng,
             workerId: suggestedWorker.workerId,

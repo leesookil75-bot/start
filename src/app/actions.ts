@@ -999,7 +999,8 @@ export async function addZoneAction(zone: Omit<Zone, 'workerName' | 'createdAt'>
         revalidatePath('/map');
         return { success: true };
     } catch (e: any) {
-        return { success: false, error: e.message };
+        console.error("DEBUG addZoneAction error:", e);
+        return { success: false, error: e.message || 'Unknown server error during addZone' };
     }
 }
 
