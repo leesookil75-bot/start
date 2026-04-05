@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Popup, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Target } from 'lucide-react';
+import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair } from 'lucide-react';
 
 interface Zone {
     id: string;
@@ -146,7 +146,7 @@ function TargetOverlays({
             {/* Enhanced Crosshair */}
             <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full bg-red-500/20 w-32 h-32 -ml-16 -mt-16 animate-ping" />
-                <Target size={60} className="text-red-600 drop-shadow-[0_2px_10px_rgba(255,255,255,1)]" strokeWidth={2.5}/>
+                <Crosshair size={60} className="text-red-600 drop-shadow-[0_2px_10px_rgba(255,255,255,1)]" strokeWidth={2.5}/>
                 <div className="absolute w-2 h-2 bg-red-600 rounded-full" />
             </div>
 
