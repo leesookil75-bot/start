@@ -22,6 +22,7 @@ interface Issue {
     workerName: string;
     status: 'PENDING' | 'WORKER_RESOLVED' | 'CLOSED';
     photoUrl?: string; 
+    adminPhotoUrl?: string;
     createdAt: number;
 }
 
@@ -187,6 +188,7 @@ export default function CleaningMapClient() {
     // Admin Issue Drop Confirmation State
     const [pendingIssuePoint, setPendingIssuePoint] = useState<{lat: number, lng: number} | null>(null);
     const [suggestedWorker, setSuggestedWorker] = useState<Zone | null>(null);
+    const [pendingAdminPhotoUrl, setPendingAdminPhotoUrl] = useState<string | null>(null);
 
     const alarmRef = useRef<HTMLAudioElement | null>(null);
     const [showAlarmPopup, setShowAlarmPopup] = useState(false);
@@ -316,11 +318,13 @@ export default function CleaningMapClient() {
             workerId: suggestedWorker.workerId,
             workerName: suggestedWorker.workerName,
             status: 'PENDING',
+            adminPhotoUrl: pendingAdminPhotoUrl || undefined,
             createdAt: Date.now()
         };
         setIssues(prev => [...prev, newIssue]);
         setPendingIssuePoint(null);
         setSuggestedWorker(null);
+        setPendingAdminPhotoUrl(null);
     };
 
     const cancelOperation = () => {
@@ -328,6 +332,7 @@ export default function CleaningMapClient() {
         setPendingStartNode(null);
         setPendingIssuePoint(null);
         setSuggestedWorker(null);
+        setPendingAdminPhotoUrl(null);
     };
 
     const toggleCleaningStatus = (id: string) => {
@@ -356,6 +361,29 @@ export default function CleaningMapClient() {
                 ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
                 setIssues(prev => prev.map(i => i.id === issueId ? { ...i, photoUrl: compressedDataUrl } : i));
+            };
+            img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleAdminPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 400;
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                setPendingAdminPhotoUrl(compressedDataUrl);
             };
             img.src = event.target?.result as string;
         };
@@ -470,7 +498,7 @@ export default function CleaningMapClient() {
             {/* Admin Issue Drop Confirm Dialog */}
             {pendingIssuePoint && (
                 <div className="absolute inset-0 z-[3000] bg-black/70 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 text-slate-800 w-full max-w-sm text-center shadow-2xl animate-in zoom-in">
+                    <div className="bg-white rounded-3xl p-6 text-slate-800 w-full max-w-sm text-center shadow-2xl animate-in zoom-in max-h-[90vh] overflow-y-auto">
                         <Siren size={60} className="text-red-500 mx-auto mb-4" />
                         <h2 className="text-3xl font-black mb-4">민원구역 할당 확인</h2>
                         {suggestedWorker ? (
@@ -483,6 +511,28 @@ export default function CleaningMapClient() {
                                 반경 맵 내에 소속된 작업자가 없습니다.<br/>그래도 임의로 배정(김반장)하시겠습니까?
                             </p>
                         )}
+
+                        <div className="mb-6">
+                            {pendingAdminPhotoUrl ? (
+                                <div className="relative">
+                                    <img src={pendingAdminPhotoUrl} alt="현장 사진 미리보기" className="w-full h-32 object-cover rounded-xl border-4 border-red-500 shadow-md" />
+                                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">사진 첨부됨</div>
+                                    <button 
+                                        onClick={() => setPendingAdminPhotoUrl(null)} 
+                                        className="absolute bottom-2 right-2 bg-white text-red-600 px-3 py-1 rounded-lg text-sm font-bold shadow-md hover:bg-red-50"
+                                    >
+                                        사진 삭제
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="w-full bg-slate-100 border-4 border-dashed border-slate-300 hover:bg-slate-200 text-slate-600 min-h-[80px] rounded-2xl flex flex-col items-center justify-center cursor-pointer active:bg-slate-300 transition shadow-inner p-2">
+                                    <Camera size={30} className="mb-1 text-slate-400" />
+                                    <span className="font-bold text-lg">참고용 현장 사진 첨부 (선택)</span>
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleAdminPhotoUpload}/>
+                                </label>
+                            )}
+                        </div>
+
                         <div className="flex flex-col gap-3">
                             <button onClick={confirmIssue} className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl text-2xl shadow-xl border-4 border-red-700 active:bg-red-700">과녁 위치에 발령 완료</button>
                             <button onClick={cancelOperation} className="w-full py-3 bg-slate-200 text-slate-700 font-bold rounded-2xl text-xl">돌아가기</button>
@@ -539,6 +589,13 @@ export default function CleaningMapClient() {
                                                 </h3>
                                                 <p className="text-sm font-bold text-slate-600 text-left">담당: {issue.workerName}</p>
                                                 
+                                                {issue.adminPhotoUrl && !isResolvedByWorker && (
+                                                    <div className="mt-2 text-left">
+                                                        <p className="text-xs font-bold text-slate-500 mb-1">첨부했던 현장사진</p>
+                                                        <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-24 object-cover rounded-md mb-2 shadow-sm border" />
+                                                    </div>
+                                                )}
+
                                                 {isResolvedByWorker && issue.photoUrl ? (
                                                     <div className="bg-slate-100 rounded-lg p-2 border border-slate-300 shadow-inner">
                                                         <p className="text-xs font-bold text-slate-500 mb-2">근로자 첨부 완료 사진</p>
@@ -567,6 +624,13 @@ export default function CleaningMapClient() {
                                                 
                                                 {!isResolvedByWorker ? (
                                                     <div className="flex flex-col gap-3">
+                                                        {issue.adminPhotoUrl && (
+                                                            <div className="text-left mb-1">
+                                                                <p className="text-xs font-bold text-slate-500 mb-1">관리자 첨부 현장사진</p>
+                                                                <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-28 object-cover rounded-xl border border-slate-300 shadow-sm" />
+                                                            </div>
+                                                        )}
+                                                        
                                                         {issue.photoUrl ? (
                                                             <div className="relative">
                                                                 <img src={issue.photoUrl} alt="Preview" className="w-full h-28 object-cover rounded-xl border-4 border-green-500 shadow-md" />
