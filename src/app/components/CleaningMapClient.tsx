@@ -49,6 +49,34 @@ const resolvedIssueIcon = new L.Icon({
     iconAnchor: [12, 41]
 });
 
+// Fit bounds to visible data
+function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) {
+    const map = useMap();
+    
+    useEffect(() => {
+        const bounds = new L.LatLngBounds([]);
+        let hasPoints = false;
+
+        zones.forEach(z => {
+            z.path.forEach(pt => {
+                bounds.extend(pt as L.LatLngTuple);
+                hasPoints = true;
+            });
+        });
+
+        issues.forEach(i => {
+            bounds.extend([i.lat, i.lng]);
+            hasPoints = true;
+        });
+
+        if (hasPoints && bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        }
+    }, [zones, issues, map]); // Trigger whenever visible zones or issues change
+
+    return null;
+}
+
 // Controls inside Map
 function CustomZoomControls() {
     const map = useMap();
@@ -117,10 +145,8 @@ function TargetOverlays({
 
             {/* Enhanced Crosshair */}
             <div className="relative flex items-center justify-center">
-                {/* Visual pulse effect behind crosshair */}
                 <div className="absolute inset-0 rounded-full bg-red-500/20 w-32 h-32 -ml-16 -mt-16 animate-ping" />
                 <Target size={60} className="text-red-600 drop-shadow-[0_2px_10px_rgba(255,255,255,1)]" strokeWidth={2.5}/>
-                {/* Exact center dot */}
                 <div className="absolute w-2 h-2 bg-red-600 rounded-full" />
             </div>
 
@@ -406,7 +432,7 @@ export default function CleaningMapClient() {
                 {currentUserRole === 'admin' ? (
                     <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
                         <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-yellow-300">전체 관리자 맵</h1>
-                        <p className="text-md text-slate-300 mb-3">구역을 새롭게 긋거나 지도 위에 긴급 민원 핀을 내립니다.</p>
+                        <p className="text-md text-slate-300 mb-3">전체 근로자의 할당 구역을 한 눈에 조망하고 관리합니다.</p>
                         
                         <div className="flex gap-3 flex-wrap justify-center">
                             <button 
@@ -476,13 +502,15 @@ export default function CleaningMapClient() {
                     </div>
                 )}
 
-                <MapContainer center={defaultCenter} zoom={15} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
+                <MapContainer center={defaultCenter} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
 
-                    {/* Renders Target Crosshair and gets Center via Leaflet hook */}
+                    {/* Applies auto bounding box zoom when data changes */}
+                    <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />
+
                     <TargetOverlays 
                         uiMode={uiMode} 
                         pendingStartNode={pendingStartNode}
@@ -496,7 +524,6 @@ export default function CleaningMapClient() {
                     )}
 
                     {issues.filter(i => i.status !== 'CLOSED').map((issue) => {
-                        // Skip rendering worker's issue if it's currently selected as someone else
                         if (currentUserRole === 'worker' && issue.workerId !== currentWorkerId) return null;
 
                         const isResolvedByWorker = issue.status === 'WORKER_RESOLVED';
@@ -582,7 +609,7 @@ export default function CleaningMapClient() {
                             <Polyline
                                 key={zone.id}
                                 positions={zone.path}
-                                pathOptions={{ color: color, weight: window?.innerWidth > 600 ? 15 : 18, opacity: 0.8 }} // Thicker on mobile
+                                pathOptions={{ color: color, weight: typeof window !== 'undefined' && window.innerWidth > 600 ? 15 : 18, opacity: 0.8 }}
                             >
                                 <Popup autoPanPadding={[50, 50]} closeButton={false}>
                                     <div className="text-center w-[250px] sm:w-[280px] p-3 flex flex-col gap-4">
@@ -647,8 +674,8 @@ export default function CleaningMapClient() {
                 </div>
             )}
             
-            {/* Worker Floating CANCEL UI Button */}
-            {currentUserRole === 'worker' && uiMode !== 'IDLE' && (
+            {/* CANCEL UI Button */}
+            {uiMode !== 'IDLE' && (
                 <div className="absolute top-48 right-4 z-[2000]">
                     <button
                         onClick={cancelOperation}
