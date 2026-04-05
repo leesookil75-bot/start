@@ -14,7 +14,7 @@ import DailyReportTable from './components/DailyReportTable';
 import AreaMonthlyReportTable from './components/AreaMonthlyReportTable';
 import AreaReportDownloadBtn from './components/AreaReportDownloadBtn';
 
-type Tab = 'daily-report' | 'user-report' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area' | 'area-monthly';
+type Tab = 'daily-report' | 'user-report' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'area' | 'area-monthly' | 'map';
 
 interface DashboardClientProps {
     records: any[];
@@ -57,8 +57,8 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                     <Link href="/change-password" className={styles.changePasswordLink}>
                         Change Password
                     </Link>
-                    <Link href="/map" className={styles.backLink}>
-                        지도 관제
+                    <Link href="/map" className={styles.backLink} style={{ background: '#3b82f6', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 'bold' }}>
+                        🗺️ 지도 관제 열기
                     </Link>
                     <Link href="/admin/users" className={styles.backLink}>
                         Manage Users
@@ -91,6 +91,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                         <button className={`${styles.tab} ${activeTab === 'daily-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('daily-report')}>Daily Report</button>
                         <button className={`${styles.tab} ${activeTab === 'area-monthly' ? styles.activeTab : ''}`} onClick={() => setActiveTab('area-monthly')}>Area Report</button>
                         <button className={`${styles.tab} ${activeTab === 'user-report' ? styles.activeTab : ''}`} onClick={() => setActiveTab('user-report')}>Monthly Report</button>
+                        <button className={`${styles.tab} ${activeTab === 'map' ? styles.activeTab : ''}`} onClick={() => setActiveTab('map')}>🗺️ 지도 관제</button>
                     </div>
 
                     {activeTab === 'area-monthly' ? (
@@ -99,7 +100,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                             year={currentDate.year}
                             month={currentDate.month}
                         />
-                    ) : activeTab !== 'daily-report' && activeTab !== 'user-report' ? (
+                    ) : activeTab !== 'daily-report' && activeTab !== 'user-report' && activeTab !== 'map' ? (
                         <ExcelDownloadBtn data={excelData} />
                     ) : null}
                 </div>
@@ -121,6 +122,11 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                         />
                     )}
                     {activeTab === 'user-report' && <MonthlyReportTable data={stats.monthlyUser} year={new Date().getFullYear()} />}
+                    {activeTab === 'map' && (
+                        <div style={{ width: '100%', height: '800px', borderRadius: '12px', overflow: 'hidden', border: '2px solid #ccc' }}>
+                            <iframe src="/map" width="100%" height="100%" style={{ border: 'none' }} />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
