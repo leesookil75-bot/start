@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Popup, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair } from 'lucide-react';
+import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import type { Zone, Issue } from '@/lib/data';
 import { 
@@ -175,6 +176,7 @@ export default function CleaningMapClient({
     // Core Data
     const [zones, setZones] = useState<Zone[]>([]);
     const [issues, setIssues] = useState<Issue[]>([]);
+    const router = useRouter();
     
     // UI States
     const [uiMode, setUiMode] = useState<UIMode>('IDLE');
@@ -450,6 +452,14 @@ export default function CleaningMapClient({
                     </button>
                 </div>
             )}
+            
+            {/* Absolute Home/Back Button */}
+            <button 
+                onClick={() => router.push(currentUserRole === 'admin' ? '/admin' : '/')}
+                className="absolute top-6 left-6 z-[2000] bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 p-3 rounded-2xl shadow-xl flex items-center justify-center text-white transition pointer-events-auto active:scale-95"
+            >
+                <Home size={28} />
+            </button>
 
             {/* Header */}
             <header className={`pt-28 pb-6 px-4 shadow-md z-10 flex flex-col items-center justify-center text-center transition-colors ${currentUserRole === 'admin' ? 'bg-slate-800' : 'bg-blue-800'}`}>
