@@ -57,6 +57,9 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                     <Link href="/change-password" className={styles.changePasswordLink}>
                         Change Password
                     </Link>
+                    <Link href="/map" className={styles.backLink}>
+                        지도 관제
+                    </Link>
                     <Link href="/admin/users" className={styles.backLink}>
                         Manage Users
                     </Link>

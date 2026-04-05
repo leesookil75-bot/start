@@ -107,3 +107,24 @@ export type LeaveRequest = {
     cleaningArea?: string; // Optional for display convenience
     remainingLeaves?: number; // Calculated on fetch
 };
+
+export type Zone = {
+    id: string;
+    path: [number, number][]; // Array of [lat, lng]
+    isCleaned: boolean;
+    workerId: string;
+    workerName: string;
+    createdAt?: string;
+};
+
+export type Issue = {
+    id: string;
+    lat: number;
+    lng: number;
+    workerId: string;
+    workerName: string;
+    status: 'PENDING' | 'WORKER_RESOLVED' | 'CLOSED';
+    photoUrl?: string; 
+    adminPhotoUrl?: string;
+    createdAt: string;
+};

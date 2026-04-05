@@ -964,3 +964,118 @@ export async function getMyDailyAttendanceStatus(): Promise<{ status: 'IDLE' | '
         return { status: 'DONE', startTime: firstIn.timestamp, endTime: lastRecord.timestamp };
     }
 }
+
+// --- Map Actions ---
+import {
+    getZones,
+    addZone,
+    toggleZoneStatus,
+    deleteZone,
+    getIssues,
+    addIssue,
+    updateIssuePhotoAndStatus,
+    closeIssue,
+    deleteIssue,
+    Zone,
+    Issue
+} from '@/lib/data';
+
+export async function getZonesAction(): Promise<Zone[]> {
+    return await getZones();
+}
+
+export async function addZoneAction(zone: Omit<Zone, 'workerName' | 'createdAt'>): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await addZone(zone);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function toggleZoneStatusAction(id: string, isCleaned: boolean): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await toggleZoneStatus(id, isCleaned);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function deleteZoneAction(id: string): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await deleteZone(id);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function getIssuesAction(): Promise<Issue[]> {
+    return await getIssues();
+}
+
+export async function addIssueAction(issue: Omit<Issue, 'workerName'>): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await addIssue(issue);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function updateIssuePhotoAndStatusAction(id: string, photoUrl: string, status: Issue['status']): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await updateIssuePhotoAndStatus(id, photoUrl, status);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function closeIssueAction(id: string): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await closeIssue(id);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function deleteIssueAction(id: string): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await deleteIssue(id);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+

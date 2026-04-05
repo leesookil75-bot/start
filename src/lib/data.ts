@@ -1,6 +1,6 @@
 import path from 'path';
-import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus } from './types';
-export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus };
+import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus, Zone, Issue } from './types';
+export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus, Zone, Issue };
 
 import { sql } from '@vercel/postgres';
 
@@ -1132,4 +1132,109 @@ export async function saveDailyOverride(override: DailyOverride): Promise<void> 
 
   const fs = (await import('fs/promises')).default;
   await fs.writeFile(DAILY_OVERRIDES_FILE_PATH, JSON.stringify(overrides, null, 2), 'utf-8');
+}
+
+// --- Map Zone & Issue Management ---
+
+export async function getZones(): Promise<Zone[]> {
+  if (isPostgresEnabled()) {
+    try {
+      const { rows } = await sql`
+        SELECT z.*, u.name as worker_name 
+        FROM cleaning_zones z
+        LEFT JOIN users u ON z.worker_id = u.id
+      `;
+      return rows.map(r => ({
+        id: r.id,
+        path: JSON.parse(r.path_data),
+        isCleaned: r.is_cleaned,
+        workerId: r.worker_id,
+        workerName: r.worker_name,
+        createdAt: r.created_at?.toISOString()
+      }));
+    } catch(e) {
+      console.warn('Error fetching zones:', e);
+      return [];
+    }
+  }
+  return []; // Fallback empty for fs since localStorage handles it on client right now, but later we could implement FS
+}
+
+export async function addZone(zone: Omit<Zone, 'workerName' | 'createdAt'>): Promise<void> {
+  if (isPostgresEnabled()) {
+    const pathStr = JSON.stringify(zone.path);
+    await sql`
+      INSERT INTO cleaning_zones (id, worker_id, path_data, is_cleaned, created_at)
+      VALUES (${zone.id}, ${zone.workerId}, ${pathStr}, false, NOW())
+    `;
+  }
+}
+
+export async function toggleZoneStatus(id: string, isCleaned: boolean): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE id = ${id}`;
+  }
+}
+
+export async function deleteZone(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM cleaning_zones WHERE id = ${id}`;
+  }
+}
+
+export async function getIssues(): Promise<Issue[]> {
+  if (isPostgresEnabled()) {
+    try {
+       const { rows } = await sql`
+        SELECT i.*, u.name as worker_name 
+        FROM cleaning_issues i
+        LEFT JOIN users u ON i.worker_id = u.id
+      `;
+      return rows.map(r => ({
+        id: r.id,
+        lat: r.lat,
+        lng: r.lng,
+        workerId: r.worker_id,
+        workerName: r.worker_name,
+        status: r.status as Issue['status'],
+        photoUrl: r.photo_url || undefined,
+        adminPhotoUrl: r.admin_photo_url || undefined,
+        createdAt: r.created_at?.toISOString() || new Date(0).toISOString()
+      }));
+    } catch(e) {
+      console.warn('Error fetching issues:', e);
+      return [];
+    }
+  }
+  return [];
+}
+
+export async function addIssue(issue: Omit<Issue, 'workerName'>): Promise<void> {
+  if (isPostgresEnabled()) {
+    const ts = new Date(issue.createdAt || Date.now()).toISOString();
+    await sql`
+      INSERT INTO cleaning_issues (id, lat, lng, worker_id, status, admin_photo_url, created_at)
+      VALUES (${issue.id}, ${issue.lat}, ${issue.lng}, ${issue.workerId}, ${issue.status}, ${issue.adminPhotoUrl || null}, ${ts})
+    `;
+  }
+}
+
+export async function updateIssuePhotoAndStatus(id: string, photoUrl: string, status: Issue['status']): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`
+      UPDATE cleaning_issues SET photo_url = ${photoUrl}, status = ${status} WHERE id = ${id}
+    `;
+  }
+}
+
+export async function closeIssue(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE cleaning_issues SET status = 'CLOSED' WHERE id = ${id}`;
+  }
+}
+
+export async function deleteIssue(id: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM cleaning_issues WHERE id = ${id}`;
+  }
 }

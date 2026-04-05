@@ -97,6 +97,29 @@ export async function initializeDB() {
             );
         `;
 
+        await sql`
+            CREATE TABLE IF NOT EXISTS cleaning_zones (
+                id UUID PRIMARY KEY,
+                worker_id UUID REFERENCES users(id),
+                path_data TEXT NOT NULL,
+                is_cleaned BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        await sql`
+            CREATE TABLE IF NOT EXISTS cleaning_issues (
+                id UUID PRIMARY KEY,
+                lat DOUBLE PRECISION NOT NULL,
+                lng DOUBLE PRECISION NOT NULL,
+                worker_id UUID REFERENCES users(id),
+                status VARCHAR(50) NOT NULL,
+                photo_url TEXT,
+                admin_photo_url TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS workplace_id UUID REFERENCES workplaces(id);`;
 
 

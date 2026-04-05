@@ -6,25 +6,18 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair } from 'lucide-react';
 
-interface Zone {
-    id: string;
-    path: [number, number][]; // Array of [lat, lng]
-    isCleaned: boolean;
-    workerId: string;
-    workerName: string;
-}
-
-interface Issue {
-    id: string;
-    lat: number;
-    lng: number;
-    workerId: string;
-    workerName: string;
-    status: 'PENDING' | 'WORKER_RESOLVED' | 'CLOSED';
-    photoUrl?: string; 
-    adminPhotoUrl?: string;
-    createdAt: number;
-}
+import type { Zone, Issue } from '@/lib/data';
+import { 
+    getZonesAction, 
+    addZoneAction, 
+    toggleZoneStatusAction, 
+    deleteZoneAction, 
+    getIssuesAction, 
+    addIssueAction, 
+    updateIssuePhotoAndStatusAction, 
+    closeIssueAction, 
+    deleteIssueAction 
+} from '@/app/actions';
 
 type UIMode = 'IDLE' | 'ROUTE_START' | 'ROUTE_END' | 'ISSUE_DROP';
 
@@ -164,16 +157,20 @@ function TargetOverlays({
     );
 }
 
-const MOCK_WORKERS = [
-    { id: 'w1', name: '김반장 (사우동)' },
-    { id: 'w2', name: '이여사 (풍무동)' },
-];
-
-export default function CleaningMapClient() {
+export default function CleaningMapClient({
+    role,
+    currentUser,
+    workers = []
+}: {
+    role: 'admin' | 'worker',
+    currentUser: { id: string, name: string },
+    workers?: { id: string, name: string }[]
+}) {
     const [isMounted, setIsMounted] = useState(false);
     
-    const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'worker'>('worker');
-    const [currentWorkerId, setCurrentWorkerId] = useState<string>('w1');
+    const currentUserRole = role;
+    const currentWorkerId = currentUser.id;
+    const currentWorkerName = currentUser.name;
     
     // Core Data
     const [zones, setZones] = useState<Zone[]>([]);
@@ -195,20 +192,23 @@ export default function CleaningMapClient() {
 
     useEffect(() => {
         setIsMounted(true);
-        const savedZones = localStorage.getItem('cleanTrackZones_v2');
-        const savedIssues = localStorage.getItem('cleanTrackIssues_v1');
-        if (savedZones) try { setZones(JSON.parse(savedZones)); } catch(e) {}
-        if (savedIssues) try { setIssues(JSON.parse(savedIssues)); } catch(e) {}
-        
         alarmRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    }, []);
 
-    useEffect(() => {
-        if(isMounted) {
-            localStorage.setItem('cleanTrackZones_v2', JSON.stringify(zones));
-            localStorage.setItem('cleanTrackIssues_v1', JSON.stringify(issues));
-        }
-    }, [zones, issues, isMounted]);
+        const loadData = async () => {
+            try {
+                const fetchedZones = await getZonesAction();
+                const fetchedIssues = await getIssuesAction();
+                setZones(fetchedZones || []);
+                setIssues(fetchedIssues || []);
+            } catch (error) {
+                console.error("Failed to load map data from server", error);
+            }
+        };
+
+        loadData();
+        const interval = setInterval(loadData, 10000); // Poll every 10s
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         if (!isMounted) return;
@@ -286,17 +286,20 @@ export default function CleaningMapClient() {
                 const coords = data.routes[0].geometry.coordinates;
                 const pathCoords: [number, number][] = coords.map((c: [number, number]) => [c[1], c[0]]);
                 
-                const workerId = currentUserRole === 'admin' ? 'w1' : currentWorkerId;
-                const workerDetail = MOCK_WORKERS.find(w => w.id === workerId) || MOCK_WORKERS[0];
+                const workerId = currentUserRole === 'admin' ? (workers[0]?.id || currentWorkerId) : currentWorkerId;
+                const workerDetail = workers.find(w => w.id === workerId) || { id: workerId, name: currentWorkerName };
                 
-                const newZone: Zone = {
+                const newZone: Omit<Zone, 'workerName' | 'createdAt'> = {
                     id: Date.now().toString(),
                     path: pathCoords,
                     isCleaned: false,
                     workerId: workerDetail.id,
-                    workerName: workerDetail.name
                 };
-                setZones(prev => [...prev, newZone]);
+                
+                // Optimistic UI
+                setZones(prev => [...prev, { ...newZone, workerName: workerDetail.name, createdAt: new Date().toISOString() }]);
+                await addZoneAction(newZone);
+                getZonesAction().then(setZones);
             } else {
                 alert("해당 위치 근처에서 차량 도로망을 찾을 수 없거나 연결할 수 없습니다.");
             }
@@ -309,19 +312,24 @@ export default function CleaningMapClient() {
         }
     };
 
-    const confirmIssue = () => {
+    const confirmIssue = async () => {
         if (!pendingIssuePoint || !suggestedWorker) return;
-        const newIssue: Issue = {
+        const newIssue: Omit<Issue, 'workerName'> = {
             id: Date.now().toString(),
             lat: pendingIssuePoint.lat,
             lng: pendingIssuePoint.lng,
             workerId: suggestedWorker.workerId,
-            workerName: suggestedWorker.workerName,
             status: 'PENDING',
             adminPhotoUrl: pendingAdminPhotoUrl || undefined,
-            createdAt: Date.now()
+            createdAt: new Date().toISOString()
         };
-        setIssues(prev => [...prev, newIssue]);
+        // Optimistic UI
+        setIssues(prev => [...prev, { ...newIssue, workerName: suggestedWorker.workerName, createdAt: new Date().toISOString() } as Issue]);
+        
+        await addIssueAction(newIssue);
+        const refetched = await getIssuesAction();
+        setIssues(refetched || []);
+
         setPendingIssuePoint(null);
         setSuggestedWorker(null);
         setPendingAdminPhotoUrl(null);
@@ -335,13 +343,22 @@ export default function CleaningMapClient() {
         setPendingAdminPhotoUrl(null);
     };
 
-    const toggleCleaningStatus = (id: string) => {
+    const toggleCleaningStatus = async (id: string) => {
         if (currentUserRole === 'admin') return; 
-        setZones(prev => prev.map(z => z.id === id ? { ...z, isCleaned: !z.isCleaned } : z));
+        const zone = zones.find(z => z.id === id);
+        if (!zone) return;
+        const newStatus = !zone.isCleaned;
+        
+        // Optimistic
+        setZones(prev => prev.map(z => z.id === id ? { ...z, isCleaned: newStatus } : z));
+        
+        await toggleZoneStatusAction(id, newStatus);
+        getZonesAction().then(setZones);
     };
 
-    const deleteZone = (id: string) => {
+    const deleteZone = async (id: string) => {
         setZones(prev => prev.filter(z => z.id !== id));
+        await deleteZoneAction(id);
     };
 
     const handlePhotoUpload = (issueId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,7 +377,9 @@ export default function CleaningMapClient() {
                 const ctx = canvas.getContext('2d');
                 ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                // Optimistic
                 setIssues(prev => prev.map(i => i.id === issueId ? { ...i, photoUrl: compressedDataUrl } : i));
+                updateIssuePhotoAndStatusAction(issueId, compressedDataUrl, 'PENDING').then(() => getIssuesAction().then(setIssues));
             };
             img.src = event.target?.result as string;
         };
@@ -390,21 +409,25 @@ export default function CleaningMapClient() {
         reader.readAsDataURL(file);
     };
 
-    const resolveWorkerIssue = (issueId: string) => {
+    const resolveWorkerIssue = async (issueId: string) => {
         setIssues(prev => prev.map(i => i.id === issueId ? { ...i, status: 'WORKER_RESOLVED' } : i));
+        const issue = issues.find(i => i.id === issueId);
+        if (issue && issue.photoUrl) {
+            await updateIssuePhotoAndStatusAction(issueId, issue.photoUrl, 'WORKER_RESOLVED');
+        }
     };
 
-    const closeAdminIssue = (issueId: string) => {
+    const closeAdminIssue = async (issueId: string) => {
         setIssues(prev => prev.map(i => i.id === issueId ? { ...i, status: 'CLOSED' } : i));
+        await closeIssueAction(issueId);
     };
 
-    const deleteAdminIssue = (issueId: string) => {
+    const deleteAdminIssue = async (issueId: string) => {
         setIssues(prev => prev.filter(i => i.id !== issueId));
+        await deleteIssueAction(issueId);
     };
 
     if (!isMounted) return null;
-
-    const currentWorkerName = MOCK_WORKERS.find(w => w.id === currentWorkerId)?.name;
 
     return (
         <div className="relative w-full h-screen bg-blue-900 text-white font-sans flex flex-col overflow-hidden">
@@ -424,36 +447,6 @@ export default function CleaningMapClient() {
                     </button>
                 </div>
             )}
-
-            {/* Mock Authentication Switcher */}
-            <div className="absolute top-4 left-4 z-[2000] bg-white p-3 rounded-2xl shadow-2xl text-slate-800 flex flex-col gap-2 border-2 border-slate-300 pointer-events-auto">
-                <div className="font-bold text-sm text-slate-500 mb-1 border-b pb-1">🧪 가상 로그인 시뮬레이터</div>
-                <div className="flex items-center gap-3">
-                    <button 
-                        onClick={() => {setCurrentUserRole('admin'); cancelOperation();}}
-                        className={`px-4 py-2 font-bold rounded-xl transition ${currentUserRole === 'admin' ? 'bg-slate-800 text-white' : 'bg-slate-100 hover:bg-slate-200'}`}
-                    >
-                        <Users size={18} className="inline mr-1"/> 관리자 위젯
-                    </button>
-                    <div className="flex flex-col gap-1 items-start">
-                        <button 
-                            onClick={() => {setCurrentUserRole('worker'); cancelOperation();}}
-                            className={`px-4 py-2 font-bold rounded-xl transition ${currentUserRole === 'worker' ? 'bg-blue-600 text-white' : 'bg-white border-2 border-slate-200 hover:bg-slate-50'}`}
-                        >
-                            <User size={18} className="inline mr-1"/> 근로자 위젯
-                        </button>
-                        {currentUserRole === 'worker' && (
-                            <select 
-                                value={currentWorkerId}
-                                onChange={(e) => setCurrentWorkerId(e.target.value)}
-                                className="p-2 ml-1 text-sm border-2 border-blue-200 rounded-xl font-bold bg-blue-50 focus:outline-none"
-                            >
-                                {MOCK_WORKERS.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                            </select>
-                        )}
-                    </div>
-                </div>
-            </div>
 
             {/* Header */}
             <header className={`pt-28 pb-6 px-4 shadow-md z-10 flex flex-col items-center justify-center text-center transition-colors ${currentUserRole === 'admin' ? 'bg-slate-800' : 'bg-blue-800'}`}>

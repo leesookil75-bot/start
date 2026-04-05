@@ -151,6 +151,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                     <Link href="/attendance" className={styles.sidebarNavItem}>
                         📅 출퇴근 기록
                     </Link>
+                    <Link href="/map" className={styles.sidebarNavItem}>
+                        🗺️ 내 청소 구역
+                    </Link>
                     <Link href="/notices" className={styles.sidebarNavItem}>
                         📢 공지사항
                     </Link>
@@ -172,6 +175,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         <span className={styles.userArea}>({user.cleaningArea})</span>
                     </div>
                     <div className={styles.headerActions}>
+                        <Link href="/map" className={styles.iconLink} aria-label="지도">
+                            <span style={{ fontSize: '1.2rem' }}>🗺️</span>
+                        </Link>
                         <Link href="/attendance" className={styles.iconLink} aria-label="출퇴근">
                             <span style={{ fontSize: '1.2rem' }}>🕒</span>
                         </Link>
