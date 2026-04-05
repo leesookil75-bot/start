@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Popup, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home } from 'lucide-react';
+import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import type { Zone, Issue } from '@/lib/data';
@@ -85,6 +85,17 @@ function CustomZoomControls() {
             </button>
         </div>
     );
+}
+
+// Component to programmatically fly map to a location
+function MapFlyTo({ target }: { target: [number, number] | null }) {
+    const map = useMap();
+    useEffect(() => {
+        if (target) {
+            map.flyTo(target, 17, { animate: true, duration: 1.5 });
+        }
+    }, [target, map]);
+    return null;
 }
 
 // Center Crosshair and Targeting UI Layer
@@ -178,6 +189,12 @@ export default function CleaningMapClient({
     const [issues, setIssues] = useState<Issue[]>([]);
     const router = useRouter();
     
+    // Address Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchFlyTarget, setSearchFlyTarget] = useState<[number, number] | null>(null);
+    
     // UI States
     const [uiMode, setUiMode] = useState<UIMode>('IDLE');
     
@@ -211,6 +228,30 @@ export default function CleaningMapClient({
         const interval = setInterval(loadData, 10000); // Poll every 10s
         return () => clearInterval(interval);
     }, []);
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        try {
+            // Using free Nominatim API. Consider standardizing with debounce if rate issues occur.
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`);
+            const data = await res.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error("Geocoding failed", error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSelectSearchResult = (lat: string, lon: string) => {
+        const target: [number, number] = [parseFloat(lat), parseFloat(lon)];
+        setSearchFlyTarget(target);
+        setUiMode('ISSUE_DROP');
+        setSearchResults([]);
+        // Optional: clear query
+    };
 
     useEffect(() => {
         if (!isMounted) return;
@@ -466,7 +507,43 @@ export default function CleaningMapClient({
                 {currentUserRole === 'admin' ? (
                     <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
                         <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-yellow-300">전체 관리자 맵</h1>
-                        <p className="text-md text-slate-300 mb-3">전체 근로자의 할당 구역을 한 눈에 조망하고 관리합니다.</p>
+                        <p className="text-md text-slate-300 mb-3">전체 근로자의 할당 구역 조망 및 민원 관제 센터입니다.</p>
+
+                        {/* Address Search Bar */}
+                        <form onSubmit={handleSearch} className="relative w-full max-w-md mx-auto mb-4 flex z-[2000]">
+                            <input 
+                                type="text"
+                                placeholder="지번 또는 도로명 주소를 검색하세요..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-5 pr-12 py-3 rounded-2xl text-slate-900 border-0 outline-none shadow-inner"
+                            />
+                            <button disabled={isSearching} type="submit" className="absolute right-2 top-1.5 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition">
+                                {isSearching ? <span className="animate-spin text-sm">⏳</span> : <Search size={20} />}
+                            </button>
+
+                            {searchResults.length > 0 && (
+                                <ul className="absolute top-[110%] left-0 w-full bg-white text-slate-800 rounded-xl shadow-2xl z-[2000] overflow-hidden border border-slate-200">
+                                    <li className="bg-slate-100 p-2 text-xs font-bold text-slate-500 text-left border-b">검색 결과 (가장 가까운 곳 터치)</li>
+                                    {searchResults.map((res: any, idx) => (
+                                        <li 
+                                            key={idx} 
+                                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer text-left text-sm border-b last:border-b-0 flex items-center justify-between"
+                                            onClick={() => handleSelectSearchResult(res.lat, res.lon)}
+                                        >
+                                            <span className="truncate max-w-[85%]">{res.display_name}</span>
+                                            <span className="text-blue-500 font-bold ml-2">이동 👉</span>
+                                        </li>
+                                    ))}
+                                    <li 
+                                        className="p-2 text-center text-red-500 font-bold bg-red-50 hover:bg-red-100 cursor-pointer"
+                                        onClick={() => setSearchResults([])}
+                                    >
+                                        결과창 닫기
+                                    </li>
+                                </ul>
+                            )}
+                        </form>
                         
                         <div className="flex gap-3 flex-wrap justify-center">
                             <button 
@@ -566,6 +643,7 @@ export default function CleaningMapClient({
 
                     {/* Applies auto bounding box zoom when data changes */}
                     <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />
+                    <MapFlyTo target={searchFlyTarget} />
 
                     <TargetOverlays 
                         uiMode={uiMode} 
