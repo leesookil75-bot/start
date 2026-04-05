@@ -64,6 +64,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                 >
                     ✈️ 휴가 관리
                 </Link>
+                <Link
+                    href="/map"
+                    className={`${styles.sidebarNavItem} ${isActive('/map') ? styles.sidebarNavActive : ''}`}
+                >
+                    🗺️ 지도관재/민원처리
+                </Link>
 
                 <div className={styles.sidebarDivider} />
 
