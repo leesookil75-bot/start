@@ -19,7 +19,12 @@ export default async function MapPage() {
     return (
         <MapWrapper 
             role={user.role === 'cleaner' ? 'worker' : 'admin'} 
-            currentUser={{ id: user.id, name: user.name }} 
+            currentUser={{ 
+                id: user.id, 
+                name: user.name, 
+                lat: user.workLat, 
+                lng: user.workLng 
+            }} 
             workers={workers} 
         />
     );

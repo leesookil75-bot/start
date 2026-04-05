@@ -163,7 +163,7 @@ export default function CleaningMapClient({
     workers = []
 }: {
     role: 'admin' | 'worker',
-    currentUser: { id: string, name: string },
+    currentUser: { id: string, name: string, lat?: number, lng?: number },
     workers?: { id: string, name: string }[]
 }) {
     const [isMounted, setIsMounted] = useState(false);
@@ -227,7 +227,10 @@ export default function CleaningMapClient({
         }
     }, [currentUserRole, currentWorkerId, issues, isMounted]);
 
-    const defaultCenter: [number, number] = [37.5665, 126.9780];
+    const defaultCenter: [number, number] = [
+        currentUser.lat || 37.615246, 
+        currentUser.lng || 126.715632
+    ];
 
     const visibleZones = currentUserRole === 'admin' ? zones : zones.filter(z => z.workerId === currentWorkerId);
     const visibleIssues = currentUserRole === 'admin' ? issues : issues.filter(i => i.workerId === currentWorkerId);
