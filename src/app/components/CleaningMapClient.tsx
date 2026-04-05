@@ -581,7 +581,7 @@ export default function CleaningMapClient() {
                         return (
                             <Marker key={issue.id} position={[issue.lat, issue.lng]} icon={icon}>
                                 <Popup autoPanPadding={[50, 50]} closeButton={false}>
-                                    <div className="text-center w-[250px] p-2 flex flex-col gap-3">
+                                    <div className="text-center w-[260px] max-h-[35vh] overflow-y-auto overflow-x-hidden p-2 flex flex-col gap-3 custom-scrollbar">
                                         {currentUserRole === 'admin' ? (
                                             <>
                                                 <h3 className="text-xl font-bold text-slate-800 border-b pb-2">
@@ -592,25 +592,25 @@ export default function CleaningMapClient() {
                                                 {issue.adminPhotoUrl && !isResolvedByWorker && (
                                                     <div className="mt-2 text-left">
                                                         <p className="text-xs font-bold text-slate-500 mb-1">첨부했던 현장사진</p>
-                                                        <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-24 object-cover rounded-md mb-2 shadow-sm border" />
+                                                        <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-20 object-cover rounded-md mb-2 shadow-sm border" />
                                                     </div>
                                                 )}
 
                                                 {isResolvedByWorker && issue.photoUrl ? (
                                                     <div className="bg-slate-100 rounded-lg p-2 border border-slate-300 shadow-inner">
                                                         <p className="text-xs font-bold text-slate-500 mb-2">근로자 첨부 완료 사진</p>
-                                                        <img src={issue.photoUrl} alt="현장 보고" className="w-full h-32 object-cover rounded-md mb-2 shadow-sm border" />
+                                                        <img src={issue.photoUrl} alt="현장 보고" className="w-full h-24 object-cover rounded-md mb-2 shadow-sm border" />
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); closeAdminIssue(issue.id); }}
-                                                            className="w-full bg-green-600 hover:bg-green-700 text-white min-h-[60px] rounded-xl flex items-center justify-center gap-2 text-xl font-extrabold shadow-md transform active:scale-95"
+                                                            className="w-full bg-green-600 hover:bg-green-700 text-white min-h-[50px] rounded-xl flex items-center justify-center gap-2 text-lg font-extrabold shadow-md transform active:scale-95 mt-1"
                                                         >
-                                                            <CheckCircle size={24} /> 종결 완료
+                                                            <CheckCircle size={20} /> 종결 완료
                                                         </button>
                                                     </div>
                                                 ) : (
                                                     <button 
                                                         onClick={(e) => { e.stopPropagation(); deleteAdminIssue(issue.id); }}
-                                                        className="w-full bg-slate-200 text-slate-600 min-h-[50px] rounded-xl font-bold mt-2 hover:bg-red-100 hover:text-red-600"
+                                                        className="w-full bg-slate-200 text-slate-600 min-h-[40px] rounded-xl font-bold mt-2 hover:bg-red-100 hover:text-red-600"
                                                     >
                                                         접수 취소 (삭제)
                                                     </button>
@@ -627,17 +627,17 @@ export default function CleaningMapClient() {
                                                         {issue.adminPhotoUrl && (
                                                             <div className="text-left mb-1">
                                                                 <p className="text-xs font-bold text-slate-500 mb-1">관리자 첨부 현장사진</p>
-                                                                <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-28 object-cover rounded-xl border border-slate-300 shadow-sm" />
+                                                                <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-20 object-cover rounded-xl border border-slate-300 shadow-sm" />
                                                             </div>
                                                         )}
                                                         
                                                         {issue.photoUrl ? (
                                                             <div className="relative">
-                                                                <img src={issue.photoUrl} alt="Preview" className="w-full h-28 object-cover rounded-xl border-4 border-green-500 shadow-md" />
+                                                                <img src={issue.photoUrl} alt="Preview" className="w-full h-24 object-cover rounded-xl border-4 border-green-500 shadow-md" />
                                                                 <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">사진 등록완료</div>
                                                             </div>
                                                         ) : (
-                                                            <label className="w-full bg-slate-100 border-4 border-dashed border-slate-300 hover:bg-blue-50 text-slate-600 min-h-[100px] rounded-2xl flex flex-col items-center justify-center cursor-pointer active:bg-blue-100 transition shadow-inner">
+                                                            <label className="w-full bg-slate-100 border-4 border-dashed border-slate-300 hover:bg-blue-50 text-slate-600 min-h-[80px] rounded-2xl flex flex-col items-center justify-center cursor-pointer active:bg-blue-100 transition shadow-inner">
                                                                 <Camera size={40} className="mb-2 text-slate-400" />
                                                                 <span className="font-extrabold text-xl">현장 사진 촬영</span>
                                                                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhotoUpload(issue.id, e)}/>
@@ -647,7 +647,7 @@ export default function CleaningMapClient() {
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); resolveWorkerIssue(issue.id); }}
                                                             disabled={!issue.photoUrl}
-                                                            className={`w-full min-h-[80px] rounded-2xl flex items-center justify-center gap-2 text-2xl font-black shadow-lg transition-transform active:scale-95 border-2 ${
+                                                            className={`w-full min-h-[60px] rounded-2xl flex items-center justify-center gap-2 text-xl font-black shadow-lg transition-transform active:scale-95 border-2 ${
                                                                 issue.photoUrl ? 'bg-green-600 text-white shadow-green-600/50 border-green-400' : 'bg-slate-300 text-slate-400 border-slate-200 cursor-not-allowed'
                                                             }`}
                                                         >
@@ -676,7 +676,7 @@ export default function CleaningMapClient() {
                                 pathOptions={{ color: color, weight: typeof window !== 'undefined' && window.innerWidth > 600 ? 15 : 18, opacity: 0.8 }}
                             >
                                 <Popup autoPanPadding={[50, 50]} closeButton={false}>
-                                    <div className="text-center w-[250px] sm:w-[280px] p-3 flex flex-col gap-4">
+                                    <div className="text-center w-[250px] sm:w-[280px] p-3 flex flex-col gap-3 max-h-[35vh] overflow-y-auto custom-scrollbar">
                                         {currentUserRole === 'admin' ? (
                                             <>
                                                 <div className="bg-slate-50 text-slate-800 rounded-xl p-3 font-bold border-2 border-slate-200 shadow-inner">
