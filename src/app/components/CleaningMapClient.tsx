@@ -568,11 +568,26 @@ export default function CleaningMapClient({
                             <span className="text-green-400 text-4xl font-extrabold">{completedCount}곳</span>
                             <span className="text-2xl">완료!</span>
                         </div>
-                        <div className="w-full max-w-lg mx-auto h-6 bg-blue-950 rounded-full overflow-hidden border-2 border-white/20 mt-2">
+                        <div className="w-full max-w-lg mx-auto h-6 bg-blue-950 rounded-full overflow-hidden border-2 border-white/20 mt-2 mb-4">
                             <div 
                                 className="h-full bg-green-500 transition-all duration-500"
                                 style={{ width: totalCount > 0 ? `${(completedCount / totalCount) * 100}%` : '0%' }}
                             />
+                        </div>
+
+                        <div className="flex gap-3 flex-wrap justify-center mt-3">
+                            <button 
+                                onClick={() => setUiMode('ROUTE_START')}
+                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_START' || uiMode === 'ROUTE_END' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
+                            >
+                                <PlusCircle size={24} /> 새 청소 구역 그리기
+                            </button>
+                            <button 
+                                onClick={() => setUiMode('ISSUE_DROP')}
+                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ISSUE_DROP' ? 'bg-red-600 border-red-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600'}`}
+                            >
+                                <Siren size={24} /> 내 민원 핀 꽂기
+                            </button>
                         </div>
                     </div>
                 )}

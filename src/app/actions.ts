@@ -986,7 +986,13 @@ export async function getZonesAction(): Promise<Zone[]> {
 
 export async function addZoneAction(zone: Omit<Zone, 'workerName' | 'createdAt'>): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    if (!user) return { success: false, error: 'Unauthorized' };
+    
+    // Allow admins to create zones for anyone.
+    // Allow workers to only create zones for themselves.
+    if (user.role !== 'admin' && zone.workerId !== user.id) {
+        return { success: false, error: 'Unauthorized: cannot create zone for another worker' };
+    }
     
     try {
         await addZone(zone);
