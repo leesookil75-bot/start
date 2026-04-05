@@ -20,7 +20,7 @@ import {
     deleteIssueAction 
 } from '@/app/actions';
 
-type UIMode = 'IDLE' | 'ROUTE_START' | 'ROUTE_END' | 'ISSUE_DROP';
+type UIMode = 'IDLE' | 'ROUTE_BUILDING' | 'ISSUE_DROP';
 
 const markerIcon = new L.Icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -105,68 +105,75 @@ function MapFlyTo({ target }: { target: [number, number] | null }) {
 // Center Crosshair and Targeting UI Layer
 function TargetOverlays({ 
     uiMode, 
-    pendingStartNode, 
-    onSetStart, 
-    onSetEnd, 
+    routeNodes, 
+    onAddRouteNode, 
+    onCompleteRoute, 
     onSetIssue 
 }: { 
     uiMode: UIMode, 
-    pendingStartNode: {lat: number, lng: number} | null,
-    onSetStart: (latlng: {lat: number, lng: number}) => void,
-    onSetEnd: (latlng: {lat: number, lng: number}) => void,
+    routeNodes: {lat: number, lng: number}[],
+    onAddRouteNode: (latlng: {lat: number, lng: number}) => void,
+    onCompleteRoute: () => void,
     onSetIssue: (latlng: {lat: number, lng: number}) => void,
 }) {
     const map = useMap();
 
-    // Re-center map to the pending node when transitioning from START -> END to save panning
-    useEffect(() => {
-        if (uiMode === 'ROUTE_END' && pendingStartNode) {
-            map.panTo([pendingStartNode.lat, pendingStartNode.lng]);
-        }
-    }, [uiMode, pendingStartNode, map]);
-
     if (uiMode === 'IDLE') return null;
 
-    let buttonAction = () => {};
-    let buttonText = '';
-    let buttonColor = '';
+    if (uiMode === 'ROUTE_BUILDING') {
+        const nodeCount = routeNodes.length;
+        return (
+            <div className="absolute inset-0 z-[1500] pointer-events-none flex flex-col items-center justify-center">
+                <div className="absolute top-6 px-6 py-3 bg-black/70 backdrop-blur rounded-full text-white font-bold text-center animate-bounce shadow-2xl text-lg sm:text-xl border-2 border-white/30">
+                    지도를 움직여 과녁을 🎯 원하는 곳에 맞추세요
+                </div>
+                
+                <div className="relative flex items-center justify-center -translate-y-8">
+                    <div className="absolute inset-0 rounded-full bg-blue-500/20 w-32 h-32 -ml-16 -mt-16 animate-ping" />
+                    <Crosshair size={60} className="text-blue-600 drop-shadow-[0_2px_10px_rgba(255,255,255,1)]" strokeWidth={2.5}/>
+                    <div className="absolute w-2 h-2 bg-blue-600 rounded-full" />
+                </div>
 
-    if (uiMode === 'ROUTE_START') {
-        buttonAction = () => onSetStart(map.getCenter());
-        buttonText = '📍 이곳을 시작점으로 결정';
-        buttonColor = 'bg-blue-600 hover:bg-blue-700';
-    } else if (uiMode === 'ROUTE_END') {
-        buttonAction = () => onSetEnd(map.getCenter());
-        buttonText = '📍 이곳으로 길 끝내기';
-        buttonColor = 'bg-green-600 hover:bg-green-700';
-    } else if (uiMode === 'ISSUE_DROP') {
-        buttonAction = () => onSetIssue(map.getCenter());
-        buttonText = '🚨 이곳에 민원 접수하기';
-        buttonColor = 'bg-red-600 hover:bg-red-700';
+                <div className="absolute bottom-10 w-full px-6 flex flex-col gap-3 justify-center pointer-events-auto max-w-sm mx-auto left-0 right-0">
+                    <button 
+                         onClick={() => onAddRouteNode(map.getCenter())}
+                         className={`w-full py-5 px-6 rounded-2xl text-white font-extrabold text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 bg-blue-600 hover:bg-blue-500`}
+                    >
+                         {nodeCount === 0 ? '📍 출발지 지정하기' : `➕ ${nodeCount + 1}번째 경유지 추가`}
+                    </button>
+
+                    {nodeCount >= 2 && (
+                        <button 
+                            onClick={onCompleteRoute}
+                            className={`w-full py-4 px-6 rounded-2xl text-white font-extrabold text-xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 bg-green-600 hover:bg-green-500`}
+                        >
+                            ✅ 여기까지 연결하여 길 생성
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
     }
 
+    // ISSUE_DROP mode
     return (
         <div className="absolute inset-0 z-[1500] pointer-events-none flex flex-col items-center justify-center">
-            
-            {/* Guide Banner */}
             <div className="absolute top-6 px-6 py-3 bg-black/70 backdrop-blur rounded-full text-white font-bold text-center animate-bounce shadow-2xl text-lg sm:text-xl border-2 border-white/30">
                 지도를 움직여 과녁을 🎯 원하는 곳에 맞추세요
             </div>
 
-            {/* Enhanced Crosshair */}
             <div className="relative flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full bg-red-500/20 w-32 h-32 -ml-16 -mt-16 animate-ping" />
                 <Crosshair size={60} className="text-red-600 drop-shadow-[0_2px_10px_rgba(255,255,255,1)]" strokeWidth={2.5}/>
                 <div className="absolute w-2 h-2 bg-red-600 rounded-full" />
             </div>
 
-            {/* Confirm Bottom Button */}
-            <div className="absolute bottom-10 w-full px-6 flex justify-center pointer-events-auto">
+            <div className="absolute bottom-10 w-full px-6 flex flex-col justify-center pointer-events-auto max-w-sm mx-auto left-0 right-0">
                 <button 
-                    onClick={buttonAction}
-                    className={`w-full max-w-sm py-5 px-6 rounded-full text-white font-extrabold text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 ${buttonColor}`}
+                    onClick={() => onSetIssue(map.getCenter())}
+                    className={`w-full py-5 px-6 rounded-2xl text-white font-extrabold text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 bg-red-600 hover:bg-red-500`}
                 >
-                    {buttonText}
+                    🚨 이곳에 민원 접수하기
                 </button>
             </div>
         </div>
@@ -202,7 +209,7 @@ export default function CleaningMapClient({
     // UI States
     const [uiMode, setUiMode] = useState<UIMode>('IDLE');
     
-    const [pendingStartNode, setPendingStartNode] = useState<{lat: number, lng: number} | null>(null);
+    const [routeNodes, setRouteNodes] = useState<{lat: number, lng: number}[]>([]);
     const [isFetchingRoute, setIsFetchingRoute] = useState(false);
     
     // Admin Issue Drop Confirmation State
@@ -305,17 +312,17 @@ export default function CleaningMapClient({
     };
 
     // --- Action Handlers mapping to Target UI ---
-    const handleSetStartNode = (latlng: {lat: number, lng: number}) => {
-        setPendingStartNode(latlng);
-        setUiMode('ROUTE_END');
+    const handleAddRouteNode = (latlng: {lat: number, lng: number}) => {
+        setRouteNodes(prev => [...prev, latlng]);
     };
 
-    const handleSetEndNode = (latlng: {lat: number, lng: number}) => {
-        if (!pendingStartNode) {
-            setUiMode('IDLE');
+    const handleCompleteRoute = () => {
+        if (routeNodes.length < 2) {
+            alert('최소 2개 이상의 경유지가 필요합니다.');
             return;
         }
-        fetchRouteAndCreateZone(pendingStartNode, latlng);
+        setUiMode('IDLE');
+        fetchRouteAndCreateZone(routeNodes);
     };
 
     const handleSetIssueDrop = (latlng: {lat: number, lng: number}) => {
@@ -325,10 +332,11 @@ export default function CleaningMapClient({
         setUiMode('IDLE'); // Hide target overlay to show confirmation dialog
     };
 
-    const fetchRouteAndCreateZone = async (start: {lat: number, lng: number}, end: {lat: number, lng: number}) => {
+    const fetchRouteAndCreateZone = async (nodes: {lat: number, lng: number}[]) => {
         setIsFetchingRoute(true);
         try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+            const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
+            const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
             const res = await fetch(url);
             const data = await res.json();
 
@@ -361,7 +369,7 @@ export default function CleaningMapClient({
             alert("통신 연결에 실패했습니다.");
         } finally {
             setIsFetchingRoute(false);
-            setPendingStartNode(null);
+            setRouteNodes([]);
             setUiMode('IDLE');
         }
     };
@@ -391,7 +399,7 @@ export default function CleaningMapClient({
 
     const cancelOperation = () => {
         setUiMode('IDLE');
-        setPendingStartNode(null);
+        setRouteNodes([]);
         setPendingIssuePoint(null);
         setSuggestedWorker(null);
         setPendingAdminPhotoUrl(null);
@@ -555,8 +563,8 @@ export default function CleaningMapClient({
                         
                         <div className="flex gap-3 flex-wrap justify-center">
                             <button 
-                                onClick={() => setUiMode('ROUTE_START')}
-                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_START' || uiMode === 'ROUTE_END' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
+                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_BUILDING' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
                             >
                                 <PlusCircle size={24} /> 구역 새로 그리기
                             </button>
@@ -585,8 +593,8 @@ export default function CleaningMapClient({
 
                         <div className="flex gap-3 flex-wrap justify-center mt-3">
                             <button 
-                                onClick={() => setUiMode('ROUTE_START')}
-                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_START' || uiMode === 'ROUTE_END' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
+                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_BUILDING' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
                             >
                                 <PlusCircle size={24} /> 새 청소 구역 그리기
                             </button>
@@ -670,14 +678,17 @@ export default function CleaningMapClient({
 
                     <TargetOverlays 
                         uiMode={uiMode} 
-                        pendingStartNode={pendingStartNode}
-                        onSetStart={handleSetStartNode}
-                        onSetEnd={handleSetEndNode}
+                        routeNodes={routeNodes}
+                        onAddRouteNode={handleAddRouteNode}
+                        onCompleteRoute={handleCompleteRoute}
                         onSetIssue={handleSetIssueDrop}
                     />
 
-                    {pendingStartNode && (
-                        <Marker position={[pendingStartNode.lat, pendingStartNode.lng]} icon={markerIcon} />
+                    {routeNodes.map((node, idx) => (
+                        <Marker key={idx} position={[node.lat, node.lng]} icon={markerIcon} />
+                    ))}
+                    {routeNodes.length > 1 && (
+                        <Polyline positions={routeNodes.map(n => [n.lat, n.lng])} color="blue" dashArray="10, 10" weight={4} />
                     )}
 
                     {issues.filter(i => i.status !== 'CLOSED').map((issue) => {
