@@ -107,12 +107,16 @@ function TargetOverlays({
     uiMode, 
     routeNodes, 
     onAddRouteNode, 
+    onUndoRouteNode,
+    onCancelRoute,
     onCompleteRoute, 
     onSetIssue 
 }: { 
     uiMode: UIMode, 
     routeNodes: {lat: number, lng: number}[],
     onAddRouteNode: (latlng: {lat: number, lng: number}) => void,
+    onUndoRouteNode: () => void,
+    onCancelRoute: () => void,
     onCompleteRoute: () => void,
     onSetIssue: (latlng: {lat: number, lng: number}) => void,
 }) {
@@ -149,6 +153,23 @@ function TargetOverlays({
                         >
                             ✅ 여기까지 연결하여 길 생성
                         </button>
+                    )}
+
+                    {nodeCount > 0 && (
+                        <div className="flex gap-2 w-full mt-1">
+                            <button 
+                                onClick={onUndoRouteNode}
+                                className="flex-1 py-3 px-2 rounded-xl text-slate-700 font-bold text-base bg-white shadow border-2 border-slate-300 transform transition active:scale-95 hover:bg-slate-100"
+                            >
+                                🔙 직전 지우기
+                            </button>
+                            <button 
+                                onClick={onCancelRoute}
+                                className="flex-1 py-3 px-2 rounded-xl text-red-600 font-bold text-base bg-white shadow border-2 border-red-300 transform transition active:scale-95 hover:bg-red-50"
+                            >
+                                ❌ 전체 취소
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -680,6 +701,8 @@ export default function CleaningMapClient({
                         uiMode={uiMode} 
                         routeNodes={routeNodes}
                         onAddRouteNode={handleAddRouteNode}
+                        onUndoRouteNode={() => setRouteNodes(prev => prev.slice(0, -1))}
+                        onCancelRoute={() => { setRouteNodes([]); setUiMode('IDLE'); }}
                         onCompleteRoute={handleCompleteRoute}
                         onSetIssue={handleSetIssueDrop}
                     />
@@ -830,6 +853,11 @@ export default function CleaningMapClient({
                                                     ) : (
                                                         <><CheckCircle2 size={44} /> 길 청소 완료!</>
                                                     )}
+                                                </button>                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); deleteZone(zone.id); }}
+                                                    className="w-full bg-slate-200 hover:bg-red-100 text-slate-600 hover:text-red-600 min-h-[40px] mt-3 rounded-xl flex items-center justify-center gap-2 text-md font-bold transition-all"
+                                                >
+                                                    <Trash2 size={18} /> 잘못 그린 이 도로 지우기
                                                 </button>
                                             </>
                                         )}
@@ -847,7 +875,7 @@ export default function CleaningMapClient({
             {currentUserRole === 'worker' && uiMode === 'IDLE' && (
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm">
                     <button
-                        onClick={() => setUiMode('ROUTE_START')}
+                        onClick={() => setUiMode('ROUTE_BUILDING')}
                         className="w-full py-5 bg-blue-600 text-white rounded-full shadow-[0_15px_30px_rgba(0,0,0,0.5)] flex items-center justify-center gap-3 border-4 border-blue-400 transform transition active:scale-95"
                     >
                         <PlusCircle size={36} />

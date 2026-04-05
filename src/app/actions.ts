@@ -1019,7 +1019,7 @@ export async function toggleZoneStatusAction(id: string, isCleaned: boolean): Pr
 
 export async function deleteZoneAction(id: string): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    if (!user) return { success: false, error: 'Unauthorized' };
     
     try {
         await deleteZone(id);
