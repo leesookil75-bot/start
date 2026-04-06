@@ -114,11 +114,14 @@ function MapZoomTracker({ onZoomChange }: { onZoomChange: (z: number) => void })
 function TargetOverlays({ 
     uiMode, 
     routeNodes, 
+    isDirectMode,
+    setIsDirectMode,
     onAddRouteNode, 
     onUndoRouteNode,
     onCancelRoute,
     onCompleteRoute, 
     onSetIssue 
+
 }: { 
     uiMode: UIMode, 
     routeNodes: {lat: number, lng: number}[],
