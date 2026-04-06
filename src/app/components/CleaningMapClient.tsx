@@ -132,7 +132,7 @@ function TargetOverlays({
                     지도를 움직여 과녁을 🎯 원하는 곳에 맞추세요
                 </div>
                 
-                <div className="relative flex items-center justify-center -translate-y-8">
+                <div className="relative flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full bg-blue-500/20 w-32 h-32 -ml-16 -mt-16 animate-ping" />
                     <Crosshair size={60} className="text-blue-600 drop-shadow-[0_2px_10px_rgba(255,255,255,1)]" strokeWidth={2.5}/>
                     <div className="absolute w-2 h-2 bg-blue-600 rounded-full" />
