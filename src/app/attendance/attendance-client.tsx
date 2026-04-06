@@ -105,6 +105,22 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
         // User might move, so adding a "Retry Location" button might be good or auto-refresh.
     }, [workLat, workLng, allowedRadius, workplaces]);
 
+    const playVoiceAnnouncement = (actionType: 'checkIn' | 'checkOut') => {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            const text = actionType === 'checkIn' 
+                ? "출근 처리되었습니다. 오늘도 안전한 하루 보내세요." 
+                : "퇴근 처리되었습니다. 오늘도 수고 많으셨습니다.";
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 1.0; // 속도
+            utterance.pitch = 1.0; // 음정
+            
+            // 만약 이미 말하고 있다면 취소하고 새로 시작
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+    };
 
     const handleAction = async (action: 'checkIn' | 'checkOut') => {
         if (locationStatus !== 'allowed' && (workLat && workLng)) {
@@ -129,6 +145,9 @@ export default function AttendanceClient({ isWorking: initialIsWorking, todayDat
             const result = action === 'checkIn' ? await checkInAction() : await checkOutAction();
             if (!result.success) {
                 setMessage(result.error || '작업 실패');
+            } else {
+                // 성공 시 음성 안내 재생
+                playVoiceAnnouncement(action);
             }
         });
     };
