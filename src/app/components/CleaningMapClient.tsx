@@ -115,21 +115,19 @@ function TargetOverlays({
 }: { 
     uiMode: UIMode, 
     routeNodes: {lat: number, lng: number}[],
-    onAddRouteNode: (latlng: {lat: number, lng: number}) => void,
+    onAddRouteNode: () => void,
     onUndoRouteNode: () => void,
     onCancelRoute: () => void,
     onCompleteRoute: () => void,
-    onSetIssue: (latlng: {lat: number, lng: number}) => void,
+    onSetIssue: () => void,
 }) {
-    const map = useMap();
-
     if (uiMode === 'IDLE') return null;
 
     if (uiMode === 'ROUTE_BUILDING') {
         const nodeCount = routeNodes.length;
         return (
             <div className="absolute inset-0 z-[1500] pointer-events-none flex flex-col items-center justify-center">
-                <div className="absolute top-6 px-6 py-3 bg-black/70 backdrop-blur rounded-full text-white font-bold text-center animate-bounce shadow-2xl text-lg sm:text-xl border-2 border-white/30">
+                <div className="absolute top-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white font-bold text-center shadow-xl text-sm sm:text-base border border-white/20">
                     지도를 움직여 과녁을 🎯 원하는 곳에 맞추세요
                 </div>
                 
@@ -139,38 +137,30 @@ function TargetOverlays({
                     <div className="absolute w-2 h-2 bg-blue-600 rounded-full" />
                 </div>
 
-                <div className="absolute bottom-10 w-full px-6 flex flex-col gap-3 justify-center pointer-events-auto max-w-sm mx-auto left-0 right-0">
+                <div className="absolute bottom-6 w-full px-4 flex flex-col gap-2 justify-center pointer-events-auto max-w-sm mx-auto left-0 right-0">
                     <button 
-                         onClick={() => onAddRouteNode(map.getCenter())}
-                         className={`w-full py-5 px-6 rounded-2xl text-white font-extrabold text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 bg-blue-600 hover:bg-blue-500`}
+                         onClick={() => onAddRouteNode()}
+                         className={`w-full py-4 px-4 rounded-xl text-white font-bold text-lg shadow-lg border border-white/20 transform transition active:scale-95 bg-blue-600/90 backdrop-blur-md hover:bg-blue-600`}
                     >
-                         {nodeCount === 0 ? '📍 출발지 지정하기' : `➕ ${nodeCount + 1}번째 경유지 추가`}
+                         {nodeCount === 0 ? '📍 이 위치를 출발지로 지정' : `➕ ${nodeCount + 1}번째 경유지로 추가`}
                     </button>
 
                     {nodeCount >= 2 && (
                         <button 
                             onClick={onCompleteRoute}
-                            className={`w-full py-4 px-6 rounded-2xl text-white font-extrabold text-xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 bg-green-600 hover:bg-green-500`}
+                            className={`w-full py-3 px-4 rounded-xl text-white font-bold text-base shadow-lg border border-white/20 transform transition active:scale-95 bg-green-600/90 backdrop-blur-md hover:bg-green-600`}
                         >
-                            ✅ 여기까지 연결하여 길 생성
+                            ✅ 여기까지 연결하여 완성하기
                         </button>
                     )}
 
                     {nodeCount > 0 && (
-                        <div className="flex gap-2 w-full mt-1">
-                            <button 
-                                onClick={onUndoRouteNode}
-                                className="flex-1 py-3 px-2 rounded-xl text-slate-700 font-bold text-base bg-white shadow border-2 border-slate-300 transform transition active:scale-95 hover:bg-slate-100"
-                            >
-                                🔙 직전 지우기
-                            </button>
-                            <button 
-                                onClick={onCancelRoute}
-                                className="flex-1 py-3 px-2 rounded-xl text-red-600 font-bold text-base bg-white shadow border-2 border-red-300 transform transition active:scale-95 hover:bg-red-50"
-                            >
-                                ❌ 전체 취소
-                            </button>
-                        </div>
+                        <button 
+                            onClick={onUndoRouteNode}
+                            className="w-full py-2.5 px-2 rounded-xl text-slate-700 font-bold text-sm bg-white/90 backdrop-blur-md shadow border border-slate-200 transform transition active:scale-95 hover:bg-slate-50 flex items-center justify-center gap-1"
+                        >
+                            🔙 방금 추가한 지점 취소
+                        </button>
                     )}
                 </div>
             </div>
@@ -192,7 +182,7 @@ function TargetOverlays({
 
             <div className="absolute bottom-10 w-full px-6 flex flex-col justify-center pointer-events-auto max-w-sm mx-auto left-0 right-0">
                 <button 
-                    onClick={() => onSetIssue(map.getCenter())}
+                    onClick={() => onSetIssue()}
                     className={`w-full py-5 px-6 rounded-2xl text-white font-extrabold text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.4)] border-4 border-white/20 transform transition active:scale-95 bg-red-600 hover:bg-red-500`}
                 >
                     🚨 이곳에 민원 접수하기
@@ -212,6 +202,7 @@ export default function CleaningMapClient({
     workers?: { id: string, name: string }[]
 }) {
     const [isMounted, setIsMounted] = useState(false);
+    const mapRef = useRef<L.Map | null>(null);
     
     const currentUserRole = role;
     const currentWorkerId = currentUser.id;
@@ -699,7 +690,7 @@ export default function CleaningMapClient({
                     </div>
                 )}
 
-                <MapContainer center={defaultCenter} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
+                <MapContainer ref={mapRef} center={defaultCenter} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -708,16 +699,6 @@ export default function CleaningMapClient({
                     {/* Applies auto bounding box zoom when data changes */}
                     <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />
                     <MapFlyTo target={searchFlyTarget} />
-
-                    <TargetOverlays 
-                        uiMode={uiMode} 
-                        routeNodes={routeNodes}
-                        onAddRouteNode={handleAddRouteNode}
-                        onUndoRouteNode={() => setRouteNodes(prev => prev.slice(0, -1))}
-                        onCancelRoute={() => { setRouteNodes([]); setUiMode('IDLE'); }}
-                        onCompleteRoute={handleCompleteRoute}
-                        onSetIssue={handleSetIssueDrop}
-                    />
 
                     {routeNodes.map((node, idx) => (
                         <Marker key={idx} position={[node.lat, node.lng]} icon={markerIcon} />
@@ -891,6 +872,20 @@ export default function CleaningMapClient({
 
                     <CustomZoomControls />
                 </MapContainer>
+
+                <TargetOverlays 
+                    uiMode={uiMode} 
+                    routeNodes={routeNodes}
+                    onAddRouteNode={() => {
+                        if (mapRef.current) handleAddRouteNode(mapRef.current.getCenter());
+                    }}
+                    onUndoRouteNode={() => setRouteNodes(prev => prev.slice(0, -1))}
+                    onCancelRoute={() => { setRouteNodes([]); setUiMode('IDLE'); }}
+                    onCompleteRoute={handleCompleteRoute}
+                    onSetIssue={() => {
+                        if (mapRef.current) handleSetIssueDrop(mapRef.current.getCenter());
+                    }}
+                />
             </main>
 
             {/* Worker Floating Central ADD ZONE Button (when IDLE) */}
@@ -908,13 +903,13 @@ export default function CleaningMapClient({
             
             {/* CANCEL UI Button */}
             {uiMode !== 'IDLE' && (
-                <div className="absolute top-48 right-4 z-[2000]">
+                <div className="absolute top-[100px] sm:top-28 right-4 z-[2000]">
                     <button
                         onClick={cancelOperation}
-                        className="p-4 bg-white text-slate-800 rounded-3xl shadow-2xl flex flex-col items-center justify-center border-4 border-slate-300 active:bg-slate-100"
+                        className="p-2.5 px-4 bg-white/95 backdrop-blur shadow-lg border border-slate-200 rounded-full flex items-center justify-center gap-2 active:bg-slate-100 transition-all font-bold text-slate-700 text-sm"
                     >
-                        <XCircle size={40} className="mb-1 text-slate-500" />
-                        <span className="text-lg font-bold">취소하기</span>
+                        <XCircle size={18} className="text-red-500" />
+                        <span>작업 취소</span>
                     </button>
                 </div>
             )}
