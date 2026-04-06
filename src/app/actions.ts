@@ -970,6 +970,7 @@ import {
     getZones,
     addZone,
     toggleZoneStatus,
+    toggleZoneGroupStatus,
     deleteZone,
     getIssues,
     addIssue,
@@ -1010,6 +1011,21 @@ export async function toggleZoneStatusAction(id: string, isCleaned: boolean): Pr
     
     try {
         await toggleZoneStatus(id, isCleaned);
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function toggleZoneGroupStatusAction(groupName: string, isCleaned: boolean): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    
+    try {
+        // Find worker target depending on user role
+        // For simple deployment, let's assume the user toggling it is the owner
+        await toggleZoneGroupStatus(groupName, user.id, isCleaned);
         revalidatePath('/map');
         return { success: true };
     } catch (e: any) {

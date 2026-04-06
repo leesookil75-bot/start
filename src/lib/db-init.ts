@@ -127,6 +127,8 @@ export async function initializeDB() {
 
         await sql`ALTER TABLE workplaces ADD COLUMN IF NOT EXISTS dong VARCHAR(255);`;
         await sql`ALTER TABLE workplaces ADD COLUMN IF NOT EXISTS sub_areas TEXT DEFAULT '[]';`;
+        
+        await sql`ALTER TABLE cleaning_zones ADD COLUMN IF NOT EXISTS group_name VARCHAR(255);`;
 
         // Attempt to create extension, might fail if not superuser but usually fine on Vercel
         try {

@@ -12,6 +12,7 @@ import {
     getZonesAction, 
     addZoneAction, 
     toggleZoneStatusAction, 
+    toggleZoneGroupStatusAction,
     deleteZoneAction, 
     getIssuesAction, 
     addIssueAction, 
@@ -342,8 +343,12 @@ export default function CleaningMapClient({
             alert('최소 2개 이상의 경유지가 필요합니다.');
             return;
         }
+        
+        const groupNameInput = window.prompt('구역 이름을 지정하시겠습니까? (예: 1구역, 중앙동 등)\n같은 이름으로 지정하면 하나의 그룹으로 묶여 관리됩니다. (선택사항)', '');
+        if (groupNameInput === null) return; // User pressed cancel
+        
         setUiMode('IDLE');
-        fetchRouteAndCreateZone(routeNodes);
+        fetchRouteAndCreateZone(routeNodes, groupNameInput.trim());
     };
 
     const handleSetIssueDrop = (latlng: {lat: number, lng: number}) => {
@@ -353,7 +358,7 @@ export default function CleaningMapClient({
         setUiMode('IDLE'); // Hide target overlay to show confirmation dialog
     };
 
-    const fetchRouteAndCreateZone = async (nodes: {lat: number, lng: number}[]) => {
+    const fetchRouteAndCreateZone = async (nodes: {lat: number, lng: number}[], groupName: string) => {
         setIsFetchingRoute(true);
         try {
             const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
@@ -373,6 +378,7 @@ export default function CleaningMapClient({
                     path: pathCoords,
                     isCleaned: false,
                     workerId: workerDetail.id,
+                    groupName: groupName || undefined,
                 };
                 
                 // Optimistic UI
@@ -432,10 +438,16 @@ export default function CleaningMapClient({
         if (!zone) return;
         const newStatus = !zone.isCleaned;
         
-        // Optimistic
-        setZones(prev => prev.map(z => z.id === id ? { ...z, isCleaned: newStatus } : z));
+        if (zone.groupName) {
+            // Optimistic update all zones in the group
+            setZones(prev => prev.map(z => z.groupName === zone.groupName ? { ...z, isCleaned: newStatus } : z));
+            await toggleZoneGroupStatusAction(zone.groupName, newStatus);
+        } else {
+            // Optimistic update single zone
+            setZones(prev => prev.map(z => z.id === id ? { ...z, isCleaned: newStatus } : z));
+            await toggleZoneStatusAction(id, newStatus);
+        }
         
-        await toggleZoneStatusAction(id, newStatus);
         getZonesAction().then(setZones);
     };
 
@@ -823,6 +835,11 @@ export default function CleaningMapClient({
                                                 <div className="bg-slate-50 text-slate-800 rounded-xl p-3 font-bold border-2 border-slate-200 shadow-inner">
                                                     <div className="text-sm text-slate-500 mb-1">담당 구역 마스터</div>
                                                     <div className="text-2xl text-blue-700 mb-3">{zone.workerName}</div>
+                                                    {zone.groupName && (
+                                                        <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
+                                                            {zone.groupName}
+                                                        </div>
+                                                    )}
                                                     <div className="flex items-center justify-between px-2">
                                                         <span>현재 상태:</span>
                                                         <span className={isDone ? 'text-green-600 bg-green-100 px-3 py-1 rounded-full' : 'text-red-500 bg-red-100 px-3 py-1 rounded-full'}>
@@ -839,6 +856,11 @@ export default function CleaningMapClient({
                                             </>
                                         ) : (
                                             <>
+                                                {zone.groupName && (
+                                                    <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
+                                                        {zone.groupName}
+                                                    </div>
+                                                )}
                                                 <h3 className="text-2xl font-black text-slate-800 mb-2 mt-2">
                                                     {isDone ? '✨ 이 도로는 깨끗합니다' : '🧹 청소를 시작할까요?'}
                                                 </h3>

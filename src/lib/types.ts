@@ -114,6 +114,7 @@ export type Zone = {
     isCleaned: boolean;
     workerId: string;
     workerName: string;
+    groupName?: string;
     createdAt?: string;
 };
 

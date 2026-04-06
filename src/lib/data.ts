@@ -1150,6 +1150,7 @@ export async function getZones(): Promise<Zone[]> {
         isCleaned: r.is_cleaned,
         workerId: r.worker_id,
         workerName: r.worker_name,
+        groupName: r.group_name || undefined,
         createdAt: r.created_at?.toISOString()
       }));
     } catch(e) {
@@ -1163,9 +1164,10 @@ export async function getZones(): Promise<Zone[]> {
 export async function addZone(zone: Omit<Zone, 'workerName' | 'createdAt'>): Promise<void> {
   if (isPostgresEnabled()) {
     const pathStr = JSON.stringify(zone.path);
+    const groupName = zone.groupName || null;
     await sql`
-      INSERT INTO cleaning_zones (id, worker_id, path_data, is_cleaned, created_at)
-      VALUES (${zone.id}, ${zone.workerId}, ${pathStr}, false, NOW())
+      INSERT INTO cleaning_zones (id, worker_id, path_data, group_name, is_cleaned, created_at)
+      VALUES (${zone.id}, ${zone.workerId}, ${pathStr}, ${groupName}, false, NOW())
     `;
   }
 }
@@ -1173,6 +1175,12 @@ export async function addZone(zone: Omit<Zone, 'workerName' | 'createdAt'>): Pro
 export async function toggleZoneStatus(id: string, isCleaned: boolean): Promise<void> {
   if (isPostgresEnabled()) {
     await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE id = ${id}`;
+  }
+}
+
+export async function toggleZoneGroupStatus(groupName: string, workerId: string, isCleaned: boolean): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE group_name = ${groupName} AND worker_id = ${workerId}`;
   }
 }
 
