@@ -92,7 +92,6 @@ function CustomZoomControls() {
     );
 }
 
-// Component to programmatically fly map to a location
 function MapFlyTo({ target }: { target: [number, number] | null }) {
     const map = useMap();
     useEffect(() => {
@@ -100,6 +99,14 @@ function MapFlyTo({ target }: { target: [number, number] | null }) {
             map.flyTo(target, 17, { animate: true, duration: 1.5 });
         }
     }, [target, map]);
+    return null;
+}
+
+// Track zoom level dynamically
+function MapZoomTracker({ onZoomChange }: { onZoomChange: (z: number) => void }) {
+    useMapEvents({
+        zoomend: (e) => onZoomChange(e.target.getZoom())
+    });
     return null;
 }
 
@@ -236,6 +243,7 @@ export default function CleaningMapClient({
 
     const alarmRef = useRef<HTMLAudioElement | null>(null);
     const [showAlarmPopup, setShowAlarmPopup] = useState(false);
+    const [currentZoom, setCurrentZoom] = useState(13);
 
     useEffect(() => {
         setIsMounted(true);
@@ -774,6 +782,7 @@ export default function CleaningMapClient({
                     {/* Applies auto bounding box zoom when data changes */}
                     <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />
                     <MapFlyTo target={searchFlyTarget} />
+                    <MapZoomTracker onZoomChange={setCurrentZoom} />
 
                     {routeNodes.map((node, idx) => (
                         <Marker key={idx} position={[node.lat, node.lng]} icon={markerIcon} />
@@ -877,12 +886,15 @@ export default function CleaningMapClient({
                     {visibleZones.map((zone) => {
                         const isDone = zone.isCleaned;
                         const color = isDone ? '#22c55e' : '#ef4444'; 
+                        
+                        const baseWeight = typeof window !== 'undefined' && window.innerWidth > 600 ? 15 : 18;
+                        const dynamicWeight = Math.max(4, baseWeight + (currentZoom - 13) * 4);
 
                         return (
                             <Polyline
                                 key={zone.id}
                                 positions={zone.path}
-                                pathOptions={{ color: color, weight: typeof window !== 'undefined' && window.innerWidth > 600 ? 15 : 18, opacity: 0.8 }}
+                                pathOptions={{ color: color, weight: dynamicWeight, opacity: 0.8 }}
                             >
                                 <Popup autoPanPadding={[50, 50]} closeButton={false}>
                                     <div className="text-center w-[250px] sm:w-[280px] p-3 flex flex-col gap-3 max-h-[35vh] overflow-y-auto custom-scrollbar">
