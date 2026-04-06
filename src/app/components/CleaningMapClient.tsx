@@ -122,6 +122,8 @@ function TargetOverlays({
 }: { 
     uiMode: UIMode, 
     routeNodes: {lat: number, lng: number}[],
+    isDirectMode: boolean,
+    setIsDirectMode: (val: boolean) => void,
     onAddRouteNode: () => void,
     onUndoRouteNode: () => void,
     onCancelRoute: () => void,
@@ -136,6 +138,15 @@ function TargetOverlays({
             <div className="absolute inset-0 z-[1500] pointer-events-none flex flex-col items-center justify-center">
                 <div className="absolute top-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white font-bold text-center shadow-xl text-sm sm:text-base border border-white/20">
                     지도를 움직여 과녁을 🎯 원하는 곳에 맞추세요
+                </div>
+                
+                <div className="absolute top-[4.5rem] pointer-events-auto">
+                    <button 
+                        onClick={() => setIsDirectMode(!isDirectMode)}
+                        className={`px-4 py-2 rounded-full font-bold text-xs sm:text-sm shadow-xl border-2 transition active:scale-95 flex items-center justify-center gap-1 ${isDirectMode ? 'bg-indigo-600 text-white border-indigo-400 shadow-indigo-600/30' : 'bg-white text-slate-700 border-slate-300'}`}
+                    >
+                        {isDirectMode ? '📏 클릭한 구간만 직접 직선 연결합니다' : '🚙 도로를 따라 자동으로 스냅 설정 중'}
+                    </button>
                 </div>
                 
                 <div className="relative flex items-center justify-center">
@@ -244,6 +255,9 @@ export default function CleaningMapClient({
     const alarmRef = useRef<HTMLAudioElement | null>(null);
     const [showAlarmPopup, setShowAlarmPopup] = useState(false);
     const [currentZoom, setCurrentZoom] = useState(13);
+    
+    // Routing toggle mode: Direct line vs Driving snap
+    const [isDirectMode, setIsDirectMode] = useState(true);
 
     useEffect(() => {
         setIsMounted(true);
@@ -367,37 +381,44 @@ export default function CleaningMapClient({
     const fetchRouteAndCreateZone = async (nodes: {lat: number, lng: number}[], groupName: string) => {
         setIsFetchingRoute(true);
         try {
-            const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
-            const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
-            const res = await fetch(url);
-            const data = await res.json();
+            let pathCoords: [number, number][] = [];
 
-            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                const coords = data.routes[0].geometry.coordinates;
-                const pathCoords: [number, number][] = coords.map((c: [number, number]) => [c[1], c[0]]);
-                
-                const workerId = currentUserRole === 'admin' ? (workers[0]?.id || currentWorkerId) : currentWorkerId;
-                const workerDetail = workers.find(w => w.id === workerId) || { id: workerId, name: currentWorkerName };
-                
-                const newZone: Omit<Zone, 'workerName' | 'createdAt'> = {
-                    id: crypto.randomUUID(),
-                    path: pathCoords,
-                    isCleaned: false,
-                    workerId: workerDetail.id,
-                    groupName: groupName || undefined,
-                };
-                
-                // Optimistic UI
-                setZones(prev => [...prev, { ...newZone, workerName: workerDetail.name, createdAt: new Date().toISOString() }]);
-                const result = await addZoneAction(newZone);
-                if (!result.success) {
-                    alert('구역 저장 실패: ' + result.error);
-                }
-                
-                getZonesAction().then(setZones);
+            if (isDirectMode) {
+                pathCoords = nodes.map(n => [n.lat, n.lng]);
             } else {
-                alert("해당 위치 근처에서 차량 도로망을 찾을 수 없거나 연결할 수 없습니다.");
+                const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                    const coords = data.routes[0].geometry.coordinates;
+                    pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
+                } else {
+                    alert("해당 위치 근처에서 차량 도로망을 찾을 수 없습니다. (대신 직선으로 연결합니다)");
+                    pathCoords = nodes.map(n => [n.lat, n.lng]);
+                }
             }
+            
+            const workerId = currentUserRole === 'admin' ? (workers[0]?.id || currentWorkerId) : currentWorkerId;
+            const workerDetail = workers.find(w => w.id === workerId) || { id: workerId, name: currentWorkerName };
+            
+            const newZone: Omit<Zone, 'workerName' | 'createdAt'> = {
+                id: crypto.randomUUID(),
+                path: pathCoords,
+                isCleaned: false,
+                workerId: workerDetail.id,
+                groupName: groupName || undefined,
+            };
+            
+            // Optimistic UI
+            setZones(prev => [...prev, { ...newZone, workerName: workerDetail.name, createdAt: new Date().toISOString() }]);
+            const result = await addZoneAction(newZone);
+            if (!result.success) {
+                alert('구역 저장 실패: ' + result.error);
+            }
+            
+            getZonesAction().then(setZones);
         } catch (error) {
             alert("통신 연결에 실패했습니다.");
         } finally {
@@ -964,6 +985,8 @@ export default function CleaningMapClient({
                 <TargetOverlays 
                     uiMode={uiMode} 
                     routeNodes={routeNodes}
+                    isDirectMode={isDirectMode}
+                    setIsDirectMode={setIsDirectMode}
                     onAddRouteNode={() => {
                         if (mapRef.current) handleAddRouteNode(mapRef.current.getCenter());
                     }}
