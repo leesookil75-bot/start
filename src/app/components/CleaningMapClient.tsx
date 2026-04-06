@@ -886,9 +886,10 @@ export default function CleaningMapClient({
                     {visibleZones.map((zone) => {
                         const isDone = zone.isCleaned;
                         const color = isDone ? '#22c55e' : '#ef4444'; 
-                        
-                        const baseWeight = typeof window !== 'undefined' && window.innerWidth > 600 ? 15 : 18;
-                        const dynamicWeight = Math.max(4, baseWeight + (currentZoom - 13) * 4);
+                        // 줌 레벨에 비례하여 실제 도로 폭(지리적 크기)에 맞게 굵기 조정 
+                        // OSM 기준 줌 18에서 도로폭이 약 16~20px 정도임
+                        const weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 16 : 20;
+                        const dynamicWeight = Math.max(4, weightAtZoom18 * Math.pow(2, currentZoom - 18));
 
                         return (
                             <Polyline
