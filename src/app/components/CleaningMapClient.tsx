@@ -230,6 +230,10 @@ export default function CleaningMapClient({
     const [suggestedWorker, setSuggestedWorker] = useState<Zone | null>(null);
     const [pendingAdminPhotoUrl, setPendingAdminPhotoUrl] = useState<string | null>(null);
 
+    // Group Name Selection Modal State
+    const [showGroupNameModal, setShowGroupNameModal] = useState(false);
+    const [newGroupNameInput, setNewGroupNameInput] = useState('');
+
     const alarmRef = useRef<HTMLAudioElement | null>(null);
     const [showAlarmPopup, setShowAlarmPopup] = useState(false);
 
@@ -335,11 +339,14 @@ export default function CleaningMapClient({
             return;
         }
         
-        const groupNameInput = window.prompt('구역 이름을 지정하시겠습니까? (예: 1구역, 중앙동 등)\n같은 이름으로 지정하면 하나의 그룹으로 묶여 관리됩니다. (선택사항)', '');
-        if (groupNameInput === null) return; // User pressed cancel
-        
+        setShowGroupNameModal(true);
+        setNewGroupNameInput('');
+    };
+
+    const finalizeRoute = (groupName: string) => {
+        setShowGroupNameModal(false);
         setUiMode('IDLE');
-        fetchRouteAndCreateZone(routeNodes, groupNameInput.trim());
+        fetchRouteAndCreateZone(routeNodes, groupName.trim());
     };
 
     const handleSetIssueDrop = (latlng: {lat: number, lng: number}) => {
@@ -421,6 +428,8 @@ export default function CleaningMapClient({
         setPendingIssuePoint(null);
         setSuggestedWorker(null);
         setPendingAdminPhotoUrl(null);
+        setShowGroupNameModal(false);
+        setNewGroupNameInput('');
     };
 
     const toggleCleaningStatus = async (id: string) => {
@@ -632,6 +641,72 @@ export default function CleaningMapClient({
                     </div>
                 )}
             </header>
+
+            {/* Group Name Selection Overlay */}
+            {showGroupNameModal && (
+                <div className="absolute inset-0 z-[3000] bg-black/80 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-800 w-full max-w-sm shadow-2xl animate-in zoom-in max-h-[90vh] flex flex-col">
+                        <h2 className="text-2xl font-black mb-2 text-center text-blue-900">구역 이름 지정</h2>
+                        <p className="text-sm text-slate-500 mb-6 text-center font-bold">같은 이름으로 지정하면 하나의 그룹으로 묶여 한 번에 청소 확인이 가능합니다.</p>
+                        
+                        <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2">
+                            {Array.from(new Set(zones.map(z => z.groupName).filter(Boolean))).length > 0 ? (
+                                <div className="mb-6">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">기존에 만든 구역 선택</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {Array.from(new Set(zones.map(z => z.groupName).filter(Boolean))).map((gName, idx) => (
+                                            <button 
+                                                key={idx}
+                                                onClick={() => finalizeRoute(gName as string)}
+                                                className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border-2 border-blue-200 hover:border-blue-600 rounded-xl font-bold transition-all text-sm active:scale-95"
+                                            >
+                                                {gName}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400 text-sm font-bold mb-6">
+                                    아직 등록된 구역 그룹이 없습니다.
+                                </div>
+                            )}
+
+                            <div>
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">새로운 구역 이름 입력</h3>
+                                <input 
+                                    type="text"
+                                    placeholder="예: 1구역, 남부, 공원 입구 등..."
+                                    value={newGroupNameInput}
+                                    onChange={e => setNewGroupNameInput(e.target.value)}
+                                    className="w-full bg-slate-100 border-2 border-slate-200 outline-none p-4 rounded-xl font-bold text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white transition"
+                                />
+                                <button 
+                                    onClick={() => finalizeRoute(newGroupNameInput)}
+                                    disabled={!newGroupNameInput.trim()}
+                                    className={`w-full mt-3 py-3 rounded-xl font-bold transform transition-all active:scale-95 border-2 ${newGroupNameInput.trim() ? "bg-blue-600 border-blue-700 text-white shadow-lg" : "bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed"}`}
+                                >
+                                    이 이름으로 생성하기
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => finalizeRoute('')}
+                                className="flex-1 py-3 px-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold transition"
+                            >
+                                건너뛰기 (이름없음)
+                            </button>
+                            <button 
+                                onClick={() => setShowGroupNameModal(false)}
+                                className="flex-1 py-3 px-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl font-bold transition"
+                            >
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Admin Issue Drop Confirm Dialog */}
             {pendingIssuePoint && (
