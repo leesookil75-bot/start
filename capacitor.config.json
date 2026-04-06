@@ -1,6 +1,6 @@
 {
   "appId": "com.cleantrack.live",
-  "appName": "가로청소 출퇴근",
+  "appName": "가로",
   "webDir": "out",
   "bundledWebRuntime": false,
   "server": {

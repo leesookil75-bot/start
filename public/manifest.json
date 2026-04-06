@@ -1,7 +1,7 @@
 {
-  "name": "Clean Track",
-  "short_name": "Clean Track",
-  "description": "Track your waste bag usage simply.",
+  "name": "가로",
+  "short_name": "가로",
+  "description": "가로청소 현장 기록 앱",
   "id": "/",
   "scope": "/",
   "start_url": "/",

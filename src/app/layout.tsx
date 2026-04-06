@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clean Track",
-  description: "Track your waste bag usage",
+  title: "가로",
+  description: "가로청소 현장 기록 앱",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.png",
@@ -25,11 +25,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Clean Track",
+    title: "가로",
   },
   openGraph: {
-    title: "Clean Track - 쓰레기 봉투 사용량 기록",
-    description: "간편하게 사용량을 기록하고 통계를 확인하세요.",
+    title: "가로",
+    description: "가로청소 작업 기록 및 출퇴근 안심 시스템",
     url: "https://clean-track-leesookils-projects.vercel.app",
     siteName: "Clean Track",
     images: [
