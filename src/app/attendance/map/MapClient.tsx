@@ -52,6 +52,22 @@ export default function MapClient({ user }: MapClientProps) {
     const [distance, setDistance] = useState<number | null>(null);
     const [isWithinRadius, setIsWithinRadius] = useState<boolean>(false);
 
+    const playVoiceAnnouncement = (actionType: 'CHECK_IN' | 'CHECK_OUT') => {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            const text = actionType === 'CHECK_IN' 
+                ? "출근 처리되었습니다. 오늘도 안전한 하루 보내세요." 
+                : "퇴근 처리되었습니다. 오늘도 수고 많으셨습니다.";
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 1.0; // 속도
+            utterance.pitch = 1.0; // 음정
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+    };
+
     const getAccuracyGrade = (acc: number) => {
         if (acc <= 20) return { label: '좋음 (GPS)', color: '#4ade80' };
         if (acc <= 60) return { label: '보통 (Wi-Fi/교외)', color: '#fbbf24' };
@@ -199,7 +215,7 @@ export default function MapClient({ user }: MapClientProps) {
                 : await checkOutAction();
 
             if (result.success) {
-                alert(mode === 'CHECK_IN' ? '출근 처리되었습니다.' : '퇴근 처리되었습니다.');
+                playVoiceAnnouncement(mode);
                 router.push('/');
             } else {
                 alert('처리 중 오류가 발생했습니다: ' + result.error);
