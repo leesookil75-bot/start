@@ -8,6 +8,8 @@ export function CapacitorPermissionGuard({ children }: { children: React.ReactNo
     const [isResolved, setIsResolved] = useState(false);
 
     useEffect(() => {
+        const MIN_LOADING_TIME = 3000; // 3초 대기
+        
         const initializePermissions = async () => {
             if (Capacitor.isNativePlatform()) {
                 try {
@@ -22,14 +24,19 @@ export function CapacitorPermissionGuard({ children }: { children: React.ReactNo
                     console.error('위치 권한 요청 중 에러 발생:', error);
                 }
             }
+        };
+
+        const loadWithDelay = async () => {
+            const delayPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME));
+            if (!Capacitor.isNativePlatform()) {
+                await delayPromise;
+            } else {
+                await Promise.all([initializePermissions(), delayPromise]);
+            }
             setIsResolved(true);
         };
 
-        if (!Capacitor.isNativePlatform()) {
-            setIsResolved(true);
-        } else {
-            initializePermissions();
-        }
+        loadWithDelay();
     }, []);
 
     if (!isResolved) {
