@@ -255,12 +255,12 @@ export default function CleaningMapClient({
     const [suggestedWorker, setSuggestedWorker] = useState<Zone | null>(null);
     const [pendingAdminPhotoUrl, setPendingAdminPhotoUrl] = useState<string | null>(null);
 
-    // Group Name Selection Modal State
     const [showGroupNameModal, setShowGroupNameModal] = useState(false);
     const [newGroupNameInput, setNewGroupNameInput] = useState('');
 
     const alarmRef = useRef<HTMLAudioElement | null>(null);
     const [showAlarmPopup, setShowAlarmPopup] = useState(false);
+    const [ackedIssues, setAckedIssues] = useState<string[]>([]);
     const [currentZoom, setCurrentZoom] = useState(13);
     
     // Routing toggle mode: Direct line vs Driving snap
@@ -313,19 +313,21 @@ export default function CleaningMapClient({
     useEffect(() => {
         if (!isMounted) return;
         if (currentUserRole === 'worker') {
-            const hasPending = issues.some(i => i.workerId === currentWorkerId && i.status === 'PENDING');
-            if (hasPending) {
+            const hasUnacked = issues.some(i => i.workerId === currentWorkerId && i.status === 'PENDING' && !ackedIssues.includes(i.id));
+            if (hasUnacked) {
                 setShowAlarmPopup(true);
                 alarmRef.current?.play().catch(e => console.log('Audio error', e));
             } else {
-                setShowAlarmPopup(false);
+                if (showAlarmPopup && !issues.some(i => i.workerId === currentWorkerId && i.status === 'PENDING')) {
+                   setShowAlarmPopup(false);
+                }
                 alarmRef.current?.pause();
             }
         } else {
             setShowAlarmPopup(false);
             alarmRef.current?.pause();
         }
-    }, [currentUserRole, currentWorkerId, issues, isMounted]);
+    }, [currentUserRole, currentWorkerId, issues, isMounted, ackedIssues, showAlarmPopup]);
 
     const defaultCenter: [number, number] = [
         currentUser.lat || 37.615246, 
@@ -654,7 +656,12 @@ export default function CleaningMapClient({
                         긴급!<br/>구역 내 민원이 발생했습니다<br/>신속히 처리 바랍니다
                     </h2>
                     <button 
-                        onClick={() => setShowAlarmPopup(false)}
+                        onClick={() => {
+                            setShowAlarmPopup(false);
+                            alarmRef.current?.pause();
+                            const currentPending = issues.filter(i => i.workerId === currentWorkerId && i.status === 'PENDING').map(i => i.id);
+                            setAckedIssues(prev => Array.from(new Set([...prev, ...currentPending])));
+                        }}
                         className="bg-white text-red-600 px-10 py-5 rounded-full text-3xl font-extrabold shadow-[0_10px_40px_rgba(0,0,0,0.6)] active:scale-95 transition"
                     >
                         안내 닫고 지도 확인
