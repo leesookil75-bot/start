@@ -21,7 +21,7 @@ import {
     deleteIssueAction 
 } from '@/app/actions';
 
-type UIMode = 'IDLE' | 'ROUTE_BUILDING' | 'ISSUE_DROP';
+type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS' | 'ISSUE_DROP';
 
 const markerIcon = new L.Icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -246,6 +246,10 @@ export default function CleaningMapClient({
     const [routeNodes, setRouteNodes] = useState<{lat: number, lng: number}[]>([]);
     const [isFetchingRoute, setIsFetchingRoute] = useState(false);
     
+    // GPS Recording State
+    const [gpsNodes, setGpsNodes] = useState<{lat: number, lng: number}[]>([]);
+    const watchIdRef = useRef<number | null>(null);
+    
     // Admin Issue Drop Confirmation State
     const [pendingIssuePoint, setPendingIssuePoint] = useState<{lat: number, lng: number} | null>(null);
     const [suggestedWorker, setSuggestedWorker] = useState<Zone | null>(null);
@@ -454,6 +458,65 @@ export default function CleaningMapClient({
         setPendingAdminPhotoUrl(null);
     };
 
+    const startGpsRecording = () => {
+        setUiMode('ROUTE_GPS');
+        setGpsNodes([]);
+        
+        if (!navigator.geolocation) {
+           alert('GPS를 지원하지 않는 기기입니다.');
+           setUiMode('IDLE');
+           return;
+        }
+
+        watchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                setGpsNodes(prev => {
+                    const newPt = { lat: latitude, lng: longitude };
+                    if (prev.length === 0) return [newPt];
+                    
+                    const lastPt = prev[prev.length - 1];
+                    const dist = L.latLng(lastPt.lat, lastPt.lng).distanceTo(L.latLng(latitude, longitude));
+                    // 3미터 이상 이동했을 때만 기록 추가 (정밀도 흔들림 방지)
+                    if (dist > 3) {
+                        return [...prev, newPt];
+                    }
+                    return prev;
+                });
+            },
+            (err) => {
+                console.error('GPS 에러', err);
+                alert('위치 정보 접근 권한을 허용해 주셔야 합니다.');
+                setUiMode('IDLE');
+                if (watchIdRef.current) {
+                    navigator.geolocation.clearWatch(watchIdRef.current);
+                    watchIdRef.current = null;
+                }
+            },
+            { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        );
+    };
+
+    const stopGpsRecording = () => {
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+        }
+        
+        if (gpsNodes.length < 2) {
+            alert('기록된 동선이 너무 짧습니다. 다시 시도해주세요.');
+            setUiMode('IDLE');
+            setGpsNodes([]);
+            return;
+        }
+
+        setRouteNodes(gpsNodes);
+        setShowGroupNameModal(true);
+        setNewGroupNameInput('');
+        setUiMode('IDLE');
+        setGpsNodes([]);
+    };
+
     const cancelOperation = () => {
         setUiMode('IDLE');
         setRouteNodes([]);
@@ -462,6 +525,11 @@ export default function CleaningMapClient({
         setPendingAdminPhotoUrl(null);
         setShowGroupNameModal(false);
         setNewGroupNameInput('');
+        setGpsNodes([]);
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+        }
     };
 
     const toggleCleaningStatus = async (id: string) => {
@@ -559,6 +627,25 @@ export default function CleaningMapClient({
     return (
         <div className="relative w-full h-screen bg-slate-200 text-slate-800 font-sans overflow-hidden">
             
+            {/* Privacy Badge for Workers */}
+            {currentUserRole === 'worker' && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-[2000] pt-1 flex justify-center w-full pointer-events-none">
+                    {uiMode === 'ROUTE_GPS' ? (
+                        <div className="bg-red-600/90 backdrop-blur text-white px-4 py-1.5 rounded-full text-xs font-black shadow-lg flex items-center gap-2 animate-pulse border border-red-400">
+                            <span className="relative flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-200"></span>
+                            </span>
+                            🔴 내 위치 실시간 기록 중...
+                        </div>
+                    ) : (
+                        <div className="bg-slate-700/80 backdrop-blur text-green-300 px-4 py-1.5 rounded-b-xl text-[10px] sm:text-xs font-bold shadow flex items-center gap-1 border-x border-b border-slate-600">
+                            🛡️ 위치 추적 꺼짐 (사생활 보호중)
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Alarm Overlay for Worker */}
             {showAlarmPopup && (
                 <div className="absolute inset-0 z-[5000] bg-red-600/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 animate-pulse">
@@ -762,7 +849,7 @@ export default function CleaningMapClient({
                 {isFetchingRoute && (
                     <div className="absolute inset-0 z-[2000] bg-black/50 flex flex-col items-center justify-center backdrop-blur-sm">
                         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 mb-4"></div>
-                        <span className="text-3xl font-bold bg-blue-900 border-4 border-white px-8 py-4 rounded-3xl shadow-2xl animate-pulse">
+                        <span className="text-3xl font-bold bg-blue-900 border-4 border-white px-8 py-4 rounded-3xl shadow-2xl animate-pulse text-white">
                             도로 자동 탐색 중...
                         </span>
                     </div>
@@ -784,6 +871,17 @@ export default function CleaningMapClient({
                     ))}
                     {routeNodes.length > 1 && (
                         <Polyline positions={routeNodes.map(n => [n.lat, n.lng])} color="blue" dashArray="10, 10" weight={4} />
+                    )}
+
+                    {uiMode === 'ROUTE_GPS' && gpsNodes.length > 0 && (
+                        <>
+                            <Polyline positions={gpsNodes.map(n => [n.lat, n.lng])} color="#ef4444" weight={8} opacity={1} />
+                            <Marker position={[gpsNodes[gpsNodes.length-1].lat, gpsNodes[gpsNodes.length-1].lng]} icon={markerIcon}>
+                                <Popup autoPanPadding={[50, 50]} closeButton={false}>
+                                    <div className="p-2 text-center text-red-600 font-black text-sm">현재 위치 기록중!</div>
+                                </Popup>
+                            </Marker>
+                        </>
                     )}
 
                     {issues.filter(i => i.status !== 'CLOSED').map((issue) => {
@@ -979,10 +1077,10 @@ export default function CleaningMapClient({
                     {currentUserRole === 'admin' ? (
                         <div className="flex gap-2 sm:gap-3 w-full max-w-lg pointer-events-auto">
                             <button 
-                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                onClick={() => setUiMode('ROUTE_CHOICE')}
                                 className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 sm:gap-2 border text-sm sm:text-base border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
                             >
-                                <PlusCircle size={20} /> 구역 그리기
+                                <PlusCircle size={20} /> 구역 관리
                             </button>
                             <button 
                                 onClick={() => setUiMode('ISSUE_DROP')}
@@ -994,7 +1092,7 @@ export default function CleaningMapClient({
                     ) : (
                         <div className="flex gap-2 sm:gap-3 w-full max-w-md pointer-events-auto">
                             <button 
-                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                onClick={() => setUiMode('ROUTE_CHOICE')}
                                 className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 border text-sm sm:text-base border-blue-600 bg-blue-800/95 backdrop-blur-md text-white hover:bg-blue-700 active:scale-95 transition-transform"
                             >
                                 <PlusCircle size={18} /> 새 구역 그리기
@@ -1009,9 +1107,63 @@ export default function CleaningMapClient({
                     )}
                 </div>
             )}
+
+            {/* Route Choice Dialog */}
+            {uiMode === 'ROUTE_CHOICE' && (
+                <div className="absolute inset-0 z-[3000] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-800 w-full max-w-sm shadow-2xl animate-in zoom-in max-h-[90vh] flex flex-col items-center text-center">
+                        <h2 className="text-2xl font-black mb-2 text-blue-900">새 구역 추가 방법</h2>
+                        <p className="text-sm text-slate-500 mb-6 font-bold">어떤 방식으로 구역을 그릴까요?</p>
+                        
+                        <div className="flex flex-col gap-3 w-full">
+                            <button 
+                                onClick={() => startGpsRecording()}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 shadow-xl flex flex-col items-center gap-2 transform active:scale-95 transition border-4 border-blue-400"
+                            >
+                                <span className="text-4xl">🚶‍♂️</span>
+                                <span className="font-extrabold text-lg">걸어가며 자동 기록 (추천)</span>
+                                <span className="text-xs text-blue-200">기록 중에만 화면에 위치가 노출됩니다.</span>
+                            </button>
+
+                            <button 
+                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded-2xl p-4 shadow-xl flex flex-col items-center gap-2 transform active:scale-95 transition border-4 border-amber-300"
+                            >
+                                <span className="text-4xl">📍</span>
+                                <span className="font-extrabold text-lg">화면 드래그로 수동 그리기</span>
+                                <span className="text-xs text-amber-100">위치 노출 없이 화면에 수동으로 선 긋기.</span>
+                            </button>
+
+                            <button 
+                                onClick={cancelOperation}
+                                className="w-full mt-3 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl"
+                            >
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* GPS Recording Mode Overlay */}
+            {uiMode === 'ROUTE_GPS' && (
+                <div className="absolute bottom-10 left-0 right-0 px-6 z-[3000] pointer-events-auto flex flex-col items-center">
+                    <div className="bg-black/80 backdrop-blur text-white px-5 py-3 rounded-2xl text-center mb-4 border border-white/20 shadow-2xl animate-pulse">
+                        <p className="font-extrabold text-lg text-yellow-300 mb-1">현재 걷는 길이 기록되고 있습니다!</p>
+                        <p className="text-xs sm:text-sm text-slate-300 font-bold">구역의 끝에 도착하면 아래 버튼을 눌러주세요.</p>
+                    </div>
+                    <button 
+                        onClick={stopGpsRecording}
+                        className="w-full max-w-sm py-5 bg-red-600 text-white font-extrabold rounded-3xl text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.5)] border-4 border-red-400 transform transition active:scale-95 flex items-center justify-center gap-2 hover:bg-red-500"
+                    >
+                        <span className="text-3xl">⏹️</span>
+                        <span>여기까지 기록 완료</span>
+                    </button>
+                </div>
+            )}
             
             {/* CANCEL UI Button */}
-            {uiMode !== 'IDLE' && (
+            {(uiMode === 'ROUTE_BUILDING' || uiMode === 'ISSUE_DROP') && (
                 <div className="absolute top-[120px] sm:top-28 right-4 z-[2000]">
                     <button
                         onClick={cancelOperation}
