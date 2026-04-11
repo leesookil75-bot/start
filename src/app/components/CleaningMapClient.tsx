@@ -557,7 +557,7 @@ export default function CleaningMapClient({
     if (!isMounted) return null;
 
     return (
-        <div className="relative w-full h-screen bg-blue-900 text-white font-sans flex flex-col overflow-hidden">
+        <div className="relative w-full h-screen bg-slate-200 text-slate-800 font-sans overflow-hidden">
             
             {/* Alarm Overlay for Worker */}
             {showAlarmPopup && (
@@ -575,104 +575,75 @@ export default function CleaningMapClient({
                 </div>
             )}
             
-            {/* Absolute Home/Back Button */}
-            <button 
-                onClick={() => router.push(currentUserRole === 'admin' ? '/admin' : '/')}
-                className="absolute top-6 left-6 z-[2000] bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 p-3 rounded-2xl shadow-xl flex items-center justify-center text-white transition pointer-events-auto active:scale-95"
-            >
-                <Home size={28} />
-            </button>
-
-            {/* Header */}
-            <header className={`pt-28 pb-6 px-4 shadow-md z-10 flex flex-col items-center justify-center text-center transition-colors ${currentUserRole === 'admin' ? 'bg-slate-800' : 'bg-blue-800'}`}>
+            {/* Top Floating Panel */}
+            <div className="absolute top-4 left-0 right-0 px-4 z-[1000] pointer-events-none flex flex-col items-center">
                 {currentUserRole === 'admin' ? (
-                    <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-                        <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-yellow-300">전체 관리자 맵</h1>
-                        <p className="text-md text-slate-300 mb-3">전체 근로자의 할당 구역 조망 및 민원 관제 센터입니다.</p>
+                    <div className="w-full max-w-lg bg-slate-800/90 backdrop-blur-md rounded-2xl shadow-xl p-3 sm:p-4 pointer-events-auto border border-slate-700">
+                        <div className="flex items-center justify-between mb-2">
+                             <button onClick={() => router.push('/admin')} className="p-2 sm:p-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl text-white transition active:scale-95 shadow border border-slate-600 text-sm"> <Home size={18} /> </button>
+                             <div className="flex flex-col items-center">
+                                <h1 className="text-lg sm:text-xl font-black text-yellow-300">전체 관리자 맵</h1>
+                                <p className="text-[10px] sm:text-xs text-slate-300">할당 구역 조망 및 민원 관제</p>
+                             </div>
+                             <div className="w-10"></div>
+                        </div>
 
                         {/* Address Search Bar */}
-                        <form onSubmit={handleSearch} className="relative w-full max-w-md mx-auto mb-4 flex z-[2000]">
+                        <form onSubmit={handleSearch} className="relative w-full mb-1 flex">
                             <input 
                                 type="text"
-                                placeholder="지번 또는 도로명 주소를 검색하세요..."
+                                placeholder="도로명 주소를 검색하세요..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-5 pr-12 py-3 rounded-2xl text-slate-900 border-0 outline-none shadow-inner"
+                                className="w-full pl-3 pr-10 py-2.5 sm:py-3 rounded-xl text-slate-900 border-0 outline-none shadow-inner text-sm font-bold placeholder:text-slate-400"
                             />
-                            <button disabled={isSearching} type="submit" className="absolute right-2 top-1.5 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition">
-                                {isSearching ? <span className="animate-spin text-sm">⏳</span> : <Search size={20} />}
+                            <button disabled={isSearching} type="submit" className="absolute right-1 top-1 p-1.5 sm:p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">
+                                {isSearching ? <span className="animate-spin text-sm">⏳</span> : <Search size={18} />}
                             </button>
 
                             {searchResults.length > 0 && (
-                                <ul className="absolute top-[110%] left-0 w-full bg-white text-slate-800 rounded-xl shadow-2xl z-[2000] overflow-hidden border border-slate-200">
-                                    <li className="bg-slate-100 p-2 text-xs font-bold text-slate-500 text-left border-b">검색 결과 (가장 가까운 곳 터치)</li>
+                                <ul className="absolute top-[110%] left-0 w-full bg-white text-slate-800 rounded-xl shadow-2xl overflow-hidden border border-slate-200 z-[2000]">
+                                    <li className="bg-slate-100 p-2 text-xs font-black text-slate-500 text-left border-b">검색 결과</li>
                                     {searchResults.map((res: any, idx) => (
                                         <li 
                                             key={idx} 
-                                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer text-left text-sm border-b last:border-b-0 flex items-center justify-between"
+                                            className="px-3 py-3 hover:bg-blue-50 cursor-pointer text-left text-sm border-b last:border-b-0 flex items-center justify-between font-bold"
                                             onClick={() => handleSelectSearchResult(res.lat, res.lon)}
                                         >
                                             <span className="truncate max-w-[85%]">{res.display_name}</span>
-                                            <span className="text-blue-500 font-bold ml-2">이동 👉</span>
+                                            <span className="text-blue-500">👉</span>
                                         </li>
                                     ))}
                                     <li 
-                                        className="p-2 text-center text-red-500 font-bold bg-red-50 hover:bg-red-100 cursor-pointer"
+                                        className="p-2 text-center text-red-500 font-black bg-red-50 hover:bg-red-100 cursor-pointer"
                                         onClick={() => setSearchResults([])}
                                     >
-                                        결과창 닫기
+                                        닫기
                                     </li>
                                 </ul>
                             )}
                         </form>
-                        
-                        <div className="flex gap-3 flex-wrap justify-center">
-                            <button 
-                                onClick={() => setUiMode('ROUTE_BUILDING')}
-                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_BUILDING' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
-                            >
-                                <PlusCircle size={24} /> 구역 새로 그리기
-                            </button>
-                            <button 
-                                onClick={() => setUiMode('ISSUE_DROP')}
-                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ISSUE_DROP' ? 'bg-red-600 border-red-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600'}`}
-                            >
-                                <Siren size={24} /> 현장 민원 핀 지시하기
-                            </button>
-                        </div>
                     </div>
                 ) : (
-                    <div className="w-full max-w-4xl mx-auto">
-                        <h1 className="text-3xl sm:text-4xl font-extrabold mb-3">내 청소 구역 ({currentWorkerName})</h1>
-                        <div className="flex items-end justify-center gap-2 mb-2">
-                            <span className="text-2xl">오늘 {totalCount}곳 중</span>
-                            <span className="text-green-400 text-4xl font-extrabold">{completedCount}곳</span>
-                            <span className="text-2xl">완료!</span>
+                    <div className="w-full max-w-md bg-blue-800/90 text-white backdrop-blur-md rounded-2xl shadow-xl p-3 sm:p-4 pointer-events-auto border border-blue-700">
+                        <div className="flex items-center justify-between mb-2">
+                             <button onClick={() => router.push('/')} className="p-2 sm:p-2.5 bg-blue-700 hover:bg-blue-600 rounded-xl text-white transition shadow active:scale-95 border border-blue-600"> <Home size={18} /> </button>
+                             <h1 className="text-base sm:text-lg font-black text-white text-center flex-1 pr-10">내 구역 ({currentWorkerName})</h1>
                         </div>
-                        <div className="w-full max-w-lg mx-auto h-6 bg-blue-950 rounded-full overflow-hidden border-2 border-white/20 mt-2 mb-4">
+                        <div className="flex items-end justify-center gap-1 mb-1">
+                            <span className="text-xs sm:text-sm font-bold text-blue-200">오늘 {totalCount}곳 중</span>
+                            <span className="text-green-400 text-xl font-black leading-none">{completedCount}곳</span>
+                            <span className="text-xs sm:text-sm font-bold text-blue-200 leading-tight">완료</span>
+                        </div>
+                        <div className="w-full h-2.5 sm:h-3 bg-blue-950 rounded-full overflow-hidden border border-white/20 mt-1 shadow-inner">
                             <div 
-                                className="h-full bg-green-500 transition-all duration-500"
+                                className="h-full bg-green-500 transition-all duration-500 rounded-full"
                                 style={{ width: totalCount > 0 ? `${(completedCount / totalCount) * 100}%` : '0%' }}
                             />
                         </div>
-
-                        <div className="flex gap-3 flex-wrap justify-center mt-3">
-                            <button 
-                                onClick={() => setUiMode('ROUTE_BUILDING')}
-                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ROUTE_BUILDING' ? 'bg-blue-600 border-blue-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200'}`}
-                            >
-                                <PlusCircle size={24} /> 새 청소 구역 그리기
-                            </button>
-                            <button 
-                                onClick={() => setUiMode('ISSUE_DROP')}
-                                className={`font-bold py-3 px-6 rounded-2xl shadow-xl flex items-center gap-2 border-2 ${uiMode === 'ISSUE_DROP' ? 'bg-red-600 border-red-300 text-white animate-pulse' : 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600'}`}
-                            >
-                                <Siren size={24} /> 내 민원 핀 꽂기
-                            </button>
-                        </div>
                     </div>
                 )}
-            </header>
+            </div>
 
             {/* Group Name Selection Overlay */}
             {showGroupNameModal && (
@@ -787,7 +758,7 @@ export default function CleaningMapClient({
             )}
 
             {/* Map Area */}
-            <main className="flex-1 relative bg-slate-200">
+            <main className="absolute inset-0 z-0">
                 {isFetchingRoute && (
                     <div className="absolute inset-0 z-[2000] bg-black/50 flex flex-col items-center justify-center backdrop-blur-sm">
                         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 mb-4"></div>
@@ -1002,25 +973,49 @@ export default function CleaningMapClient({
                 />
             </main>
 
-            {/* Worker Floating Central ADD ZONE Button (when IDLE) */}
-            {currentUserRole === 'worker' && uiMode === 'IDLE' && (
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm">
-                    <button
-                        onClick={() => setUiMode('ROUTE_BUILDING')}
-                        className="w-full py-5 bg-blue-600 text-white rounded-full shadow-[0_15px_30px_rgba(0,0,0,0.5)] flex items-center justify-center gap-3 border-4 border-blue-400 transform transition active:scale-95"
-                    >
-                        <PlusCircle size={36} />
-                        <span className="text-2xl font-extrabold tracking-wide">내 청소구역 추가</span>
-                    </button>
+            {/* Bottom Floating Actions */}
+            {uiMode === 'IDLE' && (
+                <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 px-4 z-[1000] pointer-events-none flex flex-col items-center gap-3">
+                    {currentUserRole === 'admin' ? (
+                        <div className="flex gap-2 sm:gap-3 w-full max-w-lg pointer-events-auto">
+                            <button 
+                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 sm:gap-2 border text-sm sm:text-base border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
+                            >
+                                <PlusCircle size={20} /> 구역 그리기
+                            </button>
+                            <button 
+                                onClick={() => setUiMode('ISSUE_DROP')}
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 sm:gap-2 border text-sm sm:text-base border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
+                            >
+                                <Siren size={20} /> 현장 핀 지시
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2 sm:gap-3 w-full max-w-md pointer-events-auto">
+                            <button 
+                                onClick={() => setUiMode('ROUTE_BUILDING')}
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 border text-sm sm:text-base border-blue-600 bg-blue-800/95 backdrop-blur-md text-white hover:bg-blue-700 active:scale-95 transition-transform"
+                            >
+                                <PlusCircle size={18} /> 새 구역 그리기
+                            </button>
+                            <button 
+                                onClick={() => setUiMode('ISSUE_DROP')}
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 border border-red-500 bg-red-600/95 backdrop-blur-md text-white hover:bg-red-500 active:scale-95 transition-transform"
+                            >
+                                <Siren size={18} /> 고장/민원 핀
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
             
             {/* CANCEL UI Button */}
             {uiMode !== 'IDLE' && (
-                <div className="absolute top-[100px] sm:top-28 right-4 z-[2000]">
+                <div className="absolute top-[120px] sm:top-28 right-4 z-[2000]">
                     <button
                         onClick={cancelOperation}
-                        className="p-2.5 px-4 bg-white/95 backdrop-blur shadow-lg border border-slate-200 rounded-full flex items-center justify-center gap-2 active:bg-slate-100 transition-all font-bold text-slate-700 text-sm"
+                        className="p-3 bg-white/95 backdrop-blur shadow-2xl border border-slate-200 rounded-full flex items-center justify-center gap-2 active:bg-slate-100 transition-all font-black text-slate-700 text-sm"
                     >
                         <XCircle size={18} className="text-red-500" />
                         <span>작업 취소</span>
