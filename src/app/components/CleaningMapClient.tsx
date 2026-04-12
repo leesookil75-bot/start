@@ -470,9 +470,23 @@ export default function CleaningMapClient({
            return;
         }
 
+        // 초기 위치 즉시 스캔 후 중심 이동
+        navigator.geolocation.getCurrentPosition((pos) => {
+             const { latitude, longitude } = pos.coords;
+             if (mapRef.current) {
+                 mapRef.current.setView([latitude, longitude], 18, { animate: true });
+             }
+        }, () => {}, { enableHighAccuracy: true, maximumAge: 0 });
+
         watchIdRef.current = navigator.geolocation.watchPosition(
             (pos) => {
                 const { latitude, longitude } = pos.coords;
+                
+                // 지도 실시간 이동 (Auto-pan)
+                if (mapRef.current) {
+                    mapRef.current.panTo([latitude, longitude], { animate: true });
+                }
+                
                 setGpsNodes(prev => {
                     const newPt = { lat: latitude, lng: longitude };
                     if (prev.length === 0) return [newPt];
@@ -741,17 +755,19 @@ export default function CleaningMapClient({
 
             {/* Group Name Selection Overlay */}
             {showGroupNameModal && (
-                <div className="absolute inset-0 z-[3000] bg-black/80 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-800 w-full max-w-sm shadow-2xl animate-in zoom-in max-h-[90vh] flex flex-col">
-                        <h2 className="text-2xl font-black mb-2 text-center text-blue-900">구역 이름 지정</h2>
-                        <p className="text-sm text-slate-500 mb-6 text-center font-bold">같은 이름으로 지정하면 하나의 그룹으로 묶여 한 번에 청소 확인이 가능합니다.</p>
+                <div className="absolute inset-0 z-[4000] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 text-slate-800 w-full max-w-sm shadow-2xl animate-in zoom-in max-h-[90vh] flex flex-col items-center">
+                        <h2 className="text-2xl font-black mb-1 text-blue-900 leading-tight text-center">동선 기록 완료!</h2>
+                        <p className="text-sm text-blue-600 mb-6 font-bold text-center bg-blue-50 py-1.5 px-3 rounded-full w-full">
+                            ✨ 내 구역함 ({currentWorkerName})에 저장
+                        </p>
                         
-                        <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2">
-                            {Array.from(new Set(zones.map(z => z.groupName).filter(Boolean))).length > 0 ? (
+                        <div className="w-full flex-1 overflow-y-auto custom-scrollbar pr-1 mb-2">
+                            {Array.from(new Set(visibleZones.map(z => z.groupName).filter(Boolean))).length > 0 ? (
                                 <div className="mb-6">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">기존에 만든 구역 선택</h3>
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">내가 입력한 과거 구역 이름 원터치</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {Array.from(new Set(zones.map(z => z.groupName).filter(Boolean))).map((gName, idx) => (
+                                        {Array.from(new Set(visibleZones.map(z => z.groupName).filter(Boolean))).map((gName, idx) => (
                                             <button 
                                                 key={idx}
                                                 onClick={() => finalizeRoute(gName as string)}
@@ -868,8 +884,8 @@ export default function CleaningMapClient({
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
 
-                    {/* Applies auto bounding box zoom when data changes */}
-                    <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />
+                    {/* Applies auto bounding box zoom when data changes. Disable when recording track so auto-pan takes priority. */}
+                    {uiMode !== 'ROUTE_GPS' && <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />}
                     <MapFlyTo target={searchFlyTarget} />
                     <MapZoomTracker onZoomChange={setCurrentZoom} />
 
