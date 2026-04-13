@@ -67,6 +67,21 @@ function smoothPathAngles(coords: [number, number][], iterations = 2): [number, 
     return result;
 }
 
+// 서버(OSRM) 한계를 우회하기 위해 전체 좌표를 최대 80개의 대표 힌트로 압축하는 함수 (Data Diet)
+function downsampleNodes(nodes: {lat: number, lng: number}[], maxNodes = 80): {lat: number, lng: number}[] {
+    if (nodes.length <= maxNodes) return nodes;
+    const step = nodes.length / maxNodes;
+    const sampled = [];
+    for (let i = 0; i < maxNodes; i++) {
+        sampled.push(nodes[Math.floor(i * step)]);
+    }
+    // 마지막 목적지도 끄트머리에 확실히 포함시켜 줍니다
+    if (sampled[sampled.length - 1] !== nodes[nodes.length - 1]) {
+        sampled[sampled.length - 1] = nodes[nodes.length - 1];
+    }
+    return sampled;
+}
+
 // Fit bounds to visible data only on initial load to prevent hijacking user zoom/pan
 function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) {
     const map = useMap();
@@ -418,12 +433,36 @@ export default function CleaningMapClient({
         try {
             let pathCoords: [number, number][] = [];
 
-            if (isDirectMode || fromGps || nodes.length > 20) {
-                // 날 것 그대로의 원본 이동 경로를 저장합니다 (스무딩 제거)
+            if (isDirectMode) {
+                // 온전한 수동 직결 모드
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
+            } else if (fromGps || nodes.length > 20) {
+                // GPS 스캔 모드: 오차 보정용 맵 매칭 알고리즘 
+                const sampledNodes = downsampleNodes(nodes, 80);
+                const coordsString = sampledNodes.map(n => `${n.lng},${n.lat}`).join(';');
+                // 각 좌표 반경 20m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
+                const radiuses = sampledNodes.map(() => '20').join(';');
+                const url = `https://router.project-osrm.org/match/v1/foot/${coordsString}?overview=full&geometries=geojson&radiuses=${radiuses}&tidy=true`;
+                
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    
+                    if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
+                        // 결과가 여러개로 쪼개질 수 있으므로 flatMap으로 이어 붙임
+                        const coords = data.matchings.flatMap((m: any) => m.geometry.coordinates);
+                        pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
+                    } else {
+                        throw new Error('Matching Engine Failed');
+                    }
+                } catch (e) {
+                    console.warn("Map matching failed, gracefully falling back to raw GPS route", e);
+                    // Match 실패 시 무조건 원본(날 것) 연결로 안전하게 Fallback 보장
+                    pathCoords = nodes.map(n => [n.lat, n.lng]);
+                }
             } else {
+                // 수동 클릭 라우팅 (Route API)
                 const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
-                // Use foot profile to snap to pedestrian walkways and avoid car-only highways
                 const url = `https://router.project-osrm.org/route/v1/foot/${coordsString}?overview=full&geometries=geojson`;
                 const res = await fetch(url);
                 const data = await res.json();
