@@ -265,6 +265,7 @@ export default function CleaningMapClient({
     
     // Routing toggle mode: Direct line vs Footpath snap
     const [isDirectMode, setIsDirectMode] = useState(false);
+    const isRouteFromGpsRef = useRef(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -389,10 +390,13 @@ export default function CleaningMapClient({
 
     const fetchRouteAndCreateZone = async (nodes: {lat: number, lng: number}[], groupName: string) => {
         setIsFetchingRoute(true);
+        const fromGps = isRouteFromGpsRef.current;
+        isRouteFromGpsRef.current = false;
+
         try {
             let pathCoords: [number, number][] = [];
 
-            if (isDirectMode) {
+            if (isDirectMode || fromGps || nodes.length > 20) {
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
             } else {
                 const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
@@ -527,6 +531,7 @@ export default function CleaningMapClient({
             return;
         }
 
+        isRouteFromGpsRef.current = true;
         setRouteNodes(gpsNodes);
         setShowGroupNameModal(true);
         setNewGroupNameInput('');
