@@ -45,6 +45,28 @@ const resolvedIssueIcon = new L.Icon({
     iconAnchor: [12, 41]
 });
 
+// 좌표 스무딩 알고리즘 (삐죽하게 튀는 GPS 잡음을 부드러운 곡선으로 마사지)
+function smoothPathAngles(coords: [number, number][], iterations = 2): [number, number][] {
+    if (coords.length < 3) return coords;
+    let result = [...coords];
+    for (let iter = 0; iter < iterations; iter++) {
+        const temp: [number, number][] = [result[0]];
+        for (let i = 1; i < result.length - 1; i++) {
+            const prev = result[i - 1];
+            const curr = result[i];
+            const next = result[i + 1];
+            // 3점의 평균을 내어 모서리(각)를 둥글게 깎음
+            temp.push([
+                (prev[0] + curr[0] + next[0]) / 3,
+                (prev[1] + curr[1] + next[1]) / 3,
+            ]);
+        }
+        temp.push(result[result.length - 1]);
+        result = temp;
+    }
+    return result;
+}
+
 // Fit bounds to visible data only on initial load to prevent hijacking user zoom/pan
 function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) {
     const map = useMap();
@@ -398,6 +420,8 @@ export default function CleaningMapClient({
 
             if (isDirectMode || fromGps || nodes.length > 20) {
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
+                // 날카로운 GPS 노드 모서리를 부드럽게 스무딩 적용
+                pathCoords = smoothPathAngles(pathCoords, 2);
             } else {
                 const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
                 // Use foot profile to snap to pedestrian walkways and avoid car-only highways
