@@ -419,9 +419,8 @@ export default function CleaningMapClient({
             let pathCoords: [number, number][] = [];
 
             if (isDirectMode || fromGps || nodes.length > 20) {
+                // 날 것 그대로의 원본 이동 경로를 저장합니다 (스무딩 제거)
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
-                // 날카로운 GPS 노드 모서리를 부드럽게 스무딩 적용
-                pathCoords = smoothPathAngles(pathCoords, 2);
             } else {
                 const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
                 // Use foot profile to snap to pedestrian walkways and avoid car-only highways
