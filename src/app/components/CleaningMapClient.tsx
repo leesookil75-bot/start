@@ -21,7 +21,7 @@ import {
     deleteIssueAction 
 } from '@/app/actions';
 
-type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS' | 'ISSUE_DROP';
+type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS_READY' | 'ROUTE_GPS' | 'ISSUE_DROP';
 
 const markerIcon = new L.Icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -489,8 +489,8 @@ export default function CleaningMapClient({
         setPendingAdminPhotoUrl(null);
     };
 
-    const startGpsRecording = () => {
-        setUiMode('ROUTE_GPS');
+    const prepareGpsRecording = () => {
+        setUiMode('ROUTE_GPS_READY');
         setGpsNodes([]);
         
         if (!navigator.geolocation) {
@@ -499,13 +499,22 @@ export default function CleaningMapClient({
            return;
         }
 
-        // 초기 위치 즉시 스캔 후 중심 이동
         navigator.geolocation.getCurrentPosition((pos) => {
              const { latitude, longitude } = pos.coords;
              if (mapRef.current) {
                  mapRef.current.setView([latitude, longitude], 18, { animate: true });
              }
-        }, () => {}, { enableHighAccuracy: true, maximumAge: 0 });
+        }, () => {
+             alert('위치 정보 접근 권한이 필요합니다.');
+             setUiMode('IDLE');
+        }, { enableHighAccuracy: true, maximumAge: 0 });
+    };
+
+    const startGpsRecording = () => {
+        setUiMode('ROUTE_GPS');
+        setGpsNodes([]);
+        
+        if (!navigator.geolocation) return;
 
         watchIdRef.current = navigator.geolocation.watchPosition(
             (pos) => {
@@ -1170,7 +1179,7 @@ export default function CleaningMapClient({
                         
                         <div className="flex flex-col gap-3 w-full">
                             <button 
-                                onClick={() => startGpsRecording()}
+                                onClick={() => prepareGpsRecording()}
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 shadow-xl flex flex-col items-center gap-2 transform active:scale-95 transition border-4 border-blue-400"
                             >
                                 <span className="text-4xl">🚶‍♂️</span>
@@ -1195,6 +1204,26 @@ export default function CleaningMapClient({
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* GPS Recording READY Mode Overlay */}
+            {uiMode === 'ROUTE_GPS_READY' && (
+                <div className="absolute bottom-10 left-0 right-0 px-6 z-[3000] pointer-events-auto flex flex-col items-center">
+                    <div className="bg-black/80 backdrop-blur text-white px-5 py-3 rounded-2xl text-center mb-4 border border-white/20 shadow-2xl animate-bounce">
+                        <p className="font-extrabold text-lg text-blue-300 mb-1">시작 지점으로 이동해주세요</p>
+                        <p className="text-xs sm:text-sm text-slate-200 font-bold">도착하셨으면 아래 출발 버튼을 눌러주세요.</p>
+                    </div>
+                    <button 
+                        onClick={startGpsRecording}
+                        className="w-full max-w-sm py-5 bg-blue-600 text-white font-extrabold rounded-3xl text-2xl shadow-[0_15px_30px_rgba(0,0,0,0.5)] border-4 border-blue-400 transform transition active:scale-95 flex items-center justify-center gap-2 hover:bg-blue-500"
+                    >
+                        <span className="text-3xl">▶️</span>
+                        <span>이곳에서 출발 (기록 시작)</span>
+                    </button>
+                    <button onClick={cancelOperation} className="mt-4 w-full max-w-sm py-3 bg-slate-200 text-slate-700 font-bold rounded-2xl text-lg hover:bg-slate-300 transform transition active:scale-95">
+                        취소
+                    </button>
                 </div>
             )}
 
