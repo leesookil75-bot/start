@@ -263,8 +263,8 @@ export default function CleaningMapClient({
     const [ackedIssues, setAckedIssues] = useState<string[]>([]);
     const [currentZoom, setCurrentZoom] = useState(13);
     
-    // Routing toggle mode: Direct line vs Driving snap
-    const [isDirectMode, setIsDirectMode] = useState(true);
+    // Routing toggle mode: Direct line vs Footpath snap
+    const [isDirectMode, setIsDirectMode] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -396,7 +396,8 @@ export default function CleaningMapClient({
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
             } else {
                 const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
-                const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+                // Use foot profile to snap to pedestrian walkways and avoid car-only highways
+                const url = `https://router.project-osrm.org/route/v1/foot/${coordsString}?overview=full&geometries=geojson`;
                 const res = await fetch(url);
                 const data = await res.json();
 
@@ -404,7 +405,7 @@ export default function CleaningMapClient({
                     const coords = data.routes[0].geometry.coordinates;
                     pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
                 } else {
-                    alert("해당 위치 근처에서 차량 도로망을 찾을 수 없습니다. (대신 직선으로 연결합니다)");
+                    alert("해당 위치 근처에서 보행자 도로망을 찾을 수 없습니다. (대신 직선으로 연결합니다)");
                     pathCoords = nodes.map(n => [n.lat, n.lng]);
                 }
             }
