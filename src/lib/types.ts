@@ -116,6 +116,7 @@ export type Zone = {
     workerName: string;
     groupName?: string;
     createdAt?: string;
+    lastCleanedAt?: string;
 };
 
 export type Issue = {

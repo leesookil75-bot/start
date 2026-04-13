@@ -1144,15 +1144,34 @@ export async function getZones(): Promise<Zone[]> {
         FROM cleaning_zones z
         LEFT JOIN users u ON z.worker_id = u.id
       `;
-      return rows.map(r => ({
-        id: r.id,
-        path: JSON.parse(r.path_data),
-        isCleaned: r.is_cleaned,
-        workerId: r.worker_id,
-        workerName: r.worker_name,
-        groupName: r.group_name || undefined,
-        createdAt: r.created_at?.toISOString()
-      }));
+      return rows.map(r => {
+        let effectiveIsCleaned = r.is_cleaned;
+        // KST 자정 기준 자동 리셋 판별
+        if (effectiveIsCleaned && r.last_cleaned_at) {
+            const lastDate = new Date(r.last_cleaned_at);
+            const now = new Date();
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const lastDateKst = new Date(lastDate.getTime() + kstOffset);
+            const nowKst = new Date(now.getTime() + kstOffset);
+            
+            if (lastDateKst.getUTCFullYear() !== nowKst.getUTCFullYear() || 
+                lastDateKst.getUTCMonth() !== nowKst.getUTCMonth() || 
+                lastDateKst.getUTCDate() !== nowKst.getUTCDate()) {
+                effectiveIsCleaned = false; // 오늘이 아니면 무조건 빨간색으로 리셋
+            }
+        }
+
+        return {
+          id: r.id,
+          path: JSON.parse(r.path_data),
+          isCleaned: effectiveIsCleaned,
+          workerId: r.worker_id,
+          workerName: r.worker_name,
+          groupName: r.group_name || undefined,
+          createdAt: r.created_at?.toISOString(),
+          lastCleanedAt: r.last_cleaned_at?.toISOString()
+        };
+      });
     } catch(e) {
       console.warn('Error fetching zones:', e);
       return [];
@@ -1166,21 +1185,29 @@ export async function addZone(zone: Omit<Zone, 'workerName' | 'createdAt'>): Pro
     const pathStr = JSON.stringify(zone.path);
     const groupName = zone.groupName || null;
     await sql`
-      INSERT INTO cleaning_zones (id, worker_id, path_data, group_name, is_cleaned, created_at)
-      VALUES (${zone.id}, ${zone.workerId}, ${pathStr}, ${groupName}, false, NOW())
+      INSERT INTO cleaning_zones (id, worker_id, path_data, group_name, is_cleaned, created_at, last_cleaned_at)
+      VALUES (${zone.id}, ${zone.workerId}, ${pathStr}, ${groupName}, false, NOW(), NULL)
     `;
   }
 }
 
 export async function toggleZoneStatus(id: string, isCleaned: boolean): Promise<void> {
   if (isPostgresEnabled()) {
-    await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE id = ${id}`;
+    if (isCleaned) {
+      await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned}, last_cleaned_at = NOW() WHERE id = ${id}`;
+    } else {
+      await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE id = ${id}`;
+    }
   }
 }
 
 export async function toggleZoneGroupStatus(groupName: string, workerId: string, isCleaned: boolean): Promise<void> {
   if (isPostgresEnabled()) {
-    await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE group_name = ${groupName} AND worker_id = ${workerId}`;
+    if (isCleaned) {
+      await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned}, last_cleaned_at = NOW() WHERE group_name = ${groupName} AND worker_id = ${workerId}`;
+    } else {
+      await sql`UPDATE cleaning_zones SET is_cleaned = ${isCleaned} WHERE group_name = ${groupName} AND worker_id = ${workerId}`;
+    }
   }
 }
 
