@@ -20,7 +20,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
     return (
         <aside className={styles.sidebar}>
             <div className={styles.sidebarHeader}>
-                <div className={styles.logo}>Clean Track <span style={{ fontSize: '0.8rem', color: '#888' }}>Admin</span></div>
+                <div className={styles.logo}>가로 <span style={{ fontSize: '0.8rem', color: '#888' }}>관리자</span></div>
                 <div className={styles.sidebarUserInfo}>
                     <div className={styles.sidebarUserName}>{user.name} 님</div>
                     <div className={styles.sidebarUserArea}>관리자</div>

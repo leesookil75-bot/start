@@ -54,7 +54,7 @@ export default function LoginPage() {
                 </div>
 
                 <h1 className={styles.title}>
-                    {mode === 'worker' ? 'Clean Track' : 'Admin Login'}
+                    {mode === 'worker' ? '가로' : '가로 관리자 로그인'}
                 </h1>
                 <p className={styles.subtitle}>
                     {mode === 'worker' ? '전화번호와 비밀번호로 로그인하세요' : '관리자 로그인을 해주세요'}

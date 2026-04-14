@@ -127,7 +127,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
             {/* Sidebar (Desktop Only) */}
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarHeader}>
-                    <div className={styles.logo}>Clean Track</div>
+                    <div className={styles.logo}>가로</div>
                     <div className={styles.sidebarUserInfo}>
                         <div className={styles.sidebarUserName}>{user.name} 님</div>
                         <div className={styles.sidebarUserArea}>{user.cleaningArea}</div>

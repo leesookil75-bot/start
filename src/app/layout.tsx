@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     title: "가로",
     description: "가로청소 작업 기록 및 출퇴근 안심 시스템",
     url: "https://clean-track-leesookils-projects.vercel.app",
-    siteName: "Clean Track",
+    siteName: "가로",
     images: [
       {
         url: "/icon.png",
         width: 512,
         height: 512,
-        alt: "Clean Track Icon",
+        alt: "가로 앱 아이콘",
       },
     ],
     locale: "ko_KR",
