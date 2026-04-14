@@ -1040,7 +1040,7 @@ export default function CleaningMapClient({
 
                     {uiMode === 'ROUTE_GPS' && gpsNodes.length > 0 && (
                         <>
-                            <Polyline positions={gpsNodes.map(n => [n.lat, n.lng])} color="#ef4444" weight={4} opacity={1} />
+                            <Polyline positions={gpsNodes.map(n => [n.lat, n.lng])} color="#ef4444" weight={2} opacity={1} />
                             <Marker position={[gpsNodes[gpsNodes.length-1].lat, gpsNodes[gpsNodes.length-1].lng]} icon={markerIcon}>
                                 <Popup autoPanPadding={[50, 50]} closeButton={false}>
                                     <div className="p-2 text-center text-red-600 font-black text-sm">현재 위치 기록중!</div>
@@ -1146,8 +1146,8 @@ export default function CleaningMapClient({
                         const color = isDone ? '#22c55e' : '#ef4444'; 
                         // 줌 레벨에 비례하여 실제 도로 폭(지리적 크기)에 맞게 굵기 조정 
                         // OSM 기준 줌 18에서 도로폭이 약 16~20px 정도임
-                        const weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 8 : 10;
-                        const dynamicWeight = Math.max(2, weightAtZoom18 * Math.pow(2, currentZoom - 18));
+                        const weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
+                        const dynamicWeight = Math.max(1, weightAtZoom18 * Math.pow(2, currentZoom - 18));
 
                         return (
                             <Polyline
