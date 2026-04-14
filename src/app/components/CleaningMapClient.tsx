@@ -6,6 +6,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+const BackgroundGeolocation = registerPlugin<any>('BackgroundGeolocation');
 
 import type { Zone, Issue } from '@/lib/data';
 import { 
@@ -106,7 +108,10 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         });
 
         if (hasPoints && bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+            setTimeout(() => {
+                map.invalidateSize();
+                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+            }, 500); // UI 배치가 끝난 뒤 꽉 차게 계산하도록 지연
             hasFitted.current = true;
         }
     }, [zones, issues, map]); 
@@ -115,16 +120,36 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
 }
 
 // Controls inside Map
-function CustomZoomControls() {
+function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[] }) {
     const map = useMap();
+    
+    const handleFitBounds = () => {
+        if (!zones || !issues) return;
+        const bounds = new L.LatLngBounds([]);
+        let hasPoints = false;
+        zones.forEach(z => { z.path.forEach(pt => { bounds.extend(pt as L.LatLngTuple); hasPoints = true; }); });
+        issues.forEach(i => { bounds.extend([i.lat, i.lng]); hasPoints = true; });
+        if (hasPoints && bounds.isValid()) {
+             map.invalidateSize();
+             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16, animate: true, duration: 1 });
+        }
+    };
+
     return (
-        <div className="absolute bottom-32 sm:bottom-8 right-4 sm:right-8 z-[1000] flex flex-col gap-4">
-            <button onClick={(e) => { e.stopPropagation(); map.zoomIn(); }} className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-blue-900 rounded-full shadow-2xl flex items-center justify-center text-4xl sm:text-5xl font-bold border-4 border-slate-200 active:bg-slate-200">
-                +
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); map.zoomOut(); }} className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-blue-900 rounded-full shadow-2xl flex items-center justify-center text-4xl sm:text-5xl font-bold border-4 border-slate-200 active:bg-slate-200">
-                -
-            </button>
+        <div className="absolute bottom-32 sm:bottom-8 right-4 sm:right-8 z-[1000] flex flex-col gap-3">
+            {zones && issues && (
+                <button onClick={(e) => { e.stopPropagation(); handleFitBounds(); }} className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-blue-600 rounded-full shadow-2xl flex items-center justify-center font-bold border-4 border-slate-200 active:bg-slate-200 hover:border-blue-400 transition" title="전체 구역 화면 꽉 차게 보기">
+                    <Crosshair size={32} />
+                </button>
+            )}
+            <div className="flex flex-col gap-2 mt-1">
+                <button onClick={(e) => { e.stopPropagation(); map.zoomIn(); }} className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-slate-800 rounded-full shadow-2xl flex items-center justify-center text-4xl font-bold border-4 border-slate-200 active:bg-slate-200 hover:border-slate-300">
+                    +
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); map.zoomOut(); }} className="w-16 h-16 sm:w-20 sm:h-20 bg-white text-slate-800 rounded-full shadow-2xl flex items-center justify-center text-5xl font-bold border-4 border-slate-200 active:bg-slate-200 hover:border-slate-300">
+                    -
+                </button>
+            </div>
         </div>
     );
 }
@@ -285,7 +310,7 @@ export default function CleaningMapClient({
     
     // GPS Recording State
     const [gpsNodes, setGpsNodes] = useState<{lat: number, lng: number}[]>([]);
-    const watchIdRef = useRef<number | null>(null);
+    const watchIdRef = useRef<number | string | null>(null);
     
     // Admin Issue Drop Confirmation State
     const [pendingIssuePoint, setPendingIssuePoint] = useState<{lat: number, lng: number} | null>(null);
@@ -548,50 +573,86 @@ export default function CleaningMapClient({
         }, { enableHighAccuracy: true, maximumAge: 0 });
     };
 
-    const startGpsRecording = () => {
+    const startGpsRecording = async () => {
         setUiMode('ROUTE_GPS');
         setGpsNodes([]);
         
-        if (!navigator.geolocation) return;
+        const handleLocation = (latitude: number, longitude: number, accuracy: number) => {
+            // 오차 반경이 너무 크면 기지국/와이파이 등으로 부정확하게 튄 데이터이므로 버림
+            if (accuracy > 30) return;
 
-        watchIdRef.current = navigator.geolocation.watchPosition(
-            (pos) => {
-                const { latitude, longitude } = pos.coords;
+            // 지도 실시간 이동 (Auto-pan)
+            if (mapRef.current) {
+                mapRef.current.panTo([latitude, longitude], { animate: true });
+            }
+            
+            setGpsNodes(prev => {
+                const newPt = { lat: latitude, lng: longitude };
+                if (prev.length === 0) return [newPt];
                 
-                // 지도 실시간 이동 (Auto-pan)
-                if (mapRef.current) {
-                    mapRef.current.panTo([latitude, longitude], { animate: true });
-                }
+                const lastPt = prev[prev.length - 1];
+                const dist = L.latLng(lastPt.lat, lastPt.lng).distanceTo(L.latLng(latitude, longitude));
                 
-                setGpsNodes(prev => {
-                    const newPt = { lat: latitude, lng: longitude };
-                    if (prev.length === 0) return [newPt];
-                    
-                    const lastPt = prev[prev.length - 1];
-                    const dist = L.latLng(lastPt.lat, lastPt.lng).distanceTo(L.latLng(latitude, longitude));
-                    // 3미터 이상 이동했을 때만 기록 추가 (정밀도 흔들림 방지)
-                    if (dist > 3) {
-                        return [...prev, newPt];
-                    }
-                    return prev;
-                });
-            },
-            (err) => {
-                console.error('GPS 에러', err);
-                alert('위치 정보 접근 권한을 허용해 주셔야 합니다.');
-                setUiMode('IDLE');
-                if (watchIdRef.current) {
-                    navigator.geolocation.clearWatch(watchIdRef.current);
-                    watchIdRef.current = null;
+                // 3미터 이상 이동했을 때만 추가. 단, 순간이동(스파이크) 데이터 무시.
+                // 보통 짧은 시간에 200m 이상 멀어지면 비정상 튐 데이터.
+                if (dist > 3 && dist < 200) {
+                    return [...prev, newPt];
                 }
-            },
-            { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-        );
+                return prev;
+            });
+        };
+
+        if (Capacitor.isNativePlatform()) {
+             try {
+                 const watcherId = await BackgroundGeolocation.addWatcher(
+                     {
+                         backgroundMessage: "안심 동선을 안전하게 추적하고 있습니다.",
+                         backgroundTitle: "위치 기록 중",
+                         requestPermissions: true,
+                         stale: false,
+                         distanceFilter: 3 // 미터 단위 움직임 감지
+                     },
+                     (location: any, error: any) => {
+                         if (error || !location) {
+                             if (error?.code !== 'NOT_AUTHORIZED') { console.warn(error); }
+                             return;
+                         }
+                         handleLocation(location.latitude, location.longitude, location.accuracy || 10);
+                     }
+                 );
+                 watchIdRef.current = watcherId;
+             } catch (e) {
+                 console.error("Background Geolocation err:", e);
+                 alert('위치 서비스 시작에 실패했습니다. (Background Plugin)');
+                 setUiMode('IDLE');
+             }
+        } else {
+             if (!navigator.geolocation) return;
+             watchIdRef.current = navigator.geolocation.watchPosition(
+                 (pos) => {
+                     handleLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                 },
+                 (err) => {
+                     console.error('GPS 에러', err);
+                     alert('위치 정보 접근 권한을 허용해 주셔야 합니다.');
+                     setUiMode('IDLE');
+                     if (typeof watchIdRef.current === 'number') {
+                         navigator.geolocation.clearWatch(watchIdRef.current);
+                         watchIdRef.current = null;
+                     }
+                 },
+                 { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+             );
+        }
     };
 
     const stopGpsRecording = () => {
         if (watchIdRef.current !== null) {
-            navigator.geolocation.clearWatch(watchIdRef.current);
+            if (Capacitor.isNativePlatform() && typeof watchIdRef.current === 'string') {
+                BackgroundGeolocation.removeWatcher({ id: watchIdRef.current });
+            } else if (typeof watchIdRef.current === 'number') {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+            }
             watchIdRef.current = null;
         }
         
@@ -620,7 +681,11 @@ export default function CleaningMapClient({
         setNewGroupNameInput('');
         setGpsNodes([]);
         if (watchIdRef.current !== null) {
-            navigator.geolocation.clearWatch(watchIdRef.current);
+            if (Capacitor.isNativePlatform() && typeof watchIdRef.current === 'string') {
+                BackgroundGeolocation.removeWatcher({ id: watchIdRef.current });
+            } else if (typeof watchIdRef.current === 'number') {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+            }
             watchIdRef.current = null;
         }
     };
@@ -1151,7 +1216,7 @@ export default function CleaningMapClient({
                         );
                     })}
 
-                    <CustomZoomControls />
+                    <CustomZoomControls zones={visibleZones} issues={visibleIssues} />
                 </MapContainer>
 
                 <TargetOverlays 
