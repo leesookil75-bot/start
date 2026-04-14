@@ -95,23 +95,36 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         const bounds = new L.LatLngBounds([]);
         let hasPoints = false;
 
+        // 대한민국 전체(혹은 기타 엉뚱한 위치)에 찍힌 테스트용 데이터 때문에 지도가 전국구 단위로 넓어지는 것을 방지
+        // 김포/수도권 일대 좌표만 유효하게 취급하여 바운드 박스 생성
+        const isValidArea = (lat: number, lng: number) => lat > 37.4 && lat < 37.8 && lng > 126.4 && lng < 127.2;
+
         zones.forEach(z => {
             z.path.forEach(pt => {
-                bounds.extend(pt as L.LatLngTuple);
-                hasPoints = true;
+                const [lat, lng] = pt as [number, number];
+                if (isValidArea(lat, lng)) {
+                    bounds.extend([lat, lng]);
+                    hasPoints = true;
+                }
             });
         });
 
         issues.forEach(i => {
-            bounds.extend([i.lat, i.lng]);
-            hasPoints = true;
+            if (isValidArea(i.lat, i.lng)) {
+                bounds.extend([i.lat, i.lng]);
+                hasPoints = true;
+            }
         });
 
         if (hasPoints && bounds.isValid()) {
             setTimeout(() => {
                 map.invalidateSize();
-                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 }); // 한눈에 들어오게 maxZoom 조정
             }, 500); // UI 배치가 끝난 뒤 꽉 차게 계산하도록 지연
+            hasFitted.current = true;
+        } else if (!hasPoints) {
+            // 데이터가 아예 없을 경우 기본 김포 시청 부근으로 설정
+            map.setView([37.615246, 126.715632], 13);
             hasFitted.current = true;
         }
     }, [zones, issues, map]); 
@@ -127,11 +140,21 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         if (!zones || !issues) return;
         const bounds = new L.LatLngBounds([]);
         let hasPoints = false;
-        zones.forEach(z => { z.path.forEach(pt => { bounds.extend(pt as L.LatLngTuple); hasPoints = true; }); });
-        issues.forEach(i => { bounds.extend([i.lat, i.lng]); hasPoints = true; });
+        const isValidArea = (lat: number, lng: number) => lat > 37.4 && lat < 37.8 && lng > 126.4 && lng < 127.2;
+        
+        zones.forEach(z => { z.path.forEach(pt => { 
+            const [lat, lng] = pt as [number, number];
+            if (isValidArea(lat, lng)) { bounds.extend([lat, lng]); hasPoints = true; }
+        }); });
+        issues.forEach(i => { 
+            if (isValidArea(i.lat, i.lng)) { bounds.extend([i.lat, i.lng]); hasPoints = true; }
+        });
+        
         if (hasPoints && bounds.isValid()) {
              map.invalidateSize();
-             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16, animate: true, duration: 1 });
+             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true, duration: 1 });
+        } else {
+             map.flyTo([37.615246, 126.715632], 13, { animate: true, duration: 1 });
         }
     };
 
