@@ -119,7 +119,7 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         if (hasPoints && bounds.isValid()) {
             setTimeout(() => {
                 map.invalidateSize();
-                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 }); // 한눈에 들어오게 maxZoom 조정
+                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 17 }); // 한눈에 들어오게 maxZoom 조정
             }, 500); // UI 배치가 끝난 뒤 꽉 차게 계산하도록 지연
             hasFitted.current = true;
         } else if (!hasPoints) {
@@ -152,7 +152,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         
         if (hasPoints && bounds.isValid()) {
              map.invalidateSize();
-             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true, duration: 1 });
+             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17, animate: true, duration: 1 });
         } else {
              map.flyTo([37.615246, 126.715632], 13, { animate: true, duration: 1 });
         }
@@ -346,7 +346,7 @@ export default function CleaningMapClient({
     const alarmRef = useRef<HTMLAudioElement | null>(null);
     const [showAlarmPopup, setShowAlarmPopup] = useState(false);
     const [ackedIssues, setAckedIssues] = useState<string[]>([]);
-    const [currentZoom, setCurrentZoom] = useState(13);
+    const [currentZoom, setCurrentZoom] = useState(17);
     
     // Routing toggle mode: Direct line vs Footpath snap
     const [isDirectMode, setIsDirectMode] = useState(false);
@@ -1043,7 +1043,7 @@ export default function CleaningMapClient({
                     </div>
                 )}
 
-                <MapContainer ref={mapRef} center={defaultCenter} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
+                <MapContainer ref={mapRef} center={defaultCenter} zoom={17} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
