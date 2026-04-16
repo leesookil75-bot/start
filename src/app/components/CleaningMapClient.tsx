@@ -511,21 +511,11 @@ export default function CleaningMapClient({
                 // 온전한 수동 직결 모드
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
             } else if (fromGps || nodes.length > 20) {
-                // 1. 수학적 사전 압축 (Data Diet): 핵심 꺾임점(Inflection points)만 남기기
-                const pts = nodes.map(n => ({ x: n.lng, y: n.lat }) as L.Point);
-                // 위경도 스케일 기준 (0.0005도 = 약 50m). 자잘한 흔들림/직선상 중복점 완전 소거
-                const simplified = L.LineUtil.simplify(pts, 0.0003);
-                let coreNodes = simplified.map(p => ({ lng: p.x, lat: p.y }));
-                
-                // 2. 무료 공용 인공지능망 에러 방지를 위한 2차 강제 제한 (TooBig 에러 원천 차단)
-                if (coreNodes.length > 25) {
-                    coreNodes = downsampleNodes(coreNodes, 25);
-                }
-
-                // 3. 인공지능 도로망 융합(Map Matching) 호출
-                const coordsString = coreNodes.map(n => `${n.lng},${n.lat}`).join(';');
-                // 압축된 점들 주변으로 넓은 반경(30m)을 검색하여 근처 보도블록/도로 중앙에 억지로 접착
-                const radiuses = coreNodes.map(() => '30').join(';');
+                // GPS 스캔 모드: 오차 보정용 맵 매칭 알고리즘 
+                const sampledNodes = downsampleNodes(nodes, 80);
+                const coordsString = sampledNodes.map(n => `${n.lng},${n.lat}`).join(';');
+                // 각 좌표 반경 20m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
+                const radiuses = sampledNodes.map(() => '20').join(';');
                 const url = `https://router.project-osrm.org/match/v1/foot/${coordsString}?overview=full&geometries=geojson&radiuses=${radiuses}&tidy=true`;
                 
                 try {
