@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Popup, Marker, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Polygon, Popup, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import * as turf from '@turf/turf';
 import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Capacitor, registerPlugin } from '@capacitor/core';
@@ -84,6 +85,12 @@ function downsampleNodes(nodes: {lat: number, lng: number}[], maxNodes = 80): {l
     return sampled;
 }
 
+function getZonePoints(path: any): [number, number][] {
+    if (!path || path.length === 0) return [];
+    if (Array.isArray(path[0][0])) return path[0];
+    return path;
+}
+
 // Fit bounds to visible data only on initial load to prevent hijacking user zoom/pan
 function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) {
     const map = useMap();
@@ -100,7 +107,7 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         const isValidArea = (lat: number, lng: number) => lat > 37.4 && lat < 37.8 && lng > 126.4 && lng < 127.2;
 
         zones.forEach(z => {
-            z.path.forEach(pt => {
+            getZonePoints(z.path).forEach((pt: any) => {
                 const [lat, lng] = pt as [number, number];
                 if (isValidArea(lat, lng)) {
                     bounds.extend([lat, lng]);
@@ -121,7 +128,7 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
             let targetCenter: L.LatLngExpression = bounds.getCenter();
             if (zones.length > 0 && zones[0].path.length > 0) {
                 const zBounds = new L.LatLngBounds([]);
-                zones[0].path.forEach(pt => zBounds.extend(pt as [number, number]));
+                getZonePoints(zones[0].path).forEach((pt: any) => zBounds.extend(pt as [number, number]));
                 targetCenter = zBounds.getCenter();
             } else if (issues.length > 0) {
                 targetCenter = [issues[0].lat, issues[0].lng] as L.LatLngTuple;
@@ -156,7 +163,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         let hasPoints = false;
         const isValidArea = (lat: number, lng: number) => lat > 37.4 && lat < 37.8 && lng > 126.4 && lng < 127.2;
         
-        zones.forEach(z => { z.path.forEach(pt => { 
+        zones.forEach(z => { getZonePoints(z.path).forEach((pt: any) => { 
             const [lat, lng] = pt as [number, number];
             if (isValidArea(lat, lng)) { bounds.extend([lat, lng]); hasPoints = true; }
         }); });
@@ -168,7 +175,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
              let targetCenter: L.LatLngExpression = bounds.getCenter();
              if (zones.length > 0 && zones[0].path.length > 0) {
                  const zBounds = new L.LatLngBounds([]);
-                 zones[0].path.forEach(pt => zBounds.extend(pt as [number, number]));
+                 getZonePoints(zones[0].path).forEach((pt: any) => zBounds.extend(pt as [number, number]));
                  targetCenter = zBounds.getCenter();
              } else if (issues.length > 0) {
                  targetCenter = [issues[0].lat, issues[0].lng] as L.LatLngTuple;
@@ -458,7 +465,7 @@ export default function CleaningMapClient({
         let nearestZone: Zone | null = null;
         
         zones.forEach(z => {
-            z.path.forEach(pt => {
+            getZonePoints(z.path).forEach((pt: any) => {
                 const p1 = L.latLng(lat, lng);
                 const p2 = L.latLng(pt[0], pt[1]);
                 const d = p1.distanceTo(p2);
@@ -511,21 +518,36 @@ export default function CleaningMapClient({
                 // 온전한 수동 직결 모드
                 pathCoords = nodes.map(n => [n.lat, n.lng]);
             } else if (fromGps || nodes.length > 20) {
-                // GPS 스캔 모드: 오차 보정용 맵 매칭 알고리즘 
+                // GPS 스캔 모드: 오차 보정용 맵 매칭 알고리즘 (Mapbox AI)
                 const sampledNodes = downsampleNodes(nodes, 80);
                 const coordsString = sampledNodes.map(n => `${n.lng},${n.lat}`).join(';');
                 // 각 좌표 반경 20m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
                 const radiuses = sampledNodes.map(() => '20').join(';');
-                const url = `https://router.project-osrm.org/match/v1/foot/${coordsString}?overview=full&geometries=geojson&radiuses=${radiuses}&tidy=true`;
+                
+                const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+                const url = `https://api.mapbox.com/matching/v5/mapbox/walking/${coordsString}?radiuses=${radiuses}&geometries=geojson&steps=false&access_token=${token}`;
                 
                 try {
                     const res = await fetch(url);
                     const data = await res.json();
                     
                     if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
-                        // 결과가 여러개로 쪼개질 수 있으므로 flatMap으로 이어 붙임
-                        const coords = data.matchings.flatMap((m: any) => m.geometry.coordinates);
-                        pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
+                        // 첫번째 매칭된 선형 추출 (가장 확률이 높은 도로)
+                        const coords = data.matchings[0].geometry.coordinates;
+                        
+                        // Turf.js를 사용하여 매칭된 경로를 기반으로 3m 반경의 다각형(면적) 추출
+                        const line = turf.lineString(coords); // [lng, lat] 배열
+                        const buffered = turf.buffer(line, 3, { units: 'meters' });
+                        
+                        if (buffered && buffered.geometry.type === 'Polygon') {
+                            // Turf의 Polygon은 [lng, lat]를 사용하므로, Leaflet이 사용하는 [lat, lng]로 뒤집어줍니다.
+                            // 외부 링(배열의 첫번째 요소)만 추출하여 하나의 단일 구역으로 구성
+                            const polygonCoords = buffered.geometry.coordinates[0].map((c: any) => [c[1], c[0]] as [number, number]);
+                            pathCoords = [polygonCoords] as any; // 타입 호환성을 위해 any 캐스팅, 실제로는 [ [lat, lng], ... ] 의 중첩 배열
+                        } else {
+                            // 폴리곤 생성에 실패하면 단순 라인 배열 반환
+                            pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
+                        }
                     } else {
                         throw new Error('Matching Engine Failed');
                     }
@@ -1198,69 +1220,83 @@ export default function CleaningMapClient({
                         const weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
                         const dynamicWeight = Math.max(1, weightAtZoom18 * Math.pow(2, currentZoom - 18));
 
-                        return (
-                            <Polyline
-                                key={zone.id}
-                                positions={zone.path}
-                                pathOptions={{ color: color, weight: dynamicWeight, opacity: 0.8 }}
-                            >
-                                <Popup autoPanPadding={[50, 50]} closeButton={false}>
-                                    <div className="text-center w-[250px] sm:w-[280px] p-3 flex flex-col gap-3 max-h-[35vh] overflow-y-auto custom-scrollbar">
-                                        {currentUserRole === 'admin' ? (
-                                            <>
-                                                <div className="bg-slate-50 text-slate-800 rounded-xl p-3 font-bold border-2 border-slate-200 shadow-inner">
-                                                    <div className="text-sm text-slate-500 mb-1">담당 구역 마스터</div>
-                                                    <div className="text-2xl text-blue-700 mb-3">{zone.workerName}</div>
-                                                    {zone.groupName && (
-                                                        <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
-                                                            {zone.groupName}
-                                                        </div>
-                                                    )}
-                                                    <div className="flex items-center justify-between px-2">
-                                                        <span>현재 상태:</span>
-                                                        <span className={isDone ? 'text-green-600 bg-green-100 px-3 py-1 rounded-full' : 'text-red-500 bg-red-100 px-3 py-1 rounded-full'}>
-                                                            {isDone ? '✨ 청소완료' : '🧹 미완료'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); deleteZone(zone.id); }}
-                                                    className="w-full bg-red-100 hover:bg-red-200 text-red-600 min-h-[60px] rounded-xl flex items-center justify-center gap-2 text-xl font-bold border border-red-300"
-                                                >
-                                                    <Trash2 size={24} /> 이 도로 지우기
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <>
+                        const isPolygon = zone.path.length > 0 && Array.isArray(zone.path[0][0]);
+                        
+                        const popupContent = (
+                            <Popup autoPanPadding={[50, 50]} closeButton={false}>
+                                <div className="text-center w-[250px] sm:w-[280px] p-3 flex flex-col gap-3 max-h-[35vh] overflow-y-auto custom-scrollbar">
+                                    {currentUserRole === 'admin' ? (
+                                        <>
+                                            <div className="bg-slate-50 text-slate-800 rounded-xl p-3 font-bold border-2 border-slate-200 shadow-inner">
+                                                <div className="text-sm text-slate-500 mb-1">담당 구역 마스터</div>
+                                                <div className="text-2xl text-blue-700 mb-3">{zone.workerName}</div>
                                                 {zone.groupName && (
-                                                    <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
+                                                    <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
                                                         {zone.groupName}
                                                     </div>
                                                 )}
-                                                <h3 className="text-2xl font-black text-slate-800 mb-2 mt-2">
-                                                    {isDone ? '✨ 이 도로는 깨끗합니다' : '🧹 청소를 시작할까요?'}
-                                                </h3>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); toggleCleaningStatus(zone.id); }}
-                                                    className={`w-full min-h-[120px] rounded-3xl flex items-center justify-center gap-2 text-3xl font-black shadow-2xl text-white transform active:scale-95 transition-all ${
-                                                        isDone ? 'bg-slate-600 hover:bg-slate-700 border-4 border-slate-400' : 'bg-green-500 hover:bg-green-600 border-4 border-green-300 shadow-green-500/30'
-                                                    }`}
-                                                >
-                                                    {isDone ? (
-                                                        <><XCircle size={44} /> 청소 취소</>
-                                                    ) : (
-                                                        <><CheckCircle2 size={44} /> 길 청소 완료!</>
-                                                    )}
-                                                </button>                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); deleteZone(zone.id); }}
-                                                    className="w-full bg-slate-200 hover:bg-red-100 text-slate-600 hover:text-red-600 min-h-[40px] mt-3 rounded-xl flex items-center justify-center gap-2 text-md font-bold transition-all"
-                                                >
-                                                    <Trash2 size={18} /> 잘못 그린 이 도로 지우기
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </Popup>
+                                                <div className="flex items-center justify-between px-2">
+                                                    <span>현재 상태:</span>
+                                                    <span className={isDone ? 'text-green-600 bg-green-100 px-3 py-1 rounded-full' : 'text-red-500 bg-red-100 px-3 py-1 rounded-full'}>
+                                                        {isDone ? '✨ 청소완료' : '🧹 미완료'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); deleteZone(zone.id); }}
+                                                className="w-full bg-red-100 hover:bg-red-200 text-red-600 min-h-[60px] rounded-xl flex items-center justify-center gap-2 text-xl font-bold border border-red-300"
+                                            >
+                                                <Trash2 size={24} /> 이 구역 지우기
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {zone.groupName && (
+                                                <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
+                                                    {zone.groupName}
+                                                </div>
+                                            )}
+                                            <h3 className="text-2xl font-black text-slate-800 mb-2 mt-2">
+                                                {isDone ? '✨ 이 구역은 깨끗합니다' : '🧹 청소를 시작할까요?'}
+                                            </h3>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); toggleCleaningStatus(zone.id); }}
+                                                className={`w-full min-h-[120px] rounded-3xl flex items-center justify-center gap-2 text-3xl font-black shadow-2xl text-white transform active:scale-95 transition-all ${
+                                                    isDone ? 'bg-slate-600 hover:bg-slate-700 border-4 border-slate-400' : 'bg-green-500 hover:bg-green-600 border-4 border-green-300 shadow-green-500/30'
+                                                }`}
+                                            >
+                                                {isDone ? (
+                                                    <><XCircle size={44} /> 청소 취소</>
+                                                ) : (
+                                                    <><CheckCircle2 size={44} /> 구역 청소 완료!</>
+                                                )}
+                                            </button>                                                <button 
+                                                onClick={(e) => { e.stopPropagation(); deleteZone(zone.id); }}
+                                                className="w-full bg-slate-200 hover:bg-red-100 text-slate-600 hover:text-red-600 min-h-[40px] mt-3 rounded-xl flex items-center justify-center gap-2 text-md font-bold transition-all"
+                                            >
+                                                <Trash2 size={18} /> 잘못 그린 이 구역 지우기
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </Popup>
+                        );
+
+                        return isPolygon ? (
+                            <Polygon
+                                key={zone.id}
+                                positions={zone.path as any}
+                                pathOptions={{ color: color, weight: 2, fillColor: color, fillOpacity: 0.4 }}
+                            >
+                                {popupContent}
+                            </Polygon>
+                        ) : (
+                            <Polyline
+                                key={zone.id}
+                                positions={zone.path as any}
+                                pathOptions={{ color: color, weight: dynamicWeight, opacity: 0.8 }}
+                            >
+                                {popupContent}
                             </Polyline>
                         );
                     })}

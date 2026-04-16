@@ -110,7 +110,7 @@ export type LeaveRequest = {
 
 export type Zone = {
     id: string;
-    path: [number, number][]; // Array of [lat, lng]
+    path: [number, number][] | [number, number][][]; // Array of [lat, lng] or Polygon Coordinates
     isCleaned: boolean;
     workerId: string;
     workerName: string;
