@@ -137,9 +137,9 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
             }, 500); 
             hasFitted.current = true;
         } else if (!hasPoints) {
-            // 데이터가 아예 없을 경우 기본 김포 시청 부근으로 설정
+            // 데이터가 아예 없을 경우 (혹은 아직 다운로드 중일 경우) 기본 김포 시청 부근으로 임시 설정하되,
+            // later에 데이터가 들어오면 다시 중앙정렬을 탈 수 있도록 Lock(hasFitted)을 걸지 않습니다.
             map.setView([37.615246, 126.715632], 17);
-            hasFitted.current = true;
         }
     }, [zones, issues, map]); 
 
