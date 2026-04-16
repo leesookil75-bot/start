@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>도로 스냅(Map Matching) 보정 시뮬레이션</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { width: 100%; height: 100vh; }
+        #overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 85%;
+            max-width: 400px;
+        }
+        h2 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; }
+        p { margin: 0 0 15px 0; font-size: 13px; color: #475569; line-height: 1.4; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s;
+        }
+        button:active { transform: scale(0.98); background: #1d4ed8; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .highlight { color: #e11d48; font-weight: bold; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-gray { background: #cbd5e1; color: #475569; }
+        .badge-red { background: #fee2e2; color: #e11d48; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h2>✨ AI 도로 스냅 시뮬레이션</h2>
+        <p>
+            지도 위의 <span class="badge badge-gray">회색 선</span>은 작업자가 골목길을 <b>여러 번 왔다 갔다 하며 겹치게 그어버린 원본(GPS 흔적)</b>입니다.<br><br>
+            아래 [AI 자동 보정] 버튼을 누르면 실시간으로 도로망 시스템이 겹친 선들을 분석하여 <span class="badge badge-red">단 한 줄의 붉은색 도로 중앙선</span>으로 예쁘게 펴줍니다!
+        </p>
+        <button id="snapBtn" onclick="runMapMatching()">🚀 인공지능 도로 스냅(자동 보정) 실행!</button>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // 1. 지도 초기화 (김포 시청 부근)
+        const map = L.map('map').setView([37.615246, 126.715632], 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 2. 가상의 지저분한 '왕복' GPS 경로 (같은 골목길 위를 왔다갔다하며 겹치고 떨림)
+        // OSRM Map Matching 서버는 경도,위도([Lng, Lat]) 배열을 요구합니다.
+        const messyCoords = [
+            [126.715000, 37.615000], // 시작
+            [126.715200, 37.615100], // 전진
+            [126.715500, 37.615250], // 전진
+            [126.715700, 37.615350], // 끝점 도착
+            [126.715550, 37.615280], // 튄 GPS 1 (후진)
+            [126.715800, 37.615400], // 튄 GPS 2
+            [126.715600, 37.615300], // 다시 되돌아감 (오버랩)
+            [126.715300, 37.615150], // 되돌아감
+            [126.715100, 37.615050], // 거의 처음으로 되돌아옴 (이중 겹침)
+        ];
+
+        // Leaflet 에 그리기 위해 [Lat, Lng] 로 반전
+        const latLngs = messyCoords.map(c => [c[1], c[0]]);
+
+        // 지저분한 원본 폴리라인 (회색, 점선 느낌)
+        const originalPath = L.polyline(latLngs, {
+            color: '#64748b',
+            weight: 6,
+            opacity: 0.6,
+            dashArray: '10, 10'
+        }).addTo(map);
+
+        // 지도를 선 위치와 오버레이(배너) 간격을 고려해 센터링
+        const bounds = originalPath.getBounds();
+        const center = bounds.getCenter();
+        
+        setTimeout(() => {
+            map.invalidateSize();
+            const targetPoint = map.project(center, 18);
+            targetPoint.y -= 100; // 하단으로 밀기
+            map.flyTo(map.unproject(targetPoint, 18), 18, { animate: true });
+        }, 500);
+
+        let snappedPath = null;
+
+        // 3. OSRM Map Matching API 호출 함수
+        async function runMapMatching() {
+            const btn = document.getElementById('snapBtn');
+            btn.disabled = true;
+            btn.innerText = "분석 및 보정 중... ⏳";
+
+            try {
+                // OSRM 호환 좌표 스트링 파싱 (lon,lat;lon,lat...)
+                const coordinatesString = messyCoords.map(c => `${c[0]},${c[1]}`).join(';');
+                // radiuses 파라미터 : 각 점마다 반경 20m 이내 도로 탐색 허용
+                const radiusesString = messyCoords.map(() => '20').join(';');
+
+                // OSRM 공용 데모 서버 호출 (보행자 foot 모드 데이터 사용)
+                // 실제 도입 시엔 Mapbox나 Kakao 모빌리티 보정 API를 사용할 수 있습니다.
+                const url = `https://router.project-osrm.org/match/v1/foot/${coordinatesString}?geometries=geojson&radiuses=${radiusesString}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.code !== 'Ok' || !data.matchings || data.matchings.length === 0) {
+                    alert("근처에 달라붙을 만한 적절한 도로(보도) 코드를 찾지 못했습니다.");
+                    btn.disabled = false;
+                    btn.innerText = "🚀 다시 시도하기";
+                    return;
+                }
+
+                // 매칭된 정확한 도로 중앙선 데이터 추출
+                const matchedGeometry = data.matchings[0].geometry.coordinates;
+                const matchedLatLngs = matchedGeometry.map(c => [c[1], c[0]]);
+
+                // 기존 스냅 선이 있으면 삭제
+                if (snappedPath) {
+                    map.removeLayer(snappedPath);
+                }
+
+                // 얇고 예리한 깨끗한 선을 지도 위에 새로 그리기
+                snappedPath = L.polyline(matchedLatLngs, {
+                    color: '#e11d48',
+                    weight: 8,
+                    opacity: 1
+                }).addTo(map);
+
+                // 시각적 강조를 위해 회색선 흐리게 처리
+                originalPath.setStyle({ opacity: 0.2 });
+
+                btn.innerText = "✅ 보정 완료! 놀라운 결과를 확인하세요.";
+
+            } catch (error) {
+                console.error(error);
+                alert("서버 연결에 실패했습니다.");
+                btn.disabled = false;
+                btn.innerText = "🚀 인공지능 도로 스냅(자동 보정) 실행!";
+            }
+        }
+    </script>
+</body>
+</html>
