@@ -124,7 +124,7 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
             hasFitted.current = true;
         } else if (!hasPoints) {
             // 데이터가 아예 없을 경우 기본 김포 시청 부근으로 설정
-            map.setView([37.615246, 126.715632], 13);
+            map.setView([37.615246, 126.715632], 17);
             hasFitted.current = true;
         }
     }, [zones, issues, map]); 
@@ -154,7 +154,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
              map.invalidateSize();
              map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17, animate: true, duration: 1 });
         } else {
-             map.flyTo([37.615246, 126.715632], 13, { animate: true, duration: 1 });
+             map.flyTo([37.615246, 126.715632], 17, { animate: true, duration: 1 });
         }
     };
 
