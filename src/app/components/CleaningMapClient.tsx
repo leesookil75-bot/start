@@ -118,7 +118,7 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
 
         if (hasPoints && bounds.isValid()) {
             // 첫 번째 구역의 중심점 찾기
-            let targetCenter = bounds.getCenter();
+            let targetCenter: L.LatLngExpression = bounds.getCenter();
             if (zones.length > 0 && zones[0].path.length > 0) {
                 const zBounds = new L.LatLngBounds([]);
                 zones[0].path.forEach(pt => zBounds.extend(pt as [number, number]));
@@ -162,7 +162,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         });
         
         if (hasPoints && bounds.isValid()) {
-             let targetCenter = bounds.getCenter();
+             let targetCenter: L.LatLngExpression = bounds.getCenter();
              if (zones.length > 0 && zones[0].path.length > 0) {
                  const zBounds = new L.LatLngBounds([]);
                  zones[0].path.forEach(pt => zBounds.extend(pt as [number, number]));
