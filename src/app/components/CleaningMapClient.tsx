@@ -119,7 +119,8 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         if (hasPoints && bounds.isValid()) {
             setTimeout(() => {
                 map.invalidateSize();
-                map.setView(bounds.getCenter(), 17); // 화면 배율을 17로 강제 고정하고 중심점만 이동
+                map.setView(bounds.getCenter(), 17, { animate: false }); // 화면 배율을 17로 강제 고정하고 중심점만 이동
+                map.panBy([0, 70], { animate: false }); // 하단 UI 영역(버튼들)을 고려하여 지도를 살짝 끌어올려 시야의 정중앙에 맞춤
             }, 500); // UI 배치가 끝난 뒤 꽉 차게 계산하도록 지연
             hasFitted.current = true;
         } else if (!hasPoints) {
@@ -153,6 +154,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         if (hasPoints && bounds.isValid()) {
              map.invalidateSize();
              map.flyTo(bounds.getCenter(), 17, { animate: true, duration: 1 });
+             setTimeout(() => map.panBy([0, 70], { animate: true, duration: 0.5 }), 1000);
         } else {
              map.flyTo([37.615246, 126.715632], 17, { animate: true, duration: 1 });
         }
