@@ -129,8 +129,11 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
 
             setTimeout(() => {
                 map.invalidateSize();
-                map.setView(targetCenter, 17, { animate: false }); // 첫 번째 구역의 정중앙으로 이동
-                map.panBy([0, -80], { animate: false }); // 위쪽 배너와 아래쪽 버튼을 피하기 위해 지도를 아래로 살짝 내림 (Y 오프셋 -80)
+                const targetLatLng = L.latLng(targetCenter);
+                const targetPoint = map.project(targetLatLng, 17);
+                targetPoint.y -= 80; // 화면 위 가림막(배너)을 피하기 위해 시점을 80px 위(북쪽)로 올려 구역을 화면 아래로 내림
+                const offsetCenter = map.unproject(targetPoint, 17);
+                map.setView(offsetCenter, 17, { animate: false }); 
             }, 500); 
             hasFitted.current = true;
         } else if (!hasPoints) {
@@ -171,8 +174,11 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
                  targetCenter = [issues[0].lat, issues[0].lng] as L.LatLngTuple;
              }
              map.invalidateSize();
-             map.flyTo(targetCenter, 17, { animate: true, duration: 1 });
-             setTimeout(() => map.panBy([0, -80], { animate: true, duration: 0.5 }), 1000);
+             const targetLatLng = L.latLng(targetCenter);
+             const targetPoint = map.project(targetLatLng, 17);
+             targetPoint.y -= 80;
+             const offsetCenter = map.unproject(targetPoint, 17);
+             map.flyTo(offsetCenter, 17, { animate: true, duration: 1 });
         } else {
              map.flyTo([37.615246, 126.715632], 17, { animate: true, duration: 1 });
         }
