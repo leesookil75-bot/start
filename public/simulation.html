@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>청소 구역 선 다듬기(노드 에디터) 시뮬레이션</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Geoman (Leaflet.pm) CSS for Path Editing -->
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css" />
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { width: 100%; height: 100vh; }
+        #overlay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+        h2 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; }
+        p { margin: 0 0 5px 0; font-size: 13px; color: #475569; line-height: 1.4; }
+        .highlight { color: #e11d48; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h2>✨ 노드 에디터 시뮬레이션</h2>
+        <p>아래 붉은 선은 왔다갔다 겹치게 기록된 <b>가상의 지저분한 청소구역</b>입니다.</p>
+        <p>1. 선 위의 <b>하얀색 네모(꼭짓점)</b>를 손가락으로 드래그해 보세요.</p>
+        <p>2. 불필요하게 꺾인 부분의 꼭짓점을 <b>우클릭(모바일은 길게 누르기 또는 클릭)</b>하여 삭제해 보세요.</p>
+        <p>지저분한 선이 <span class="highlight">깔끔한 일직선</span>으로 펴지는 것을 테스트할 수 있습니다!</p>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Geoman (Leaflet.pm) JS -->
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js"></script>
+    
+    <script>
+        // 1. 지도 초기화 (김포 시청 부근)
+        const map = L.map('map').setView([37.615246, 126.715632], 18);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Geoman 컨트롤 추가
+        map.pm.addControls({
+            position: 'topleft',
+            drawCircle: false,
+            drawCircleMarker: false,
+            drawText: false,
+            drawRectangle: false,
+            drawPolygon: false,
+            cutPolygon: false,
+            drawMarker: false,
+            drawPolyline: false
+        });
+
+        // 2. 고의로 지저분하게 겹치고 꺾인 왕복선(Scribble) 생성
+        const messyPath = [
+            [37.615246, 126.715632], // Start
+            [37.615350, 126.715800], // Move 1
+            [37.615280, 126.715750], // Backtrack (겹침)
+            [37.615450, 126.715950], // Move 2
+            [37.615550, 126.716100], // Move 3 (튀는 데이터)
+            [37.615300, 126.716200], // 엉뚱한 곳으로 튐
+            [37.615500, 126.716050], // 돌아옴
+            [37.615650, 126.716250], // End
+        ];
+
+        // 폴리라인 그리기
+        const polyline = L.polyline(messyPath, {
+            color: '#e11d48',
+            weight: 6,
+            opacity: 0.8
+        }).addTo(map);
+
+        // 지도 시야를 선에 맞춤
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+        // 3. 에디터 모드 강제 활성화 (편집 가능 상태로 변환)
+        polyline.pm.enable({
+            allowSelfIntersection: true,
+            snappable: true,
+            preventMarkerRemoval: false, // 꼭짓점 삭제 허용
+        });
+
+    </script>
+</body>
+</html>
