@@ -119,7 +119,7 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         if (hasPoints && bounds.isValid()) {
             setTimeout(() => {
                 map.invalidateSize();
-                map.fitBounds(bounds, { padding: [80, 80], maxZoom: 17 }); // 한눈에 들어오게 maxZoom 조정
+                map.setView(bounds.getCenter(), 17); // 화면 배율을 17로 강제 고정하고 중심점만 이동
             }, 500); // UI 배치가 끝난 뒤 꽉 차게 계산하도록 지연
             hasFitted.current = true;
         } else if (!hasPoints) {
@@ -152,7 +152,7 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         
         if (hasPoints && bounds.isValid()) {
              map.invalidateSize();
-             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 17, animate: true, duration: 1 });
+             map.flyTo(bounds.getCenter(), 17, { animate: true, duration: 1 });
         } else {
              map.flyTo([37.615246, 126.715632], 17, { animate: true, duration: 1 });
         }
