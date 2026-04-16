@@ -117,11 +117,21 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
         });
 
         if (hasPoints && bounds.isValid()) {
+            // 첫 번째 구역의 중심점 찾기
+            let targetCenter = bounds.getCenter();
+            if (zones.length > 0 && zones[0].path.length > 0) {
+                const zBounds = new L.LatLngBounds([]);
+                zones[0].path.forEach(pt => zBounds.extend(pt as [number, number]));
+                targetCenter = zBounds.getCenter();
+            } else if (issues.length > 0) {
+                targetCenter = [issues[0].lat, issues[0].lng] as L.LatLngTuple;
+            }
+
             setTimeout(() => {
                 map.invalidateSize();
-                map.setView(bounds.getCenter(), 17, { animate: false }); // 화면 배율을 17로 강제 고정하고 중심점만 이동
-                map.panBy([0, 70], { animate: false }); // 하단 UI 영역(버튼들)을 고려하여 지도를 살짝 끌어올려 시야의 정중앙에 맞춤
-            }, 500); // UI 배치가 끝난 뒤 꽉 차게 계산하도록 지연
+                map.setView(targetCenter, 17, { animate: false }); // 첫 번째 구역의 정중앙으로 이동
+                map.panBy([0, -80], { animate: false }); // 위쪽 배너와 아래쪽 버튼을 피하기 위해 지도를 아래로 살짝 내림 (Y 오프셋 -80)
+            }, 500); 
             hasFitted.current = true;
         } else if (!hasPoints) {
             // 데이터가 아예 없을 경우 기본 김포 시청 부근으로 설정
@@ -152,9 +162,17 @@ function CustomZoomControls({ zones, issues }: { zones?: Zone[], issues?: Issue[
         });
         
         if (hasPoints && bounds.isValid()) {
+             let targetCenter = bounds.getCenter();
+             if (zones.length > 0 && zones[0].path.length > 0) {
+                 const zBounds = new L.LatLngBounds([]);
+                 zones[0].path.forEach(pt => zBounds.extend(pt as [number, number]));
+                 targetCenter = zBounds.getCenter();
+             } else if (issues.length > 0) {
+                 targetCenter = [issues[0].lat, issues[0].lng] as L.LatLngTuple;
+             }
              map.invalidateSize();
-             map.flyTo(bounds.getCenter(), 17, { animate: true, duration: 1 });
-             setTimeout(() => map.panBy([0, 70], { animate: true, duration: 0.5 }), 1000);
+             map.flyTo(targetCenter, 17, { animate: true, duration: 1 });
+             setTimeout(() => map.panBy([0, -80], { animate: true, duration: 0.5 }), 1000);
         } else {
              map.flyTo([37.615246, 126.715632], 17, { animate: true, duration: 1 });
         }
