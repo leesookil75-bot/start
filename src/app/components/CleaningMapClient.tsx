@@ -362,6 +362,7 @@ export default function CleaningMapClient({
     
     // UI States
     const [uiMode, setUiMode] = useState<UIMode>('IDLE');
+    const [focusedGroup, setFocusedGroup] = useState<string | null>(null);
     
     const [routeNodes, setRouteNodes] = useState<{lat: number, lng: number}[]>([]);
     const [isFetchingRoute, setIsFetchingRoute] = useState(false);
@@ -645,6 +646,7 @@ export default function CleaningMapClient({
         });
         
         if (allPoints.length > 0) {
+            setFocusedGroup(groupName);
             const bounds = L.latLngBounds(allPoints);
             mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
             setUiMode('IDLE');
@@ -1265,10 +1267,20 @@ export default function CleaningMapClient({
 
                     {visibleZones.map((zone) => {
                         const isDone = zone.isCleaned;
-                        const color = isDone ? '#22c55e' : '#ef4444'; 
+                        const isFocused = focusedGroup === zone.groupName;
+                        let color = isDone ? '#22c55e' : '#ef4444'; 
+                        let weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
+                        let fillOpacity = 0.4;
+                        let defaultWeight = 2;
+                        
+                        if (isFocused) {
+                            color = '#facc15'; // 눈에 띄는 노란색(Yellow) 
+                            weightAtZoom18 = 10;
+                            fillOpacity = 0.8;
+                            defaultWeight = 5;
+                        }
+
                         // 줌 레벨에 비례하여 실제 도로 폭(지리적 크기)에 맞게 굵기 조정 
-                        // OSM 기준 줌 18에서 도로폭이 약 16~20px 정도임
-                        const weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
                         const dynamicWeight = Math.max(1, weightAtZoom18 * Math.pow(2, currentZoom - 18));
 
                         const isPolygon = zone.path.length > 0 && Array.isArray(zone.path[0][0]);
@@ -1337,7 +1349,7 @@ export default function CleaningMapClient({
                             <Polygon
                                 key={zone.id}
                                 positions={zone.path as any}
-                                pathOptions={{ color: color, weight: 2, fillColor: color, fillOpacity: 0.4 }}
+                                pathOptions={{ color: color, weight: defaultWeight, fillColor: color, fillOpacity: fillOpacity, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
                             </Polygon>
@@ -1345,7 +1357,7 @@ export default function CleaningMapClient({
                             <Polyline
                                 key={zone.id}
                                 positions={zone.path as any}
-                                pathOptions={{ color: color, weight: dynamicWeight, opacity: 0.8 }}
+                                pathOptions={{ color: color, weight: dynamicWeight, opacity: isFocused ? 1 : 0.8, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
                             </Polyline>
@@ -1384,7 +1396,7 @@ export default function CleaningMapClient({
                                 <PlusCircle size={20} /> 구역 관리
                             </button>
                             <button 
-                                onClick={() => setUiMode('GROUP_LIST')}
+                                onClick={() => { setUiMode('GROUP_LIST'); setFocusedGroup(null); }}
                                 className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-sm border-indigo-500 bg-indigo-600/95 backdrop-blur-md text-white hover:bg-indigo-500 active:scale-95 transition-transform"
                             >
                                 <List size={20} /> 전체 구역 관리
@@ -1405,7 +1417,7 @@ export default function CleaningMapClient({
                                 <PlusCircle size={18} /> 새 구역 긋기
                             </button>
                             <button 
-                                onClick={() => setUiMode('GROUP_LIST')}
+                                onClick={() => { setUiMode('GROUP_LIST'); setFocusedGroup(null); }}
                                 className="flex-1 font-black py-3 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-[13px] border-indigo-500 bg-indigo-600/95 backdrop-blur-md text-white hover:bg-indigo-500 active:scale-95 transition-transform"
                             >
                                 <List size={18} /> 내 구역 리스트
