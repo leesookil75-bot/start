@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Polyline, Polygon, Popup, Marker, useMap, useM
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import * as turf from '@turf/turf';
-import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, Trash2, PlusCircle, Users, User, Camera, Siren, CheckCircle, Crosshair, Home, Search, List, Edit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 const BackgroundGeolocation = registerPlugin<any>('BackgroundGeolocation');
@@ -21,10 +21,12 @@ import {
     addIssueAction, 
     updateIssuePhotoAndStatusAction, 
     closeIssueAction, 
-    deleteIssueAction 
+    deleteIssueAction,
+    renameZoneGroupAction,
+    deleteZoneGroupAction
 } from '@/app/actions';
 
-type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS_READY' | 'ROUTE_GPS' | 'ISSUE_DROP';
+type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS_READY' | 'ROUTE_GPS' | 'ISSUE_DROP' | 'GROUP_LIST';
 
 const markerIcon = new L.Icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -607,7 +609,42 @@ export default function CleaningMapClient({
             alert("통신 연결에 실패했습니다.");
         } finally {
             setIsFetchingRoute(false);
-            setRouteNodes([]);
+        }
+    };
+
+    const handleRenameGroup = async (oldName: string) => {
+        const newName = prompt(`'${oldName}' 구역의 새 이름을 입력하세요:`, oldName);
+        if (!newName || newName.trim() === '' || newName === oldName) return;
+        
+        await renameZoneGroupAction(currentWorkerId || '', oldName, newName.trim());
+        getZonesAction().then(setZones);
+    };
+
+    const handleDeleteGroup = async (groupName: string) => {
+        if (!confirm(`정말 '${groupName}' 구역 전체를 삭제하시겠습니까?\n(묶여있는 모든 블록이 영구 삭제됩니다)`)) return;
+        await deleteZoneGroupAction(currentWorkerId || '', groupName);
+        getZonesAction().then(setZones);
+    };
+
+    const focusGroupCoords = (groupName: string) => {
+        if (!mapRef.current) return;
+        const groupZones = zones.filter(z => z.groupName === groupName && (currentUserRole === 'admin' || z.workerId === currentWorkerId));
+        if (groupZones.length === 0) return;
+        
+        const allPoints: [number, number][] = [];
+        groupZones.forEach(z => {
+            z.path.forEach(p => {
+                if (Array.isArray(p[0])) { 
+                    (p as unknown as [number, number][]).forEach(c => allPoints.push(c));
+                } else {
+                    allPoints.push(p as [number, number]);
+                }
+            });
+        });
+        
+        if (allPoints.length > 0) {
+            const bounds = L.latLngBounds(allPoints);
+            mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
             setUiMode('IDLE');
         }
     };
@@ -1335,38 +1372,117 @@ export default function CleaningMapClient({
 
             {/* Bottom Floating Actions */}
             {uiMode === 'IDLE' && (
-                <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 px-4 z-[1000] pointer-events-none flex flex-col items-center gap-3">
+                <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 px-2 sm:px-4 z-[1000] pointer-events-none flex flex-col items-center gap-3">
                     {currentUserRole === 'admin' ? (
                         <div className="flex gap-2 sm:gap-3 w-full max-w-lg pointer-events-auto">
                             <button 
                                 onClick={() => setUiMode('ROUTE_CHOICE')}
-                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 sm:gap-2 border text-sm sm:text-base border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-sm border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
                             >
                                 <PlusCircle size={20} /> 구역 관리
                             </button>
                             <button 
+                                onClick={() => setUiMode('GROUP_LIST')}
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-sm border-indigo-500 bg-indigo-600/95 backdrop-blur-md text-white hover:bg-indigo-500 active:scale-95 transition-transform"
+                            >
+                                <List size={20} /> 전체 구역 관리
+                            </button>
+                            <button 
                                 onClick={() => setUiMode('ISSUE_DROP')}
-                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 sm:gap-2 border text-sm sm:text-base border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
+                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-sm border-slate-600 bg-slate-800/95 backdrop-blur-md text-white hover:bg-slate-700 active:scale-95 transition-transform"
                             >
                                 <Siren size={20} /> 현장 핀 지시
                             </button>
                         </div>
                     ) : (
-                        <div className="flex gap-2 sm:gap-3 w-full max-w-md pointer-events-auto">
+                        <div className="flex gap-2 w-full max-w-md pointer-events-auto">
                             <button 
                                 onClick={() => setUiMode('ROUTE_CHOICE')}
-                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 border text-sm sm:text-base border-blue-600 bg-blue-800/95 backdrop-blur-md text-white hover:bg-blue-700 active:scale-95 transition-transform"
+                                className="flex-1 font-black py-3 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-[13px] border-blue-600 bg-blue-800/95 backdrop-blur-md text-white hover:bg-blue-700 active:scale-95 transition-transform"
                             >
-                                <PlusCircle size={18} /> 새 구역 그리기
+                                <PlusCircle size={18} /> 새 구역 긋기
+                            </button>
+                            <button 
+                                onClick={() => setUiMode('GROUP_LIST')}
+                                className="flex-1 font-black py-3 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-[13px] border-indigo-500 bg-indigo-600/95 backdrop-blur-md text-white hover:bg-indigo-500 active:scale-95 transition-transform"
+                            >
+                                <List size={18} /> 내 구역 리스트
                             </button>
                             <button 
                                 onClick={() => setUiMode('ISSUE_DROP')}
-                                className="flex-1 font-black py-4 sm:py-4 rounded-2xl shadow-xl flex items-center justify-center gap-1 border border-red-500 bg-red-600/95 backdrop-blur-md text-white hover:bg-red-500 active:scale-95 transition-transform"
+                                className="flex-1 font-black py-3 sm:py-4 rounded-2xl shadow-xl flex flex-col items-center justify-center gap-1 border text-[13px] border-red-500 bg-red-600/95 backdrop-blur-md text-white hover:bg-red-500 active:scale-95 transition-transform"
                             >
-                                <Siren size={18} /> 고장/민원 핀
+                                <Siren size={18} /> 민원 핀 지시
                             </button>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Group List Drawer */}
+            {uiMode === 'GROUP_LIST' && (
+                <div className="absolute inset-x-0 bottom-0 top-1/4 z-[3000] bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-full">
+                    <div className="w-full flex justify-center py-3 bg-slate-50 border-b border-slate-200" onClick={() => setUiMode('IDLE')}>
+                        <div className="w-16 h-1.5 bg-slate-300 rounded-full"></div>
+                    </div>
+                    <div className="p-4 sm:p-6 pb-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-800">
+                            {currentUserRole === 'admin' ? '전체 구역 관리 리스트' : '내 구역 관리 리스트'}
+                        </h2>
+                        <button onClick={() => setUiMode('IDLE')} className="p-2 bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300">
+                            <XCircle size={24} />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50">
+                        {(() => {
+                            const myZones = zones.filter(z => currentUserRole === 'admin' || z.workerId === currentWorkerId);
+                            const groupNames = Array.from(new Set(myZones.map(z => z.groupName).filter(Boolean))) as string[];
+                            
+                            if (groupNames.length === 0) {
+                                return (
+                                    <div className="text-center py-10 text-slate-400 font-bold">
+                                        아직 설정된 구역 그룹이 없습니다.
+                                    </div>
+                                );
+                            }
+
+                            return groupNames.map((gName, idx) => {
+                                const groupBlocks = myZones.filter(z => z.groupName === gName);
+                                const cleanedBlocks = groupBlocks.filter(z => z.isCleaned);
+                                const progress = Math.round((cleanedBlocks.length / groupBlocks.length) * 100);
+                                
+                                return (
+                                    <div key={idx} className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 mb-3 shadow-sm flex flex-col gap-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1" onClick={() => focusGroupCoords(gName)}>
+                                                <h3 className="text-lg font-black text-blue-900 mb-1 cursor-pointer hover:underline">{gName}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">
+                                                        총 {groupBlocks.length}개 블록 묶음
+                                                    </span>
+                                                    {progress === 100 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">청소 완료</span>}
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 ml-2">
+                                                <button onClick={() => focusGroupCoords(gName)} className="p-2.5 sm:p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors shrink-0 shadow-sm" title="구역 위치로 이동">
+                                                    <Crosshair size={18} className="stroke-[2.5px]" />
+                                                </button>
+                                                <button onClick={() => handleRenameGroup(gName)} className="p-2.5 sm:p-3 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl transition-colors shrink-0 shadow-sm" title="이름 수정">
+                                                    <Edit2 size={18} className="stroke-[2.5px]" />
+                                                </button>
+                                                <button onClick={() => handleDeleteGroup(gName)} className="p-2.5 sm:p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors shrink-0 shadow-sm" title="그룹 삭제">
+                                                    <Trash2 size={18} className="stroke-[2.5px]" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                            <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                                        </div>
+                                    </div>
+                                );
+                            });
+                        })()}
+                    </div>
                 </div>
             )}
 

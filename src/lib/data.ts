@@ -1217,6 +1217,18 @@ export async function deleteZone(id: string): Promise<void> {
   }
 }
 
+export async function renameZoneGroup(workerId: string, oldGroupName: string, newGroupName: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`UPDATE cleaning_zones SET group_name = ${newGroupName} WHERE worker_id = ${workerId} AND group_name = ${oldGroupName}`;
+  }
+}
+
+export async function deleteZoneGroup(workerId: string, groupName: string): Promise<void> {
+  if (isPostgresEnabled()) {
+    await sql`DELETE FROM cleaning_zones WHERE worker_id = ${workerId} AND group_name = ${groupName}`;
+  }
+}
+
 export async function getIssues(): Promise<Issue[]> {
   if (isPostgresEnabled()) {
     try {

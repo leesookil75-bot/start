@@ -1102,3 +1102,22 @@ export async function deleteIssueAction(id: string): Promise<{ success: boolean;
     }
 }
 
+export async function renameZoneGroupAction(workerId: string, oldGroupName: string, newGroupName: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await import('@/lib/data').then(mod => mod.renameZoneGroup(workerId, oldGroupName, newGroupName));
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to rename group' };
+    }
+}
+
+export async function deleteZoneGroupAction(workerId: string, groupName: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await import('@/lib/data').then(mod => mod.deleteZoneGroup(workerId, groupName));
+        revalidatePath('/');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message || 'Failed to delete group' };
+    }
+}
