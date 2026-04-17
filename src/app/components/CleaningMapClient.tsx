@@ -609,6 +609,8 @@ export default function CleaningMapClient({
             alert("통신 연결에 실패했습니다.");
         } finally {
             setIsFetchingRoute(false);
+            setRouteNodes([]);
+            setUiMode('IDLE');
         }
     };
 
