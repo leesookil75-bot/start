@@ -560,18 +560,27 @@ export default function CleaningMapClient({
                     pathCoords = safeRawNodes.map(n => [n.lat, n.lng]);
                 }
             } else {
-                // 수동 클릭 라우팅 (Route API)
-                const coordsString = nodes.map(n => `${n.lng},${n.lat}`).join(';');
-                const url = `https://router.project-osrm.org/route/v1/foot/${coordsString}?overview=full&geometries=geojson`;
-                const res = await fetch(url);
-                const data = await res.json();
-
-                if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                    const coords = data.routes[0].geometry.coordinates;
-                    pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
+                // 수동 그리기 모드
+                // 외부 OSRM 연결 없이, 사용자가 그린 궤적 그대로 연결하여 면적화(Polygon)
+                const safeNodes = downsampleNodes(nodes, 150); // 수동 드래그 시 포인트 폭주 방지압축
+                const coords = safeNodes.map(n => [n.lng, n.lat]);
+                
+                if (coords.length > 1) {
+                    try {
+                        const line = turf.lineString(coords); 
+                        const buffered = turf.buffer(line, 3, { units: 'meters' });
+                        
+                        if (buffered && buffered.geometry.type === 'Polygon') {
+                            const polygonCoords = buffered.geometry.coordinates[0].map((c: any) => [c[1], c[0]] as [number, number]);
+                            pathCoords = [polygonCoords] as any;
+                        } else {
+                            pathCoords = safeNodes.map(n => [n.lat, n.lng]);
+                        }
+                    } catch (e) {
+                        pathCoords = safeNodes.map(n => [n.lat, n.lng]);
+                    }
                 } else {
-                    alert("해당 위치 근처에서 보행자 도로망을 찾을 수 없습니다. (대신 직선으로 연결합니다)");
-                    pathCoords = nodes.map(n => [n.lat, n.lng]);
+                    pathCoords = safeNodes.map(n => [n.lat, n.lng]);
                 }
             }
             
