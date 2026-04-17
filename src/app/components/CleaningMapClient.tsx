@@ -524,7 +524,8 @@ export default function CleaningMapClient({
                 // 각 좌표 반경 20m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
                 const radiuses = sampledNodes.map(() => '20').join(';');
                 
-                const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+                // 토큰 문제(Vercel undefined) 대응
+                const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env[' NEXT_PUBLIC_MAPBOX_TOKEN'];
                 const url = `https://api.mapbox.com/matching/v5/mapbox/walking/${coordsString}?radiuses=${radiuses}&geometries=geojson&steps=false&access_token=${token}`;
                 
                 try {
@@ -553,8 +554,10 @@ export default function CleaningMapClient({
                     }
                 } catch (e) {
                     console.warn("Map matching failed, gracefully falling back to raw GPS route", e);
-                    // Match 실패 시 무조건 원본(날 것) 연결로 안전하게 Fallback 보장
-                    pathCoords = nodes.map(n => [n.lat, n.lng]);
+                    // Match 실패 시 무조건 원본 연결로 안전하게 Fallback 보장하되,
+                    // 점이 너무 많으면 DB 저장 크기(Payload) 초과로 뻗거나 메모리 에러가 발생하므로 100개로 압축합니다.
+                    const safeRawNodes = downsampleNodes(nodes, 100);
+                    pathCoords = safeRawNodes.map(n => [n.lat, n.lng]);
                 }
             } else {
                 // 수동 클릭 라우팅 (Route API)
