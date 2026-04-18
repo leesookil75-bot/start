@@ -525,8 +525,8 @@ export default function CleaningMapClient({
                 // GPS 스캔 모드: 오차 보정용 맵 매칭 알고리즘 (Mapbox AI)
                 const sampledNodes = downsampleNodes(nodes, 80);
                 const coordsString = sampledNodes.map(n => `${n.lng},${n.lat}`).join(';');
-                // 각 좌표 반경 20m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
-                const radiuses = sampledNodes.map(() => '20').join(';');
+                // 각 좌표 반경 50m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
+                const radiuses = sampledNodes.map(() => '50').join(';');
                 
                 // 서버 액션을 통해 런타임에 동적으로 토큰을 받아옵니다 (Vercel 빌드타임 환경 변수 띄어쓰기 버그 완전 우회)
                 const token = await getMapboxTokenAction();
@@ -567,7 +567,27 @@ export default function CleaningMapClient({
                     // Match 실패 시 무조건 원본 연결로 안전하게 Fallback 보장하되,
                     // 점이 너무 많으면 DB 저장 크기(Payload) 초과로 뻗거나 메모리 에러가 발생하므로 100개로 압축합니다.
                     const safeRawNodes = downsampleNodes(nodes, 100);
-                    pathCoords = safeRawNodes.map(n => [n.lat, n.lng]);
+                    
+                    // 폴리마사지 (스무딩)
+                    let smoothed = smoothPathAngles(safeRawNodes.map(n => [n.lat, n.lng]), 3);
+                    const turfCoords = smoothed.map(c => [c[1], c[0]]); // [lng, lat] for Turf
+                    
+                    if (turfCoords.length > 1) {
+                        try {
+                            const line = turf.lineString(turfCoords);
+                            const buffered = turf.buffer(line, 3.5, { units: 'meters' });
+                            if (buffered && buffered.geometry.type === 'Polygon') {
+                                const polygonCoords = buffered.geometry.coordinates[0].map((c: any) => [c[1], c[0]] as [number, number]);
+                                pathCoords = [polygonCoords] as any;
+                            } else {
+                                pathCoords = smoothed;
+                            }
+                        } catch (err) {
+                            pathCoords = smoothed;
+                        }
+                    } else {
+                        pathCoords = smoothed;
+                    }
                 }
             } else {
                 // 수동 그리기 모드
