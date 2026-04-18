@@ -89,9 +89,30 @@ function downsampleNodes(nodes: {lat: number, lng: number}[], maxNodes = 80): {l
 }
 
 function getZonePoints(path: any): [number, number][] {
-    if (!path || path.length === 0) return [];
-    if (Array.isArray(path[0][0])) return path[0];
-    return path;
+    if (!path || !Array.isArray(path) || path.length === 0) return [];
+    const points: [number, number][] = [];
+    const flatten = (arr: any[]) => {
+        if (!Array.isArray(arr)) return;
+        if (arr.length === 2 && typeof arr[0] === 'number' && typeof arr[1] === 'number') {
+            points.push(arr as [number, number]);
+        } else {
+            arr.forEach(flatten);
+        }
+    };
+    flatten(path);
+    return points;
+}
+
+function extractLeafletCoordsFromBuffer(buffered: any, defaultCoords: any): any {
+    if (!buffered || !buffered.geometry) return defaultCoords;
+    try {
+        if (buffered.geometry.type === 'Polygon') {
+            return buffered.geometry.coordinates.map((ring: any) => ring.map((c: any) => [c[1], c[0]]));
+        } else if (buffered.geometry.type === 'MultiPolygon') {
+            return buffered.geometry.coordinates.map((polyg: any) => polyg.map((ring: any) => ring.map((c: any) => [c[1], c[0]])));
+        }
+    } catch (e) {}
+    return defaultCoords;
 }
 
 // Fit bounds to visible data only on initial load to prevent hijacking user zoom/pan
@@ -550,13 +571,9 @@ export default function CleaningMapClient({
                         const line = turf.lineString(coords); // [lng, lat] 배열
                         const buffered = turf.buffer(line, 3, { units: 'meters' });
                         
-                        if (buffered && buffered.geometry.type === 'Polygon') {
-                            // Turf의 Polygon은 [lng, lat]를 사용하므로, Leaflet이 사용하는 [lat, lng]로 뒤집어줍니다.
-                            // 외부 링(배열의 첫번째 요소)만 추출하여 하나의 단일 구역으로 구성
-                            const polygonCoords = buffered.geometry.coordinates[0].map((c: any) => [c[1], c[0]] as [number, number]);
-                            pathCoords = [polygonCoords] as any; // 타입 호환성을 위해 any 캐스팅, 실제로는 [ [lat, lng], ... ] 의 중첩 배열
+                        if (buffered) {
+                            pathCoords = extractLeafletCoordsFromBuffer(buffered, coords.map((c: [number, number]) => [c[1], c[0]]));
                         } else {
-                            // 폴리곤 생성에 실패하면 단순 라인 배열 반환
                             pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
                         }
                     } else {
@@ -576,9 +593,8 @@ export default function CleaningMapClient({
                         try {
                             const line = turf.lineString(turfCoords);
                             const buffered = turf.buffer(line, 3.5, { units: 'meters' });
-                            if (buffered && buffered.geometry.type === 'Polygon') {
-                                const polygonCoords = buffered.geometry.coordinates[0].map((c: any) => [c[1], c[0]] as [number, number]);
-                                pathCoords = [polygonCoords] as any;
+                            if (buffered) {
+                                pathCoords = extractLeafletCoordsFromBuffer(buffered, smoothed);
                             } else {
                                 pathCoords = smoothed;
                             }
@@ -600,9 +616,8 @@ export default function CleaningMapClient({
                         const line = turf.lineString(coords); 
                         const buffered = turf.buffer(line, 3, { units: 'meters' });
                         
-                        if (buffered && buffered.geometry.type === 'Polygon') {
-                            const polygonCoords = buffered.geometry.coordinates[0].map((c: any) => [c[1], c[0]] as [number, number]);
-                            pathCoords = [polygonCoords] as any;
+                        if (buffered) {
+                            pathCoords = extractLeafletCoordsFromBuffer(buffered, safeNodes.map(n => [n.lat, n.lng]));
                         } else {
                             pathCoords = safeNodes.map(n => [n.lat, n.lng]);
                         }
