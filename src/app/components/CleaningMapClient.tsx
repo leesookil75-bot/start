@@ -550,16 +550,16 @@ export default function CleaningMapClient({
                 const radiuses = sampledNodes.map(() => '50').join(';');
                 
                 // 서버 액션을 통해 런타임에 동적으로 토큰을 받아옵니다 (Vercel 빌드타임 환경 변수 띄어쓰기 버그 완전 우회)
-                const token = await getMapboxTokenAction();
-                
-                if (!token) {
-                    console.error("Mapbox token is missing from server environment variables.");
-                    throw new Error('Mapbox Token Missing');
-                }
-                
-                const url = `https://api.mapbox.com/matching/v5/mapbox/walking/${coordsString}?radiuses=${radiuses}&geometries=geojson&steps=false&access_token=${token}`;
-                
                 try {
+                    const token = await getMapboxTokenAction();
+                    
+                    if (!token) {
+                        console.error("Mapbox token is missing from server environment variables.");
+                        throw new Error('Mapbox Token Missing');
+                    }
+                    
+                    const url = `https://api.mapbox.com/matching/v5/mapbox/walking/${coordsString}?radiuses=${radiuses}&geometries=geojson&steps=false&access_token=${token}`;
+                    
                     const res = await fetch(url);
                     const data = await res.json();
                     
@@ -569,7 +569,7 @@ export default function CleaningMapClient({
                         
                         // Turf.js를 사용하여 매칭된 경로를 기반으로 3m 반경의 다각형(면적) 추출
                         const line = turf.lineString(coords); // [lng, lat] 배열
-                        const buffered = turf.buffer(line, 3, { units: 'meters' });
+                        const buffered = turf.buffer(line, 3, { units: 'meters', steps: 2 }); // payload 최적화를 위해 steps 축소
                         
                         if (buffered) {
                             pathCoords = extractLeafletCoordsFromBuffer(buffered, coords.map((c: [number, number]) => [c[1], c[0]]));
@@ -592,7 +592,7 @@ export default function CleaningMapClient({
                     if (turfCoords.length > 1) {
                         try {
                             const line = turf.lineString(turfCoords);
-                            const buffered = turf.buffer(line, 3.5, { units: 'meters' });
+                            const buffered = turf.buffer(line, 3.5, { units: 'meters', steps: 2 }); // payload 최적화
                             if (buffered) {
                                 pathCoords = extractLeafletCoordsFromBuffer(buffered, smoothed);
                             } else {
@@ -614,7 +614,7 @@ export default function CleaningMapClient({
                 if (coords.length > 1) {
                     try {
                         const line = turf.lineString(coords); 
-                        const buffered = turf.buffer(line, 3, { units: 'meters' });
+                        const buffered = turf.buffer(line, 3, { units: 'meters', steps: 2 }); // payload 최적화
                         
                         if (buffered) {
                             pathCoords = extractLeafletCoordsFromBuffer(buffered, safeNodes.map(n => [n.lat, n.lng]));
@@ -648,8 +648,9 @@ export default function CleaningMapClient({
             }
             
             getZonesAction().then(setZones);
-        } catch (error) {
-            alert("통신 연결에 실패했습니다.");
+        } catch (error: any) {
+            console.error("fetchRouteAndCreateZone Error:", error);
+            alert("서버 통신/저장에 실패했습니다. 사유: " + (error.message || '알 수 없는 오류'));
         } finally {
             setIsFetchingRoute(false);
             setRouteNodes([]);
