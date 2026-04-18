@@ -1121,3 +1121,7 @@ export async function deleteZoneGroupAction(workerId: string, groupName: string)
         return { success: false, error: e.message || 'Failed to delete group' };
     }
 }
+
+export async function getMapboxTokenAction(): Promise<string> {
+    return process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env[' NEXT_PUBLIC_MAPBOX_TOKEN'] || process.env.MAPBOX_TOKEN || '';
+}

@@ -23,7 +23,8 @@ import {
     closeIssueAction, 
     deleteIssueAction,
     renameZoneGroupAction,
-    deleteZoneGroupAction
+    deleteZoneGroupAction,
+    getMapboxTokenAction
 } from '@/app/actions';
 
 type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS_READY' | 'ROUTE_GPS' | 'ISSUE_DROP' | 'GROUP_LIST';
@@ -527,8 +528,14 @@ export default function CleaningMapClient({
                 // 각 좌표 반경 20m를 허용치로 주어 흔들리는 GPS를 강제 편입 (Map Matching)
                 const radiuses = sampledNodes.map(() => '20').join(';');
                 
-                // 토큰 문제(Vercel undefined) 대응
-                const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env[' NEXT_PUBLIC_MAPBOX_TOKEN'];
+                // 서버 액션을 통해 런타임에 동적으로 토큰을 받아옵니다 (Vercel 빌드타임 환경 변수 띄어쓰기 버그 완전 우회)
+                const token = await getMapboxTokenAction();
+                
+                if (!token) {
+                    console.error("Mapbox token is missing from server environment variables.");
+                    throw new Error('Mapbox Token Missing');
+                }
+                
                 const url = `https://api.mapbox.com/matching/v5/mapbox/walking/${coordsString}?radiuses=${radiuses}&geometries=geojson&steps=false&access_token=${token}`;
                 
                 try {
