@@ -39,21 +39,14 @@ export default function ClientApplyPage({ initialRequests = [] }: ClientApplyPag
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Determine start and end date
-        let startDate: Date;
-        let endDate: Date;
-
+        let targetDate: Date;
         if (Array.isArray(date)) {
-            // Range selection
-            startDate = date[0] as Date;
-            endDate = date[1] as Date;
+            targetDate = date[0] as Date; // Fallback in case state wasn't cleared
         } else {
-            // Single date
-            startDate = date as Date;
-            endDate = date as Date;
+            targetDate = date as Date;
         }
 
-        if (!startDate || !endDate) return;
+        if (!targetDate) return;
 
         // Reset time to local midnight or handle timezone carefully
         // Here we just want YYYY-MM-DD
@@ -62,8 +55,16 @@ export default function ClientApplyPage({ initialRequests = [] }: ClientApplyPag
             return new Date(d.getTime() - offset).toISOString().split('T')[0];
         };
 
-        const startStr = toLocalISO(startDate);
-        const endStr = toLocalISO(endDate);
+        const startStr = toLocalISO(targetDate);
+        const endStr = startStr; // 단일 휴가이므로 시작일과 종료일이 같음
+
+        const y = targetDate.getFullYear();
+        const m = targetDate.getMonth() + 1;
+        const d = targetDate.getDate();
+        
+        if (!confirm(`[최종 확인]\n\n선택하신 날짜: ${y}년 ${m}월 ${d}일 (하루)\n\n이대로 휴가를 신청하시겠습니까?`)) {
+            return;
+        }
 
         startTransition(async () => {
             const result = await requestVacation(startStr, endStr, reason);
@@ -105,7 +106,7 @@ export default function ClientApplyPage({ initialRequests = [] }: ClientApplyPag
                     <Calendar
                         onChange={setDate}
                         value={date}
-                        selectRange={true} // Allow range selection
+                        selectRange={false} 
                         className="react-calendar-custom"
                         minDate={new Date()} // Can't select past dates
                         tileContent={({ date: cellDate, view }) => {
@@ -135,8 +136,7 @@ export default function ClientApplyPage({ initialRequests = [] }: ClientApplyPag
                         }}
                     />
                     <p className={styles.helpText}>
-                        * 날짜를 터치하여 기간을 선택하세요.<br />
-                        (하루인 경우 두 번 터치하거나 그대로 진행)
+                        * 달력에서 원하시는 날짜를 한 번만 터치하세요.
                     </p>
                 </div>
 
