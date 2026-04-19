@@ -35,6 +35,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
+  
+  /* 시니어 디바이스 환경에서 시스템 폰트 확대 강제 차단 (접근성 스케일 방지) */
+  -webkit-text-size-adjust: none !important;
+  -moz-text-size-adjust: none !important;
+  -ms-text-size-adjust: none !important;
+  text-size-adjust: none !important;
 }
 
 a {
