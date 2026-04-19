@@ -31,6 +31,19 @@ export default function MobileVacationManager({ initialRequests }: { initialRequ
         }
     };
 
+    const handleCancelApproval = async (id: string, userName: string) => {
+        if (!confirm(`${userName}님의 승인된 휴가를 방금 취소하시겠습니까?\n(해당 일정은 달력에서 삭제되며 연차가 복구됩니다)`)) return;
+
+        const result = await processVacationRequest(id, false);
+        if (result.success) {
+            setRequests(prev => prev.map(r =>
+                r.id === id ? { ...r, status: 'REJECTED' } : r
+            ));
+        } else {
+            alert('취소 실패: ' + result.error);
+        }
+    };
+
     const getLeavesOnDate = (d: Date) => {
         const offset = d.getTimezoneOffset() * 60000;
         const localDate = new Date(d.getTime() - offset).toISOString().split('T')[0];
@@ -171,7 +184,15 @@ export default function MobileVacationManager({ initialRequests }: { initialRequ
                                                 <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>{l.userName}</span>
                                                 <span style={{ fontSize: '0.8rem', color: '#aaa' }}>{l.cleaningArea}</span>
                                             </div>
-                                            <span style={{ fontSize: '0.8rem', color: '#888' }}>잔여: {l.remainingLeaves}일</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#888' }}>잔여: {l.remainingLeaves}일</span>
+                                                <button 
+                                                    onClick={() => handleCancelApproval(l.id, l.userName || '알 수 없음')}
+                                                    style={{ padding: '0.25rem 0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}
+                                                >
+                                                    승인 취소
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
