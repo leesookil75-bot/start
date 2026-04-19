@@ -33,6 +33,20 @@ export default function AdminVacationClient({ initialRequests }: AdminVacationCl
         }
     };
 
+    const handleCancelApproval = async (e: React.MouseEvent, id: string, userName: string) => {
+        e.stopPropagation();
+        if (!confirm(`${userName}님의 승인된 휴가를 직권 취소하시겠습니까?\n(해당 달력 일정이 즉시 삭제되며 연차가 복구됩니다)`)) return;
+
+        const result = await processVacationRequest(id, false);
+        if (result.success) {
+            setRequests(prev => prev.map(r =>
+                r.id === id ? { ...r, status: 'REJECTED' } : r
+            ));
+        } else {
+            alert('취소 실패: ' + result.error);
+        }
+    };
+
     const handleDownloadExcel = () => {
         // Filter by current month view in calendar? Or all? 
         // User asked for "Overview of all workers monthly schedule". 
@@ -91,7 +105,7 @@ export default function AdminVacationClient({ initialRequests }: AdminVacationCl
         return (
             <div className={styles.tileContent}>
                 {leavesOnDay.map((l, i) => (
-                    <div key={i} className={styles.leaveItem} title={`${l.userName} (잔여: ${l.remainingLeaves}) - ${l.cleaningArea}`}>
+                    <div key={i} className={styles.leaveItem} title={`${l.userName} (잔여: ${l.remainingLeaves}) - ${l.cleaningArea}`} style={{ position: 'relative', paddingRight: '18px' }}>
                         <span className={styles.leaveName}>
                             {l.userName}
                             <span style={{ fontSize: '0.8em', marginLeft: '2px', fontWeight: 'normal', opacity: 0.8 }}>
@@ -99,6 +113,13 @@ export default function AdminVacationClient({ initialRequests }: AdminVacationCl
                             </span>
                         </span>
                         <span className={styles.leaveArea}>{l.cleaningArea}</span>
+                        <button 
+                            onClick={(e) => handleCancelApproval(e, l.id, l.userName || '알 수 없음')}
+                            style={{ position: 'absolute', top: '50%', right: '4px', transform: 'translateY(-50%)', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', width: '14px', height: '14px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
+                            title="승인 취소"
+                        >
+                            ✕
+                        </button>
                     </div>
                 ))}
             </div>
