@@ -1046,6 +1046,19 @@ export async function deleteZoneAction(id: string): Promise<{ success: boolean; 
     }
 }
 
+export async function updateZonePathAction(id: string, path: any): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+    
+    try {
+        await import('@/lib/data').then(mod => mod.updateZonePath(id, path));
+        revalidatePath('/map');
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
 export async function getIssuesAction(): Promise<Issue[]> {
     return await getIssues();
 }

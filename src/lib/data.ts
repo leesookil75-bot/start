@@ -1217,6 +1217,13 @@ export async function deleteZone(id: string): Promise<void> {
   }
 }
 
+export async function updateZonePath(id: string, pathCoords: any): Promise<void> {
+  if (isPostgresEnabled()) {
+    const pathStr = JSON.stringify(pathCoords);
+    await sql`UPDATE cleaning_zones SET path_data = ${pathStr} WHERE id = ${id}`;
+  }
+}
+
 export async function renameZoneGroup(workerId: string, oldGroupName: string, newGroupName: string): Promise<void> {
   if (isPostgresEnabled()) {
     await sql`UPDATE cleaning_zones SET group_name = ${newGroupName} WHERE worker_id = ${workerId} AND group_name = ${oldGroupName}`;

@@ -24,7 +24,8 @@ import {
     deleteIssueAction,
     renameZoneGroupAction,
     deleteZoneGroupAction,
-    getMapboxTokenAction
+    getMapboxTokenAction,
+    updateZonePathAction
 } from '@/app/actions';
 
 type UIMode = 'IDLE' | 'ROUTE_CHOICE' | 'ROUTE_BUILDING' | 'ROUTE_GPS_READY' | 'ROUTE_GPS' | 'ISSUE_DROP' | 'GROUP_LIST';
@@ -388,6 +389,7 @@ export default function CleaningMapClient({
     
     const [routeNodes, setRouteNodes] = useState<{lat: number, lng: number}[]>([]);
     const [isFetchingRoute, setIsFetchingRoute] = useState(false);
+    const [isUpgradingZone, setIsUpgradingZone] = useState<string | null>(null);
     
     // GPS Recording State
     const [gpsNodes, setGpsNodes] = useState<{lat: number, lng: number}[]>([]);
@@ -655,6 +657,49 @@ export default function CleaningMapClient({
             setIsFetchingRoute(false);
             setRouteNodes([]);
             setUiMode('IDLE');
+        }
+    };
+
+    const handleUpgradeLegacyZone = async (oldZone: Zone) => {
+        setIsUpgradingZone(oldZone.id);
+        try {
+            // Extract raw points assuming it's an array of [lat, lng] since isPolygon is false
+            const rawPoints = oldZone.path.map((p: any) => ({ lat: p[0], lng: p[1] })) as {lat: number, lng: number}[];
+            const sampledNodes = downsampleNodes(rawPoints, 80);
+            const coordsString = sampledNodes.map(n => `${n.lng},${n.lat}`).join(';');
+            const radiuses = sampledNodes.map(() => '50').join(';');
+            
+            const token = await getMapboxTokenAction();
+            if (!token) throw new Error('Mapbox Token Missing');
+            
+            const url = `https://api.mapbox.com/matching/v5/mapbox/walking/${coordsString}?radiuses=${radiuses}&geometries=geojson&steps=false&access_token=${token}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            let pathCoords: [number, number][] = [];
+            if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
+                const coords = data.matchings[0].geometry.coordinates;
+                const line = turf.lineString(coords); 
+                const buffered = turf.buffer(line, 3.5, { units: 'meters', steps: 2 }); 
+                
+                if (buffered) {
+                    pathCoords = extractLeafletCoordsFromBuffer(buffered, coords.map((c: [number, number]) => [c[1], c[0]]));
+                } else {
+                    pathCoords = coords.map((c: [number, number]) => [c[1], c[0]]);
+                }
+                
+                const result = await updateZonePathAction(oldZone.id, pathCoords);
+                if (!result.success) throw new Error(result.error || 'Failed to update DB');
+                getZonesAction().then(setZones);
+            } else {
+                throw new Error('매칭 결과가 부족하여 자동완성할 수 없습니다.');
+            }
+            
+        } catch (e: any) {
+            console.error('Upgrade Error:', e);
+            alert('맵 매칭 변환 실패: ' + e.message);
+        } finally {
+            setIsUpgradingZone(null);
         }
     };
 
@@ -1354,6 +1399,16 @@ export default function CleaningMapClient({
                                             >
                                                 <Trash2 size={24} /> 이 구역 지우기
                                             </button>
+                                            
+                                            {!isPolygon && (
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleUpgradeLegacyZone(zone); }}
+                                                    disabled={isUpgradingZone === zone.id}
+                                                    className="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 min-h-[50px] mt-2 rounded-xl flex items-center justify-center gap-2 text-sm font-bold border border-indigo-300 transition-all active:scale-95"
+                                                >
+                                                    {isUpgradingZone === zone.id ? '⏳ 맵 매칭 최적화 중...' : '✨ 구역 자동 도로 스냅 (Mapbox 변환)'}
+                                                </button>
+                                            )}
                                         </>
                                     ) : (
                                         <>
