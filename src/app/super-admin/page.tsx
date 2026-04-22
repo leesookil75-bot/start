@@ -29,7 +29,9 @@ export default async function SuperAdminPage() {
                         const { logout } = await import('../actions');
                         await logout();
                     }}>
-                        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#ef4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+                        <button type="submit" onClick={() => {
+                            document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                        }} style={{ padding: '0.5rem 1rem', background: '#ef4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
                             로그아웃
                         </button>
                     </form>

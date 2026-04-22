@@ -125,7 +125,12 @@ export async function changePassword(currentPassword: string, newPassword: strin
 }
 
 export async function logout() {
-    (await cookies()).delete(COOKIE_NAME);
+    (await cookies()).set(COOKIE_NAME, '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 0,
+        path: '/'
+    });
     revalidatePath('/', 'layout');
     redirect('/login');
 }

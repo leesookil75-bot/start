@@ -81,7 +81,10 @@ export default function MobileAdminHome({ userName, onLogout }: MobileAdminHomeP
                                 </button>
                             </Link>
 
-                            <button onClick={onLogout} style={{ width: '100%', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                            <button onClick={async () => {
+                                document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                await onLogout();
+                            }} style={{ width: '100%', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
                                 로그아웃
                             </button>
                         </div>

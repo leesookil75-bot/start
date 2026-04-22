@@ -161,7 +161,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                         🔒 비밀번호 변경
                     </Link>
                     <form action={logout}>
-                        <button className={styles.sidebarLogoutBtn}>로그아웃</button>
+                        <button type="submit" onClick={() => {
+                            document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                        }} className={styles.sidebarLogoutBtn}>로그아웃</button>
                     </form>
                 </nav>
             </aside>
@@ -191,7 +193,9 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                             <KeyIcon />
                         </Link>
                         <form action={logout}>
-                            <button className={styles.iconButton} aria-label="로그아웃">
+                            <button type="submit" onClick={() => {
+                                document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                            }} className={styles.iconButton} aria-label="로그아웃">
                                 <LogOutIcon />
                             </button>
                         </form>

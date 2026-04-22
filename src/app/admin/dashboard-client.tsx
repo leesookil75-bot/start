@@ -62,7 +62,9 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                         Manage Users
                     </Link>
                     <form action={logout}>
-                        <button className={styles.logoutButton}>
+                        <button type="submit" onClick={() => {
+                            document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                        }} className={styles.logoutButton}>
                             Logout
                         </button>
                     </form>
