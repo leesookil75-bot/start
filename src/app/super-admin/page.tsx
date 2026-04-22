@@ -3,6 +3,7 @@ import { getCurrentUser } from '../actions';
 import { redirect } from 'next/navigation';
 import AgencyList from './AgencyList';
 import Link from 'next/link';
+import LogoutButton from './LogoutButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,15 +25,7 @@ export default async function SuperAdminPage() {
                     <Link href="/admin" style={{ padding: '0.5rem 1rem', background: '#e2e8f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
                         일반 어드민 뷰 보기
                     </Link>
-                    <form action={async () => {
-                        'use server';
-                        const { logout } = await import('../actions');
-                        await logout();
-                    }}>
-                        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#ef4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
-                            로그아웃
-                        </button>
-                    </form>
+                    <LogoutButton />
                 </div>
             </header>
 

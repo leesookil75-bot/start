@@ -21,7 +21,7 @@ const COOKIE_NAME = 'clean-track-user-id';
 
 // --- Auth Actions ---
 
-export async function login(phoneNumber: string, password?: string): Promise<{ success: boolean; error?: string }> {
+export async function login(phoneNumber: string, password?: string): Promise<{ success: boolean; error?: string; role?: string }> {
     const user = await getUserByPhone(phoneNumber);
 
     if (!user) {
@@ -47,7 +47,7 @@ export async function login(phoneNumber: string, password?: string): Promise<{ s
         path: '/',
     });
 
-    return { success: true };
+    return { success: true, role: user.role };
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {

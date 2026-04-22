@@ -24,7 +24,13 @@ export default function LoginPage() {
             // For worker, we also force password check now.
             const result = await login(phoneNumber, password);
             if (result.success) {
-                router.push(mode === 'admin' ? '/admin' : '/');
+                if (result.role === 'super_admin') {
+                    router.push('/super-admin');
+                } else if (result.role === 'admin') {
+                    router.push('/admin');
+                } else {
+                    router.push('/');
+                }
                 router.refresh();
             } else {
                 setError(result.error || 'Login failed');
