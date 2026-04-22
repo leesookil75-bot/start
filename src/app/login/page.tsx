@@ -88,7 +88,7 @@ export default function LoginPage() {
                 setError(`발송 실패 (${err.code || '알 수 없는 오류'}): ${err.message}`);
                 // ReCAPTCHA reset after error
                 if (window.recaptchaVerifier) {
-                    window.recaptchaVerifier.render().then(widgetId => {
+                    window.recaptchaVerifier.render().then((widgetId: any) => {
                         window.grecaptcha.reset(widgetId);
                     });
                 }
