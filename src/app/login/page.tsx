@@ -89,7 +89,7 @@ export default function LoginPage() {
                 // ReCAPTCHA reset after error
                 if (window.recaptchaVerifier) {
                     window.recaptchaVerifier.render().then((widgetId: any) => {
-                        window.grecaptcha.reset(widgetId);
+                        (window as any).grecaptcha.reset(widgetId);
                     });
                 }
             }
