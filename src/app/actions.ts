@@ -126,6 +126,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 export async function logout() {
     (await cookies()).delete(COOKIE_NAME);
+    revalidatePath('/', 'layout');
     redirect('/login');
 }
 
