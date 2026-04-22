@@ -67,15 +67,19 @@ export async function getAgencies(): Promise<Agency[]> {
         console.error('Error fetching agencies:', e);
         return [];
     }
-}
-
-export async function updateAgencyName(id: string, name: string): Promise<boolean> {
+export async function updateAgencyDetails(id: string, name: string, contactPhone: string, planType: string, isActive: boolean): Promise<boolean> {
     if (!isPostgresEnabled()) return false;
     try {
-        await sql`UPDATE agencies SET name = ${name} WHERE id = ${id}`;
+        await sql`
+            UPDATE agencies 
+            SET name = ${name}, 
+                contact_phone = ${contactPhone}, 
+                plan_type = ${planType}, 
+                is_active = ${isActive}
+            WHERE id = ${id}`;
         return true;
     } catch (error) {
-        console.error('Failed to update agency name:', error);
+        console.error('Failed to update agency details:', error);
         return false;
     }
 }

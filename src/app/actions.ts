@@ -129,21 +129,19 @@ export async function logout() {
         path: '/'
     });
     redirect('/login');
-}
-
-export async function renameAgencyAction(agencyId: string, newName: string): Promise<{ success: boolean; error?: string }> {
+export async function updateAgencyAction(id: string, name: string, phone: string, plan: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
     if (!user || user.role !== 'super_admin') {
         return { success: false, error: 'Unauthorized' };
     }
-    const { updateAgencyName } = await import('@/lib/data');
-    const success = await updateAgencyName(agencyId, newName);
+    const { updateAgencyDetails } = await import('@/lib/data');
+    const success = await updateAgencyDetails(id, name, phone, plan, isActive);
     if (success) {
         revalidatePath('/super-admin');
         revalidatePath('/admin');
         return { success: true };
     }
-    return { success: false, error: 'Failed to update agency name' };
+    return { success: false, error: 'Failed to update agency details' };
 }
 
 export async function getCurrentUser(): Promise<User | null> {
