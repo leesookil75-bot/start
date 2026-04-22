@@ -189,6 +189,42 @@ export async function deleteUserAction(userId: string): Promise<{ success: boole
     }
 }
 
+export async function createAgencyAdminAction(agencyId: string, name: string, phone: string, password?: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'super_admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+    
+    try {
+        await addNewUser({
+            name,
+            phoneNumber: phone,
+            password: password || phone.slice(-4),
+            role: 'admin',
+            cleaningArea: '본사', // Default for admins
+            agencyId
+        });
+        revalidatePath('/super-admin');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function deleteAgencyAdminAction(userId: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'super_admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        await removeUser(userId);
+        revalidatePath('/super-admin');
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: 'Failed to delete admin' };
+    }
+}
 export async function resetUserPassword(userId: string): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
     if (!currentUser || currentUser.role !== 'admin') {

@@ -1,4 +1,4 @@
-import { getAgencies } from '@/lib/data';
+import { getAgencies, getUsers } from '@/lib/data';
 import { getCurrentUser } from '../actions';
 import { redirect } from 'next/navigation';
 import AgencyList from './AgencyList';
@@ -15,7 +15,11 @@ export default async function SuperAdminPage() {
         redirect('/login');
     }
 
-    const agencies = await getAgencies();
+    const [agencies, allUsers] = await Promise.all([
+        getAgencies(),
+        getUsers()
+    ]);
+    const adminUsers = allUsers.filter(u => u.role === 'admin' || u.role === 'super_admin');
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
@@ -31,13 +35,13 @@ export default async function SuperAdminPage() {
 
             <section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>가입된 학원/업체 (Agencies)</h2>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>가입된 업체 (Agencies)</h2>
                     <button style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                         + 새 업체 등록
                     </button>
                 </div>
                 
-                <AgencyList agencies={agencies} />
+                <AgencyList agencies={agencies} adminUsers={adminUsers} />
             </section>
         </div>
     );
