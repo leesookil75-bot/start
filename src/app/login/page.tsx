@@ -85,7 +85,13 @@ export default function LoginPage() {
                 alert('인증번호를 발송했습니다. 문자를 확인해주세요.');
             } catch (err: any) {
                 console.error(err);
-                setError('인증번호 발송에 실패했습니다. 번호를 확인해주세요.');
+                setError(`발송 실패 (${err.code || '알 수 없는 오류'}): ${err.message}`);
+                // ReCAPTCHA reset after error
+                if (window.recaptchaVerifier) {
+                    window.recaptchaVerifier.render().then(widgetId => {
+                        window.grecaptcha.reset(widgetId);
+                    });
+                }
             }
         });
     };
