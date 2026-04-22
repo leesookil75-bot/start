@@ -47,9 +47,6 @@ export async function login(phoneNumber: string, password?: string): Promise<{ s
         path: '/',
     });
 
-    // 강제 캐시 초기화 (클라이언트의 Next.js Router Cache 무효화)
-    revalidatePath('/', 'layout');
-
     return { success: true };
 }
 
@@ -131,7 +128,6 @@ export async function logout() {
         maxAge: 0,
         path: '/'
     });
-    revalidatePath('/', 'layout');
     redirect('/login');
 }
 

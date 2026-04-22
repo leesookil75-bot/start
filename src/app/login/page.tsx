@@ -24,9 +24,8 @@ export default function LoginPage() {
             // For worker, we also force password check now.
             const result = await login(phoneNumber, password);
             if (result.success) {
-                // 모바일 환경에서의 끈질긴 캐시(뒤로가기/라우터 캐시)를 완전히 부수기 위해
-                // Next.js router.push 대신 브라우저 하드 리다이렉트를 사용합니다.
-                window.location.href = mode === 'admin' ? '/admin' : '/';
+                router.push(mode === 'admin' ? '/admin' : '/');
+                router.refresh();
             } else {
                 setError(result.error || 'Login failed');
             }
