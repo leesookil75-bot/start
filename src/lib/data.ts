@@ -376,7 +376,8 @@ export async function deleteWorkplace(id: string): Promise<void> {
 
 export async function getUserByPhone(phoneNumber: string): Promise<User | undefined> {
   const users = await getUsers();
-  return users.find(u => u.phoneNumber === phoneNumber);
+  const cleanSearch = phoneNumber.replace(/[^0-9]/g, '');
+  return users.find(u => u.phoneNumber.replace(/[^0-9]/g, '') === cleanSearch);
 }
 
 export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<void> {
