@@ -67,6 +67,8 @@ export async function getAgencies(): Promise<Agency[]> {
         console.error('Error fetching agencies:', e);
         return [];
     }
+}
+
 export async function updateAgencyDetails(id: string, name: string, contactPhone: string, planType: string, isActive: boolean): Promise<boolean> {
     if (!isPostgresEnabled()) return false;
     try {

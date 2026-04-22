@@ -129,6 +129,8 @@ export async function logout() {
         path: '/'
     });
     redirect('/login');
+}
+
 export async function updateAgencyAction(id: string, name: string, phone: string, plan: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
     if (!user || user.role !== 'super_admin') {
