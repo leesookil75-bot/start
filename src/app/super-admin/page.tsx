@@ -20,9 +20,20 @@ export default async function SuperAdminPage() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>가로청소 SaaS 마스터 대시보드</h1>
-                <Link href="/admin" style={{ padding: '0.5rem 1rem', background: '#e2e8f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
-                    일반 어드민 뷰 보기
-                </Link>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <Link href="/admin" style={{ padding: '0.5rem 1rem', background: '#e2e8f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
+                        일반 어드민 뷰 보기
+                    </Link>
+                    <form action={async () => {
+                        'use server';
+                        const { logout } = await import('../actions');
+                        await logout();
+                    }}>
+                        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#ef4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+                            로그아웃
+                        </button>
+                    </form>
+                </div>
             </header>
 
             <section>
