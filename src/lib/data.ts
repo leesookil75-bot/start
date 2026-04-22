@@ -1,6 +1,6 @@
 import path from 'path';
-import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus, Zone, Issue } from './types';
-export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus, Zone, Issue };
+import { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus, Zone, Issue, Agency } from './types';
+export type { User, UsageRecord, Notice, DailyOverride, AttendanceRecord, Workplace, LeaveRequest, LeaveStatus, Zone, Issue, Agency };
 
 import { sql } from '@vercel/postgres';
 
@@ -23,6 +23,7 @@ type UserRow = {
   wp_lng?: number;
   wp_address?: string;
   wp_radius?: number;
+  agency_id?: string;
 };
 
 
@@ -49,23 +50,60 @@ async function ensureFile(filePath: string, defaultData: unknown) {
   }
 }
 
+// --- Agency Management ---
+export async function getAgencies(): Promise<Agency[]> {
+    if (!isPostgresEnabled()) return [];
+    try {
+        const { rows } = await sql`SELECT * FROM agencies ORDER BY created_at DESC`;
+        return rows.map(r => ({
+            id: r.id,
+            name: r.name,
+            contactPhone: r.contact_phone,
+            planType: r.plan_type,
+            isActive: r.is_active,
+            createdAt: r.created_at.toString()
+        }));
+    } catch (e) {
+        console.error('Error fetching agencies:', e);
+        return [];
+    }
+}
+
+export async function createAgency(name: string, contactPhone: string, planType: string = 'basic'): Promise<Agency> {
+    if (!isPostgresEnabled()) throw new Error('Postgres not enabled');
+    const id = crypto.randomUUID();
+    await sql`
+        INSERT INTO agencies (id, name, contact_phone, plan_type)
+        VALUES (${id}, ${name}, ${contactPhone}, ${planType})
+    `;
+    return {
+        id, name, contactPhone, planType, isActive: true, createdAt: new Date().toISOString()
+    };
+}
+
 // --- User Management ---
-export async function getUsers(): Promise<User[]> {
+export async function getUsers(agencyId?: string): Promise<User[]> {
   if (isPostgresEnabled()) {
     try {
-      // Join with workplaces to get location if workplace_id is set
-      // Actually, for simplicity and to avoid complex joins if not needed, we can just fetch all and map?
-      // Or better, do a LEFT JOIN.
-      // But to keep it simple with sql template, let's just fetch users and if they have workplace_id, we might need to look it up?
-      // No, `getUsers` should return the effective location. 
-      // Let's do a JOIN.
-
-      const { rows } = await sql<UserRow & { total_leaves: number }>`
-        SELECT u.*, w.lat as wp_lat, w.lng as wp_lng, w.address as wp_address, w.radius as wp_radius
-        FROM users u
-        LEFT JOIN workplaces w ON u.workplace_id = w.id
-        ORDER BY u.created_at DESC
-      `;
+      let rows;
+      if (agencyId) {
+          const res = await sql<UserRow & { total_leaves: number }>`
+            SELECT u.*, w.lat as wp_lat, w.lng as wp_lng, w.address as wp_address, w.radius as wp_radius
+            FROM users u
+            LEFT JOIN workplaces w ON u.workplace_id = w.id
+            WHERE u.agency_id = ${agencyId}
+            ORDER BY u.created_at DESC
+          `;
+          rows = res.rows;
+      } else {
+          const res = await sql<UserRow & { total_leaves: number }>`
+            SELECT u.*, w.lat as wp_lat, w.lng as wp_lng, w.address as wp_address, w.radius as wp_radius
+            FROM users u
+            LEFT JOIN workplaces w ON u.workplace_id = w.id
+            ORDER BY u.created_at DESC
+          `;
+          rows = res.rows;
+      }
 
       return rows.map(r => ({
         id: r.id,
@@ -81,7 +119,8 @@ export async function getUsers(): Promise<User[]> {
         workLng: r.workplace_id ? r.wp_lng : r.work_lng,
         allowedRadius: r.workplace_id ? r.wp_radius : r.allowed_radius,
         workplaceId: r.workplace_id,
-        totalLeaves: r.total_leaves ?? 15 // Default to 15 if null
+        totalLeaves: r.total_leaves ?? 15, // Default to 15 if null
+        agencyId: r.agency_id
       }));
     } catch (error) {
       console.warn('Postgres error (getUsers):', error);
@@ -132,8 +171,8 @@ export async function addUser(user: Omit<User, 'id' | 'createdAt'>): Promise<Use
       const password = user.password || user.phoneNumber.slice(-4);
 
       await sql`
-        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password, workplace_id, work_address, work_lat, work_lng, allowed_radius, total_leaves)
-        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password}, ${user.workplaceId ?? null}, ${user.workAddress ?? null}, ${user.workLat ?? null}, ${user.workLng ?? null}, ${user.allowedRadius ?? null}, ${user.totalLeaves ?? 15})
+        INSERT INTO users (id, phone_number, name, cleaning_area, role, created_at, password, workplace_id, work_address, work_lat, work_lng, allowed_radius, total_leaves, agency_id)
+        VALUES (${id}, ${user.phoneNumber}, ${user.name}, ${user.cleaningArea}, ${user.role}, NOW(), ${password}, ${user.workplaceId ?? null}, ${user.workAddress ?? null}, ${user.workLat ?? null}, ${user.workLng ?? null}, ${user.allowedRadius ?? null}, ${user.totalLeaves ?? 15}, ${user.agencyId ?? null})
        `;
       // Return constructed user
       return {
@@ -197,10 +236,17 @@ const WORKPLACES_FILE_PATH = path.join(process.cwd(), 'workplaces.json');
 
 
 
-export async function getWorkplaces(): Promise<Workplace[]> {
+export async function getWorkplaces(agencyId?: string): Promise<Workplace[]> {
   if (isPostgresEnabled()) {
     try {
-      const { rows } = await sql`SELECT * FROM workplaces ORDER BY created_at DESC`;
+      let rows;
+      if (agencyId) {
+        const res = await sql`SELECT * FROM workplaces WHERE agency_id = ${agencyId} ORDER BY created_at DESC`;
+        rows = res.rows;
+      } else {
+        const res = await sql`SELECT * FROM workplaces ORDER BY created_at DESC`;
+        rows = res.rows;
+      }
       return rows.map(r => {
         let parsedSubAreas: string[] = [];
         try {
@@ -241,8 +287,8 @@ export async function addWorkplace(data: Omit<Workplace, 'id' | 'createdAt'>): P
     const dong = data.dong || '';
     const subAreasJson = JSON.stringify(data.subAreas || []);
     await sql`
-            INSERT INTO workplaces (id, name, dong, sub_areas, address, lat, lng, radius, created_at)
-            VALUES (${id}, ${data.name}, ${dong}, ${subAreasJson}, ${data.address}, ${data.lat}, ${data.lng}, ${data.radius}, NOW())
+            INSERT INTO workplaces (id, name, dong, sub_areas, address, lat, lng, radius, created_at, agency_id)
+            VALUES (${id}, ${data.name}, ${dong}, ${subAreasJson}, ${data.address}, ${data.lat}, ${data.lng}, ${data.radius}, NOW(), ${data.agencyId ?? null})
         `;
     return { ...data, id, dong, subAreas: data.subAreas || [], createdAt: new Date().toISOString() };
   }
@@ -362,10 +408,24 @@ export async function updateUser(id: string, updates: Partial<Omit<User, 'id' | 
 }
 
 // --- Usage Records ---
-export async function getRecords(): Promise<UsageRecord[]> {
+export async function getRecords(agencyId?: string): Promise<UsageRecord[]> {
   if (isPostgresEnabled()) {
     try {
-      const { rows } = await sql`SELECT * FROM usage_records ORDER BY timestamp DESC`;
+      let rows;
+      if (agencyId) {
+        // Usage records don't have agency_id directly, so we JOIN users
+        const res = await sql`
+          SELECT r.* FROM usage_records r
+          LEFT JOIN users u ON r.user_id = u.id
+          WHERE u.agency_id = ${agencyId}
+          ORDER BY r.timestamp DESC
+        `;
+        rows = res.rows;
+      } else {
+        const res = await sql`SELECT * FROM usage_records ORDER BY timestamp DESC`;
+        rows = res.rows;
+      }
+      
       return rows.map(r => ({
         id: r.id,
         size: r.size,
@@ -671,11 +731,23 @@ export async function updateUserPassword(userId: string, newPassword: string): P
 // --- Leave Requests (Vacations) ---
 const LEAVES_FILE_PATH = path.join(process.cwd(), 'leaves.json');
 
-export async function getLeaveRequests(userId?: string): Promise<LeaveRequest[]> {
+export async function getLeaveRequests(userId?: string, agencyId?: string): Promise<LeaveRequest[]> {
   if (isPostgresEnabled()) {
     try {
       const users = await getUsers();
-      const { rows: allLeaves } = await sql`SELECT * FROM leave_requests ORDER BY created_at DESC`;
+      let allLeaves;
+      if (agencyId) {
+        const { rows } = await sql`
+          SELECT r.* FROM leave_requests r
+          LEFT JOIN users u ON r.user_id = u.id
+          WHERE u.agency_id = ${agencyId}
+          ORDER BY r.created_at DESC
+        `;
+        allLeaves = rows;
+      } else {
+        const { rows } = await sql`SELECT * FROM leave_requests ORDER BY created_at DESC`;
+        allLeaves = rows;
+      }
 
       // Calculate used leaves in JS to be safe
       const usedMap: Record<string, number> = {};
@@ -824,11 +896,17 @@ export async function updateLeaveRequestStatus(id: string, status: LeaveStatus):
 
 const NOTICES_FILE_PATH = path.join(process.cwd(), 'notices.json');
 
-export async function getNotices(): Promise<Notice[]> {
+export async function getNotices(agencyId?: string): Promise<Notice[]> {
   if (isPostgresEnabled()) {
     try {
-      // Using generic/any for row type for now to avoid extensive type definitions overhead
-      const { rows } = await sql`SELECT * FROM notices ORDER BY is_pinned DESC, created_at DESC`;
+      let rows;
+      if (agencyId) {
+        const res = await sql`SELECT * FROM notices WHERE agency_id = ${agencyId} OR agency_id IS NULL ORDER BY is_pinned DESC, created_at DESC`;
+        rows = res.rows;
+      } else {
+        const res = await sql`SELECT * FROM notices ORDER BY is_pinned DESC, created_at DESC`;
+        rows = res.rows;
+      }
       return rows.map(r => ({
         id: r.id,
         title: r.title,
@@ -864,9 +942,9 @@ export async function addNotice(notice: Omit<Notice, 'id' | 'createdAt'>): Promi
   if (isPostgresEnabled()) {
     const id = crypto.randomUUID();
     await sql`
-            INSERT INTO notices (id, title, content, image_data, is_pinned, created_at, author_id)
-            VALUES (${id}, ${notice.title}, ${notice.content}, ${notice.imageData || null}, ${notice.isPinned || false}, NOW(), ${notice.authorId})
-         `;
+      INSERT INTO notices (id, title, content, image_data, is_pinned, author_id, created_at, agency_id)
+      VALUES (${id}, ${notice.title}, ${notice.content}, ${notice.imageData ?? null}, ${notice.isPinned ?? false}, ${notice.authorId}, NOW(), ${notice.agencyId ?? null})
+    `;
     return {
       ...notice,
       id,
@@ -950,10 +1028,9 @@ export async function updateNotice(id: string, updates: Partial<Notice>): Promis
 // --- Attendance ---
 const ATTENDANCE_FILE_PATH = path.join(process.cwd(), 'attendance.json');
 
-export async function getAttendanceRecords(userId?: string): Promise<AttendanceRecord[]> {
+export async function getAttendanceRecords(userId?: string, agencyId?: string): Promise<AttendanceRecord[]> {
   if (isPostgresEnabled()) {
     try {
-      let query = sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
       // If filtering by userId is needed strictly in SQL
       if (userId) {
         const { rows } = await sql`SELECT * FROM attendance_records WHERE user_id = ${userId} ORDER BY timestamp DESC`;
@@ -965,7 +1042,14 @@ export async function getAttendanceRecords(userId?: string): Promise<AttendanceR
         }));
       }
 
-      const { rows } = await sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+      let rows;
+      if (agencyId) {
+        const res = await sql`SELECT * FROM attendance_records WHERE agency_id = ${agencyId} ORDER BY timestamp DESC`;
+        rows = res.rows;
+      } else {
+        const res = await sql`SELECT * FROM attendance_records ORDER BY timestamp DESC`;
+        rows = res.rows;
+      }
       return rows.map(r => ({
         id: r.id,
         userId: r.user_id,

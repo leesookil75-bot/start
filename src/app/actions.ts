@@ -146,7 +146,7 @@ export async function createUser(data: Omit<User, 'id' | 'createdAt'>): Promise<
     }
 
     try {
-        await addNewUser(data);
+        await addNewUser({ ...data, agencyId: currentUser.agencyId });
         revalidatePath('/admin/users');
         return { success: true };
     } catch (error: any) {
@@ -249,7 +249,8 @@ export async function createNoticeAction(title: string, content: string, imageDa
             content,
             imageData,
             isPinned,
-            authorId: currentUser.id
+            authorId: currentUser.id,
+            agencyId: currentUser.agencyId
         });
         revalidatePath('/admin/notices');
         revalidatePath('/notices');
@@ -433,7 +434,9 @@ export async function getTodayUserUsage(): Promise<{ count50: number; count75: n
 }
 
 export async function getUsageStats() {
-    const records = await getRecords();
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return { stats: { count50: 0, count75: 0, total: 0 }, records: [] };
+    const records = await getRecords(currentUser.agencyId);
 
     const stats = records.reduce(
         (acc, record) => {
@@ -451,7 +454,7 @@ export async function getMyStats() {
     const user = await getCurrentUser();
     if (!user) return null;
 
-    const records = await getRecords();
+    const records = await getRecords(user.agencyId);
     const overrides = await getDailyOverrides();
     const userRecords = records.filter(r => r.userId === user.id);
     const userOverrides = overrides.filter(o => o.userId === user.id);
@@ -839,7 +842,7 @@ import {
 export async function getWorkplacesAction(): Promise<Workplace[]> {
     const currentUser = await getCurrentUser();
     if (!currentUser || currentUser.role !== 'admin') return [];
-    return await getWorkplaces();
+    return await getWorkplaces(currentUser.agencyId);
 }
 
 export async function addWorkplaceAction(data: Omit<Workplace, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> {
@@ -848,7 +851,7 @@ export async function addWorkplaceAction(data: Omit<Workplace, 'id' | 'createdAt
         return { success: false, error: 'Unauthorized' };
     }
     try {
-        await addWorkplace(data);
+        await addWorkplace({ ...data, agencyId: currentUser.agencyId });
         revalidatePath('/admin/workplaces');
         revalidatePath('/admin/users');
         return { success: true };

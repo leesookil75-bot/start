@@ -15,8 +15,8 @@ export default async function UsersPage() {
         redirect('/login');
     }
 
-    const users = await getUsers();
-    const workplaces = await getWorkplaces();
+    const users = await getUsers(currentUser.agencyId);
+    const workplaces = await getWorkplaces(currentUser.agencyId);
 
     return (
         <>

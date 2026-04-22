@@ -16,9 +16,10 @@ function getWeekNumber(d: Date): number {
 // ... (getWeekNumber)
 
 export async function getStatsByPeriod(
-    period: PeriodType
+    period: PeriodType,
+    agencyId?: string
 ): Promise<StatEntry[]> {
-    const records = await getRecords();
+    const records = await getRecords(agencyId);
     const rawData: Record<string, { count50: number; count75: number }> = {};
 
     records.forEach((record) => {
@@ -56,9 +57,9 @@ export async function getStatsByPeriod(
     }));
 }
 
-export async function getStatsByArea(): Promise<AreaStatEntry[]> {
-    const records = await getRecords();
-    const users = await getUsers();
+export async function getStatsByArea(agencyId?: string): Promise<AreaStatEntry[]> {
+    const records = await getRecords(agencyId);
+    const users = await getUsers(agencyId);
     const userMap = new Map(users.map(u => [u.id, u.cleaningArea]));
 
     const rawData: Record<string, { count50: number; count75: number }> = {};
@@ -85,9 +86,9 @@ export async function getStatsByArea(): Promise<AreaStatEntry[]> {
 }
 
 // Prepare export data
-export async function getExcelData() {
-    const records = await getRecords();
-    const users = await getUsers();
+export async function getExcelData(agencyId?: string) {
+    const records = await getRecords(agencyId);
+    const users = await getUsers(agencyId);
     const userMap = new Map(users.map(u => [u.id, u]));
 
     return records.map(r => {
@@ -104,9 +105,9 @@ export async function getExcelData() {
 
 
 
-export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
-    const records = await getRecords();
-    const users = await getUsers();
+export async function getMonthlyUserStats(agencyId?: string): Promise<MonthlyUserStat[]> {
+    const records = await getRecords(agencyId);
+    const users = await getUsers(agencyId);
 
     // Create a map to store stats for each user
     // Key: userId
@@ -167,9 +168,9 @@ export async function getMonthlyUserStats(): Promise<MonthlyUserStat[]> {
 
 
 
-export async function getDailyUserStats(year: number, month: number): Promise<DailyUserStat[]> {
-    const records = await getRecords();
-    const users = await getUsers();
+export async function getDailyUserStats(year: number, month: number, agencyId?: string): Promise<DailyUserStat[]> {
+    const records = await getRecords(agencyId);
+    const users = await getUsers(agencyId);
     const overrides = await getDailyOverrides();
 
     const statsMap = new Map<string, DailyUserStat>();

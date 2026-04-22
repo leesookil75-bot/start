@@ -5,21 +5,7 @@ import styles from './user-management.module.css';
 import { createUser, deleteUserAction, resetUserPassword, updateUserAction } from '../../actions';
 
 import { Workplace } from '@/lib/data';
-
-type User = {
-    id: string;
-    phoneNumber: string;
-    name: string;
-    cleaningArea: string;
-    role: 'admin' | 'cleaner';
-    createdAt: string;
-    workAddress?: string;
-    workLat?: number;
-    workLng?: number;
-    allowedRadius?: number;
-    workplaceId?: string; // Add workplaceId to User type locally
-    totalLeaves?: number;
-};
+import { User } from '@/lib/types';
 
 export default function UserManagement({ initialUsers, workplaces }: { initialUsers: User[], workplaces: Workplace[] }) {
     // Note: For a real app, we might want to use optimistic updates or re-fetch, 

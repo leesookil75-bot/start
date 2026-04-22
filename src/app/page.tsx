@@ -14,6 +14,9 @@ export default async function Home() {
   if (user.role === 'admin') {
     redirect('/admin');
   }
+  if (user.role === 'super_admin') {
+    redirect('/super-admin');
+  }
 
 
   const initialUsage = await getTodayUserUsage();

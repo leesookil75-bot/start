@@ -4,20 +4,7 @@ import { useState, useTransition } from 'react';
 import { createUser, deleteUserAction, resetUserPassword, updateUserAction } from '../../actions';
 import { Workplace } from '@/lib/data';
 
-type User = {
-    id: string;
-    phoneNumber: string;
-    name: string;
-    cleaningArea: string;
-    role: 'admin' | 'cleaner';
-    createdAt: string;
-    workAddress?: string;
-    workLat?: number;
-    workLng?: number;
-    allowedRadius?: number;
-    workplaceId?: string;
-    totalLeaves?: number;
-};
+import { User } from '@/lib/types';
 
 export default function MobileUserManagement({ initialUsers, workplaces }: { initialUsers: User[], workplaces: Workplace[] }) {
     const [isPending, startTransition] = useTransition();

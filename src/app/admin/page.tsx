@@ -17,8 +17,11 @@ export default async function AdminPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role === 'cleaner') {
         redirect('/login');
+    }
+    if (user.role === 'super_admin') {
+        redirect('/super-admin');
     }
 
     const { stats, records } = await getUsageStats();
@@ -39,10 +42,10 @@ export default async function AdminPage({
         monthlyUserStats,
         dailyUserStats
     ] = await Promise.all([
-        getExcelData(),
-        getNotices(),
-        getMonthlyUserStats(),
-        getDailyUserStats(queryYear, queryMonth)
+        getExcelData(user.agencyId),
+        getNotices(user.agencyId),
+        getMonthlyUserStats(user.agencyId),
+        getDailyUserStats(queryYear, queryMonth, user.agencyId)
     ]);
 
     // Fetch pending vacation requests

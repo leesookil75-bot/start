@@ -1,10 +1,18 @@
+export type Agency = {
+    id: string;
+    name: string;
+    contactPhone?: string;
+    planType?: string;
+    isActive?: boolean;
+    createdAt: string;
+};
 
 export type User = {
     id: string;
     phoneNumber: string;
     name: string;
     cleaningArea: string;
-    role: 'admin' | 'cleaner';
+    role: 'super_admin' | 'admin' | 'cleaner'; // Added super_admin
     createdAt: string;
     password?: string;
     workAddress?: string;
@@ -13,6 +21,7 @@ export type User = {
     allowedRadius?: number; // meters
     workplaceId?: string;
     totalLeaves?: number;
+    agencyId?: string; // New: Multi-Tenant Tenant ID
 };
 
 export type Workplace = {
@@ -25,6 +34,7 @@ export type Workplace = {
     lng: number;
     radius: number;
     createdAt: string;
+    agencyId?: string; // New
 };
 
 export type UsageRecord = {
@@ -50,6 +60,7 @@ export type Notice = {
     isPinned?: boolean;
     createdAt: string;
     authorId: string;
+    agencyId?: string; // New
 };
 
 export type DailyOverride = {
