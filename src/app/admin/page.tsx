@@ -48,6 +48,11 @@ export default async function AdminPage({
         getDailyUserStats(queryYear, queryMonth, user.agencyId)
     ]);
 
+    // Fetch agency name
+    const { getAgencies } = await import('@/lib/data');
+    const agencies = await getAgencies();
+    const agencyName = agencies.find(a => a.id === user.agencyId)?.name || '가로청소 본사';
+
     // Fetch pending vacation requests
     const { getVacationRequests } = await import('@/app/vacations/actions');
     const vacationResult = await getVacationRequests(true); // as admin
@@ -60,6 +65,7 @@ export default async function AdminPage({
             <div className={styles.mobileOnlyWrapper}>
                 <MobileAdminHome
                     userName={user.name}
+                    agencyName={agencyName}
                     onLogout={logout}
                 />
             </div>
@@ -67,6 +73,7 @@ export default async function AdminPage({
             {/* PC View */}
             <div className={styles.pcOnlyWrapper}>
                 <AdminDashboardClient
+                    agencyName={agencyName}
                     records={records}
                     stats={{
                         daily: [],

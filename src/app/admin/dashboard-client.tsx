@@ -38,9 +38,10 @@ interface DashboardClientProps {
     };
     excelData: any[];
     notices: Notice[];
+    agencyName?: string;
 }
 
-export default function AdminDashboardClient({ records, stats, currentDate, summaryStats, excelData, notices }: DashboardClientProps) {
+export default function AdminDashboardClient({ records, stats, currentDate, summaryStats, excelData, notices, agencyName }: DashboardClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('daily-report');
     const router = useRouter();
 
@@ -52,7 +53,7 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
     return (
         <div className={styles.dashboardContainer} style={{ marginTop: 0 }}>
             <header className={styles.header}>
-                <h1 className={styles.title}>Dashboard</h1>
+                <h1 className={styles.title}>{agencyName ? `${agencyName} Dashboard` : 'Dashboard'}</h1>
                 <div className={styles.headerActions}>
                     <Link href="/change-password" className={styles.changePasswordLink}>
                         Change Password

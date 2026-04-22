@@ -69,6 +69,17 @@ export async function getAgencies(): Promise<Agency[]> {
     }
 }
 
+export async function updateAgencyName(id: string, name: string): Promise<boolean> {
+    if (!isPostgresEnabled()) return false;
+    try {
+        await sql`UPDATE agencies SET name = ${name} WHERE id = ${id}`;
+        return true;
+    } catch (error) {
+        console.error('Failed to update agency name:', error);
+        return false;
+    }
+}
+
 export async function createAgency(name: string, contactPhone: string, planType: string = 'basic'): Promise<Agency> {
     if (!isPostgresEnabled()) throw new Error('Postgres not enabled');
     const id = crypto.randomUUID();

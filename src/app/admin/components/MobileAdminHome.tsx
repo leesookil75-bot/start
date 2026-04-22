@@ -6,10 +6,11 @@ import styles from '../admin.module.css';
 
 interface MobileAdminHomeProps {
     userName: string;
+    agencyName?: string;
     onLogout: () => void;
 }
 
-export default function MobileAdminHome({ userName, onLogout }: MobileAdminHomeProps) {
+export default function MobileAdminHome({ userName, agencyName, onLogout }: MobileAdminHomeProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -73,6 +74,9 @@ export default function MobileAdminHome({ userName, onLogout }: MobileAdminHomeP
                             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
                                 <div style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: '0.25rem' }}>현재 계정</div>
                                 <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{userName}</div>
+                                {agencyName && (
+                                    <div style={{ fontSize: '0.85rem', color: '#3b82f6', marginTop: '0.25rem' }}>소속: {agencyName}</div>
+                                )}
                             </div>
 
                             <Link href="/change-password" style={{ textDecoration: 'none' }}>

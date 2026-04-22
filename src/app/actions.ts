@@ -131,6 +131,21 @@ export async function logout() {
     redirect('/login');
 }
 
+export async function renameAgencyAction(agencyId: string, newName: string): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user || user.role !== 'super_admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+    const { updateAgencyName } = await import('@/lib/data');
+    const success = await updateAgencyName(agencyId, newName);
+    if (success) {
+        revalidatePath('/super-admin');
+        revalidatePath('/admin');
+        return { success: true };
+    }
+    return { success: false, error: 'Failed to update agency name' };
+}
+
 export async function getCurrentUser(): Promise<User | null> {
     const userId = (await cookies()).get(COOKIE_NAME)?.value;
     if (!userId) return null;
