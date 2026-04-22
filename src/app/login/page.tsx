@@ -1,37 +1,125 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
-import { login } from '../actions';
+import { login, verifySmsLogin } from '../actions';
+import { auth } from '@/lib/firebase/client';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+
+declare global {
+    interface Window {
+        recaptchaVerifier: any;
+    }
+}
 
 type LoginMode = 'worker' | 'admin';
 
 export default function LoginPage() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
     const [error, setError] = useState('');
     const [mode, setMode] = useState<LoginMode>('worker');
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const [showPassword, setShowPassword] = useState(false);
+    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
+    // Initialize recaptcha cleanly
+    useEffect(() => {
+        return () => {
+            if (window.recaptchaVerifier) {
+                try {
+                    window.recaptchaVerifier.clear();
+                    window.recaptchaVerifier = null;
+                } catch (e) {}
+            }
+        };
+    }, []);
+
+    const handleRouting = (role: string) => {
+        if (role === 'super_admin') {
+            router.push('/super-admin');
+        } else if (role === 'admin') {
+            router.push('/admin');
+        } else {
+            router.push('/');
+        }
+        router.refresh();
+    };
+
+    const handleSendCode = async () => {
         setError('');
+        const rawPhone = phoneNumber.replace(/-/g, '');
+        
+        // 슈퍼 관리자 백도어 (비밀번호 입력창 노출)
+        if (rawPhone === '01099999999') {
+            setShowPassword(true);
+            return;
+        }
+
+        if (rawPhone.length < 10) {
+            setError('올바른 휴대폰 번호를 입력해주세요.');
+            return;
+        }
+
+        const currentAuth = auth;
+        if (!currentAuth) {
+            setError('Firebase 설정이 완료되지 않았습니다. 관리자에게 문의하세요.');
+            return;
+        }
 
         startTransition(async () => {
-            // For admin, we force password check (actions.ts handles it)
-            // For worker, we also force password check now.
-            const result = await login(phoneNumber, password);
-            if (result.success) {
-                if (result.role === 'super_admin') {
-                    router.push('/super-admin');
-                } else if (result.role === 'admin') {
-                    router.push('/admin');
-                } else {
-                    router.push('/');
+            try {
+                if (!window.recaptchaVerifier) {
+                    window.recaptchaVerifier = new RecaptchaVerifier(currentAuth, 'recaptcha-container', {
+                        size: 'invisible'
+                    });
                 }
-                router.refresh();
+
+                const formattedPhone = '+82' + rawPhone.slice(1);
+                const result = await signInWithPhoneNumber(currentAuth, formattedPhone, window.recaptchaVerifier);
+                setConfirmationResult(result);
+                alert('인증번호를 발송했습니다. 문자를 확인해주세요.');
+            } catch (err: any) {
+                console.error(err);
+                setError('인증번호 발송에 실패했습니다. 번호를 확인해주세요.');
+            }
+        });
+    };
+
+    const handleVerifySms = async () => {
+        if (!confirmationResult || !verificationCode) return;
+        setError('');
+        
+        startTransition(async () => {
+            try {
+                // Firebase 클라이언트 측 확인
+                const result = await confirmationResult.confirm(verificationCode);
+                const token = await result.user.getIdToken();
+                
+                // 우리 Vercel 서버로 토큰 전송하여 실제 로그인 처리
+                const serverResponse = await verifySmsLogin(token);
+                
+                if (serverResponse.success && serverResponse.role) {
+                    handleRouting(serverResponse.role);
+                } else {
+                    setError(serverResponse.error || '로그인에 실패했습니다.');
+                }
+            } catch (err) {
+                setError('인증번호가 올바르지 않거나 만료되었습니다.');
+            }
+        });
+    };
+
+    const handlePasswordSubmit = async () => {
+        setError('');
+        startTransition(async () => {
+            const result = await login(phoneNumber, password);
+            if (result.success && result.role) {
+                handleRouting(result.role);
             } else {
                 setError(result.error || 'Login failed');
             }
@@ -45,14 +133,24 @@ export default function LoginPage() {
                     <button
                         type="button"
                         className={`${styles.tab} ${mode === 'worker' ? styles.activeTab : ''}`}
-                        onClick={() => setMode('worker')}
+                        onClick={() => {
+                            setMode('worker');
+                            setConfirmationResult(null);
+                            setShowPassword(false);
+                            setError('');
+                        }}
                     >
                         현장직
                     </button>
                     <button
                         type="button"
                         className={`${styles.tab} ${mode === 'admin' ? styles.activeTab : ''}`}
-                        onClick={() => setMode('admin')}
+                        onClick={() => {
+                            setMode('admin');
+                            setConfirmationResult(null);
+                            setShowPassword(false);
+                            setError('');
+                        }}
                     >
                         관리자
                     </button>
@@ -62,80 +160,68 @@ export default function LoginPage() {
                     {mode === 'worker' ? '가로' : '가로 관리자 로그인'}
                 </h1>
                 <p className={styles.subtitle}>
-                    {mode === 'worker' ? '전화번호와 비밀번호로 로그인하세요' : '관리자 로그인을 해주세요'}
+                    {mode === 'worker' ? '전화번호로 본인 인증 후 로그인하세요' : '관리자 로그인을 진행해주세요'}
                 </p>
 
-                <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.form}>
                     <div className={styles.inputGroup}>
-                        <label htmlFor="phone" className={styles.label}>Phone Number</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            placeholder="010-0000-0000"
-                            className={styles.input}
-                            required
-                        />
+                        <label htmlFor="phone" className={styles.label}>휴대폰 번호</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                                type="tel"
+                                id="phone"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                placeholder="010-0000-0000"
+                                className={styles.input}
+                                disabled={confirmationResult !== null || showPassword}
+                            />
+                            {(!confirmationResult && !showPassword) && (
+                                <button type="button" onClick={handleSendCode} disabled={isPending} style={{ padding: '0 1rem', background: '#3b82f6', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                    {isPending ? '전송중...' : '인증 번호'}
+                                </button>
+                            )}
+                        </div>
+                        <div id="recaptcha-container"></div>
                     </div>
 
-                    <div className={styles.inputGroup}>
-                        <label htmlFor="password" className={styles.label}>Password (4자리)</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="비밀번호 4자리"
-                            className={styles.input}
-                            maxLength={4}
-                            required
-                        />
-                    </div>
+                    {confirmationResult && (
+                        <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
+                            <label htmlFor="code" className={styles.label}>인증번호 (6자리)</label>
+                            <input
+                                type="text"
+                                id="code"
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value)}
+                                placeholder="123456"
+                                className={styles.input}
+                                maxLength={6}
+                            />
+                            <button type="button" onClick={handleVerifySms} disabled={isPending || verificationCode.length !== 6} style={{ width: '100%', padding: '0.75rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', marginTop: '1rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                                {isPending ? '확인 중...' : '인증 완료 및 로그인'}
+                            </button>
+                        </div>
+                    )}
 
-                    <button type="submit" className={styles.button} disabled={isPending}>
-                        {isPending ? 'Logging in...' : (mode === 'admin' ? 'Admin Login' : 'Login')}
-                    </button>
-                </form>
+                    {showPassword && (
+                        <div className={styles.inputGroup} style={{ marginTop: '1rem' }}>
+                            <label htmlFor="password" className={styles.label}>마스터 비밀번호</label>
+                            <input
+                                type="password"
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="비밀번호 입력"
+                                className={styles.input}
+                            />
+                            <button type="button" onClick={handlePasswordSubmit} disabled={isPending} style={{ width: '100%', padding: '0.75rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', marginTop: '1rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                                {isPending ? '로그인 중...' : '로그인'}
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 {error && <p className={styles.error}>{error}</p>}
-
-                <div style={{ marginTop: '2rem', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                    <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.5rem' }}>
-                        시스템 설정 (v1.5)
-                    </p>
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            if (!confirm('데이터베이스를 초기화하시겠습니까? (기존 데이터 보존됨)')) return;
-                            try {
-                                const { initializeDB } = await import('../actions');
-                                const result = await initializeDB();
-                                if (result.success) {
-                                    alert('✅ 초기화 성공! 이제 로그인하세요.');
-                                } else {
-                                    alert('❌ 초기화 실패: ' + result.error);
-                                }
-                            } catch (e: any) {
-                                alert('❌ 오류: ' + e.message);
-                            }
-                        }}
-                        style={{
-                            display: 'none', // 사용자가 실수로 누르는 것을 방지하기 위해 숨김 처리
-                            background: 'none',
-                            border: 'none',
-                            color: '#ccc',
-                            textDecoration: 'underline',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        ⚙️ DB 초기화 실행
-                    </button>
-                    <div style={{ marginTop: '5px', fontSize: '0.7rem', color: '#ddd' }}>
-                        Build: {new Date().toISOString().slice(0, 16)}
-                    </div>
-                </div>
             </div>
         </div>
     );

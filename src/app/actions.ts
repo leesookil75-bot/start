@@ -50,6 +50,46 @@ export async function login(phoneNumber: string, password?: string): Promise<{ s
     return { success: true, role: user.role };
 }
 
+export async function verifySmsLogin(idToken: string): Promise<{ success: boolean; error?: string; role?: string }> {
+    try {
+        const { verifyIdToken } = await import('@/lib/firebase/server');
+        const decodedToken = await verifyIdToken(idToken);
+        
+        let phoneNumber = decodedToken.phone_number;
+        if (!phoneNumber) {
+             return { success: false, error: '전화번호 인증 정보가 없습니다.' };
+        }
+
+        // Firebase returns E.164 format e.g. +821012345678. We need to convert it to 010-1234-5678 or whatever our DB uses.
+        if (phoneNumber.startsWith('+82')) {
+            phoneNumber = '0' + phoneNumber.slice(3); // e.g. 01012345678
+            // Add dashes if necessary: 010-1234-5678
+            if (phoneNumber.length === 11) {
+                phoneNumber = `${phoneNumber.slice(0,3)}-${phoneNumber.slice(3,7)}-${phoneNumber.slice(7)}`;
+            } else if (phoneNumber.length === 10) {
+                phoneNumber = `${phoneNumber.slice(0,3)}-${phoneNumber.slice(3,6)}-${phoneNumber.slice(6)}`;
+            }
+        }
+
+        const user = await getUserByPhone(phoneNumber);
+        if (!user) {
+            return { success: false, error: '등록되지 않은 사용자입니다.' };
+        }
+
+        // Set cookie
+        (await cookies()).set(COOKIE_NAME, user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 * 365, // 1년 (모바일 웹뷰 오버플로우 방지)
+            path: '/',
+        });
+
+        return { success: true, role: user.role };
+    } catch (e: any) {
+        return { success: false, error: e.message || '인증 오류가 발생했습니다.' };
+    }
+}
+
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
     if (!currentUser) {
