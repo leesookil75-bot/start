@@ -23,6 +23,23 @@ export default async function Home() {
   const stats = await getMyStats();
   const attendanceStatus = await getMyDailyAttendanceStatus();
 
+  // Fetch today's safety training
+  const today = new Date().toISOString().split('T')[0];
+  const { sql } = await import('@vercel/postgres');
+  const { rows: safetyTrainings } = await sql`
+      SELECT id, title, lat, lng FROM safety_trainings WHERE date = ${today} LIMIT 1
+  `;
+  const activeSafetyTraining = safetyTrainings.length > 0 ? safetyTrainings[0] : null;
+
+  // Check if user already signed
+  let hasSignedSafetyTraining = false;
+  if (activeSafetyTraining) {
+      const { rows: signRows } = await sql`
+          SELECT id FROM safety_signatures WHERE training_id = ${activeSafetyTraining.id} AND user_id = ${user.id}
+      `;
+      hasSignedSafetyTraining = signRows.length > 0;
+  }
+
   // Get recent notices
   const { getNotices } = await import('@/lib/data');
   const notices = await getNotices();
@@ -38,7 +55,10 @@ export default async function Home() {
         stats={stats}
         recentNotice={recentNotice}
         attendanceStatus={attendanceStatus}
+        activeSafetyTraining={activeSafetyTraining}
+        hasSignedSafetyTraining={hasSignedSafetyTraining}
         user={{
+          id: user.id,
           name: user.name,
           cleaningArea: user.cleaningArea,
           role: user.role

@@ -9,6 +9,7 @@ import MyStatsEditCalendar from './components/MyStatsEditCalendar';
 import InstallPrompt from '@/components/InstallPrompt';
 import Link from 'next/link';
 import { logout } from './actions';
+import SafetySignatureModal from './components/SafetySignatureModal';
 
 interface ClientHomeProps {
     initialUsage: { count50: number; count75: number };
@@ -22,16 +23,24 @@ interface ClientHomeProps {
         startTime?: string;
         endTime?: string;
     };
+    activeSafetyTraining?: {
+        id: string;
+        title: string;
+    } | null;
+    hasSignedSafetyTraining?: boolean;
     user: {
+        id: string;
         name: string;
         cleaningArea: string;
         role: string;
     };
 }
 
-export default function ClientHome({ initialUsage, stats, attendanceStatus, user, recentNotice }: ClientHomeProps) {
+export default function ClientHome({ initialUsage, stats, attendanceStatus, activeSafetyTraining, hasSignedSafetyTraining: initialHasSigned, user, recentNotice }: ClientHomeProps) {
     // 0 = Usage, 1 = Stats, 2 = Edit Calendar
     const [activeIndex, setActiveIndex] = useState(0);
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
+    const [hasSignedSafetyTraining, setHasSignedSafetyTraining] = useState(initialHasSigned);
 
     // --- Usage Logic ---
     const [isPending, startTransition] = useTransition();
@@ -207,6 +216,33 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                     {renderAttendanceButton()}
                 </div>
 
+                {/* Safety Training Banner */}
+                {activeSafetyTraining && !hasSignedSafetyTraining && (
+                    <div className={styles.noticeContainer} style={{ marginBottom: '16px' }}>
+                        <button 
+                            onClick={() => setShowSignatureModal(true)}
+                            style={{
+                                width: '100%',
+                                padding: '20px',
+                                backgroundColor: '#e53e3e',
+                                color: 'white',
+                                borderRadius: '16px',
+                                border: 'none',
+                                fontSize: '1.2rem',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '12px',
+                                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+                            오늘 안전교육 서명하기
+                        </button>
+                    </div>
+                )}
+
                 {recentNotice && (
                     <div className={styles.noticeContainer}>
                         <Link href={`/notices/${recentNotice.id}`} className={styles.noticeBanner}>
@@ -308,6 +344,21 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, user
                     </div>
                 </div>
             </div>
+
+            {/* Signature Modal */}
+            {showSignatureModal && activeSafetyTraining && (
+                <SafetySignatureModal
+                    trainingId={activeSafetyTraining.id}
+                    trainingTitle={activeSafetyTraining.title}
+                    userId={user.id}
+                    onClose={() => setShowSignatureModal(false)}
+                    onSuccess={() => {
+                        setShowSignatureModal(false);
+                        setHasSignedSafetyTraining(true);
+                        alert('안전교육 출석이 완료되었습니다!');
+                    }}
+                />
+            )}
         </div>
     );
 }

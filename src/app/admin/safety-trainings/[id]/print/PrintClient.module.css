@@ -1,0 +1,78 @@
+.printContainer {
+    min-height: 100vh;
+    background-color: #e2e8f0;
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+}
+
+.document {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 20mm;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+.docTitle {
+    text-align: center;
+    font-size: 24pt;
+    font-weight: bold;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+
+.subTitle {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 30px;
+    margin-bottom: 10px;
+}
+
+.infoTable, .signatureTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.th, .td {
+    border: 1px solid #000;
+    padding: 10px;
+    font-size: 11pt;
+}
+
+.th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    text-align: center;
+}
+
+.footer {
+    margin-top: 50px;
+    text-align: center;
+    font-size: 14pt;
+    font-weight: bold;
+}
+
+@media print {
+    .noPrint {
+        display: none !important;
+    }
+    
+    .printContainer {
+        background-color: white;
+    }
+
+    .document {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
+    .th {
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

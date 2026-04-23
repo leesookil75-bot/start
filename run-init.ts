@@ -1,12 +1,14 @@
-import { loadEnvConfig } from '@next/env';
-loadEnvConfig(process.cwd());
+import { config } from 'dotenv';
+import { resolve } from 'path';
 
-import { initializeDB } from './src/lib/db-init';
+config({ path: resolve(process.cwd(), '.env.local') });
 
-async function main() {
-  console.log('Running DB Init...');
-  const res = await initializeDB();
-  console.log('Result:', res);
-}
+import { initializeDB } from './src/lib/db-init.ts';
 
-main().catch(console.error);
+initializeDB().then(res => {
+  console.log('Init DB Result:', res);
+  process.exit(0);
+}).catch(err => {
+  console.error('Error:', err);
+  process.exit(1);
+});

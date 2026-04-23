@@ -120,6 +120,31 @@ export async function initializeDB() {
             );
         `;
 
+        await sql`
+            CREATE TABLE IF NOT EXISTS safety_trainings (
+                id UUID PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                date VARCHAR(20) NOT NULL,
+                lat DOUBLE PRECISION NOT NULL,
+                lng DOUBLE PRECISION NOT NULL,
+                instructor VARCHAR(255) DEFAULT '관리자',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        await sql`
+            CREATE TABLE IF NOT EXISTS safety_signatures (
+                id UUID PRIMARY KEY,
+                training_id UUID REFERENCES safety_trainings(id),
+                user_id UUID REFERENCES users(id),
+                signature_data TEXT NOT NULL,
+                lat DOUBLE PRECISION,
+                lng DOUBLE PRECISION,
+                distance_m INTEGER,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS workplace_id UUID REFERENCES workplaces(id);`;
 
 

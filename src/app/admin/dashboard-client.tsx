@@ -62,6 +62,9 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                     <Link href="/admin/users" className={styles.backLink}>
                         Manage Users
                     </Link>
+                    <Link href="/admin/safety-trainings" className={styles.backLink} style={{ background: '#3182ce', color: 'white' }}>
+                        안전교육 관리
+                    </Link>
                     <form action={logout}>
                         <button type="submit" onClick={() => {
                             document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
