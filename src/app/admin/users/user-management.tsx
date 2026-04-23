@@ -236,7 +236,7 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                                                 >
                                                     수정
                                                 </button>
-                                                {user.role === 'cleaner' && (
+                                                {(user.role === 'cleaner' || user.role === 'super_admin') && (
                                                     <>
                                                         <button
                                                             className={styles.resetButton}
@@ -259,7 +259,13 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                                                         </button>
                                                         <button
                                                             className={styles.deleteButton}
-                                                            onClick={() => handleDelete(user.id)}
+                                                            onClick={() => {
+    if (user.role === 'super_admin') {
+        alert("알 수 없는 오류가 발생했습니다. (보호된 계정)");
+        return;
+    }
+    handleDelete(user.id);
+}}
                                                             disabled={isPending}
                                                         >
                                                             삭제

@@ -78,17 +78,29 @@ export default function MobileUserManagement({ initialUsers, workplaces }: { ini
                                 </div>
                             </div>
 
-                            {user.role === 'cleaner' && (
+                            {(user.role === 'cleaner' || user.role === 'super_admin') && (
                                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                                     <button
-                                        onClick={() => handleResetPassword(user)}
+                                        onClick={() => {
+    if (user.role === 'super_admin') {
+        alert("알 수 없는 오류가 발생했습니다. (보호된 계정)");
+        return;
+    }
+    handleResetPassword(user);
+}}
                                         disabled={isPending}
                                         style={{ flex: 1, padding: '0.6rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}
                                     >
                                         비번 초기화
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(user.id, user.name)}
+                                        onClick={() => {
+    if (user.role === 'super_admin') {
+        alert("알 수 없는 오류가 발생했습니다. (보호된 계정)");
+        return;
+    }
+    handleDelete(user.id, user.name);
+}}
                                         disabled={isPending}
                                         style={{ flex: 1, padding: '0.6rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}
                                     >
