@@ -1237,3 +1237,9 @@ export async function deleteZoneGroupAction(workerId: string, groupName: string)
 export async function getMapboxTokenAction(): Promise<string> {
     return process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env[' NEXT_PUBLIC_MAPBOX_TOKEN'] || process.env.MAPBOX_TOKEN || '';
 }
+
+export async function switchViewMode(mode: 'worker' | 'admin' | 'super_admin') {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    cookieStore.set('view_mode', mode, { path: '/' });
+}

@@ -17,11 +17,18 @@ export default async function AdminPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const user = await getCurrentUser();
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const viewMode = cookieStore.get('view_mode')?.value;
+
     if (!user || user.role === 'cleaner') {
         redirect('/login');
     }
-    if (user.role === 'super_admin') {
+    if (user.role === 'super_admin' && viewMode !== 'admin') {
         redirect('/super-admin');
+    }
+    if (viewMode === 'worker') {
+        redirect('/');
     }
 
     const { stats, records } = await getUsageStats();

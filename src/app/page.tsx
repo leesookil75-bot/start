@@ -10,11 +10,15 @@ export default async function Home() {
     redirect('/login');
   }
 
-  // If user is admin, redirect to admin dashboard immediately
-  if (user.role === 'admin') {
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  const viewMode = cookieStore.get('view_mode')?.value;
+
+  // If user is admin or super_admin, respect viewMode
+  if (user.role === 'admin' && viewMode !== 'worker') {
     redirect('/admin');
   }
-  if (user.role === 'super_admin') {
+  if (user.role === 'super_admin' && viewMode !== 'worker') {
     redirect('/super-admin');
   }
 

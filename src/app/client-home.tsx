@@ -8,8 +8,9 @@ import MyStatsView from './components/MyStatsView';
 import MyStatsEditCalendar from './components/MyStatsEditCalendar';
 import InstallPrompt from '@/components/InstallPrompt';
 import Link from 'next/link';
-import { logout } from './actions';
+import { logout, switchViewMode } from './actions';
 import SafetySignatureModal from './components/SafetySignatureModal';
+import { useRouter } from 'next/navigation';
 
 interface ClientHomeProps {
     initialUsage: { count50: number; count75: number };
@@ -37,10 +38,17 @@ interface ClientHomeProps {
 }
 
 export default function ClientHome({ initialUsage, stats, attendanceStatus, activeSafetyTraining, hasSignedSafetyTraining: initialHasSigned, user, recentNotice }: ClientHomeProps) {
+    const router = useRouter();
     // 0 = Usage, 1 = Stats, 2 = Edit Calendar
     const [activeIndex, setActiveIndex] = useState(0);
     const [showSignatureModal, setShowSignatureModal] = useState(false);
     const [hasSignedSafetyTraining, setHasSignedSafetyTraining] = useState(initialHasSigned);
+
+    const handleSwitchToAdmin = async () => {
+        const mode = user.role === 'super_admin' ? 'super_admin' : 'admin';
+        await switchViewMode(mode);
+        window.location.href = mode === 'super_admin' ? '/super-admin' : '/admin';
+    };
 
     // --- Usage Logic ---
     const [isPending, startTransition] = useTransition();
@@ -169,6 +177,11 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                     <Link href="/change-password" className={styles.sidebarNavItem}>
                         🔒 비밀번호 변경
                     </Link>
+                    {(user.role === 'admin' || user.role === 'super_admin') && (
+                        <button onClick={handleSwitchToAdmin} className={styles.sidebarNavItem} style={{ color: '#3182ce', fontWeight: 'bold' }}>
+                            🔄 관리자 모드로 돌아가기
+                        </button>
+                    )}
                     <form action={logout}>
                         <button type="submit" onClick={() => {
                             document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -201,6 +214,11 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                         <Link href="/change-password" className={styles.iconLink} aria-label="비밀번호 변경">
                             <KeyIcon />
                         </Link>
+                        {(user.role === 'admin' || user.role === 'super_admin') && (
+                            <button onClick={handleSwitchToAdmin} className={styles.iconButton} aria-label="관리자 모드">
+                                🔄
+                            </button>
+                        )}
                         <form action={logout}>
                             <button type="submit" onClick={() => {
                                 document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

@@ -5,7 +5,7 @@ import styles from './admin.module.css';
 import ExcelDownloadBtn from './components/ExcelDownloadBtn';
 import { NoticeForm, NoticeList, Notice } from './notices/client';
 import Link from 'next/link';
-import { logout } from '../actions';
+import { logout, switchViewMode } from '../actions';
 import { useRouter } from 'next/navigation';
 
 import { MonthlyUserStat, DailyUserStat } from '@/lib/types';
@@ -65,6 +65,16 @@ export default function AdminDashboardClient({ records, stats, currentDate, summ
                     <Link href="/admin/safety-trainings" className={styles.backLink} style={{ background: '#3182ce', color: 'white' }}>
                         안전교육 관리
                     </Link>
+                    <button 
+                        onClick={async () => {
+                            await switchViewMode('worker');
+                            window.location.href = '/';
+                        }} 
+                        className={styles.backLink} 
+                        style={{ background: '#48bb78', color: 'white', border: 'none', cursor: 'pointer' }}
+                    >
+                        📱 앱 화면(근로자) 보기
+                    </button>
                     <form action={logout}>
                         <button type="submit" onClick={() => {
                             document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
