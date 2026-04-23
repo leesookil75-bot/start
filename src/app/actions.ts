@@ -1251,6 +1251,8 @@ export async function getMapboxTokenAction(): Promise<string> {
 
 export async function switchViewMode(mode: 'worker' | 'admin' | 'super_admin') {
     const { cookies } = await import('next/headers');
+    const { revalidatePath } = await import('next/cache');
     const cookieStore = await cookies();
     cookieStore.set('view_mode', mode, { path: '/' });
+    revalidatePath('/', 'layout');
 }

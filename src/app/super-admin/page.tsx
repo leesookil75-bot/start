@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import AgencyList from './AgencyList';
 import Link from 'next/link';
 import LogoutButton from './LogoutButton';
+import RoleSwitchButtons from './RoleSwitchButtons';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,26 +37,7 @@ export default async function SuperAdminPage() {
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>가로청소 SaaS 마스터 대시보드</h1>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <form action={async () => {
-                        "use server";
-                        const { switchViewMode } = await import('../actions');
-                        await switchViewMode('admin');
-                        redirect('/admin');
-                    }}>
-                        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#e2e8f0', borderRadius: '8px', border: 'none', cursor: 'pointer', color: '#333', fontWeight: 'bold' }}>
-                            🏢 일반 관리자 뷰
-                        </button>
-                    </form>
-                    <form action={async () => {
-                        "use server";
-                        const { switchViewMode } = await import('../actions');
-                        await switchViewMode('worker');
-                        redirect('/');
-                    }}>
-                        <button type="submit" style={{ padding: '0.5rem 1rem', background: '#48bb78', borderRadius: '8px', border: 'none', cursor: 'pointer', color: 'white', fontWeight: 'bold' }}>
-                            📱 앱 화면(근로자) 뷰
-                        </button>
-                    </form>
+                    <RoleSwitchButtons />
                     <LogoutButton />
                 </div>
             </header>
