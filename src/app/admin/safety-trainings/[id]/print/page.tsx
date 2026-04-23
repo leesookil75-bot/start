@@ -3,12 +3,13 @@ import { getCurrentUser } from '@/app/actions';
 import { redirect } from 'next/navigation';
 import PrintClient from './PrintClient';
 
-export default async function PrintSafetyTrainingPage({ params }: { params: { id: string } }) {
+export default async function PrintSafetyTrainingPage(props: { params: Promise<{ id: string }> }) {
     const user = await getCurrentUser();
     if (!user || user.role !== 'admin') {
         redirect('/login');
     }
 
+    const params = await props.params;
     const id = params.id;
 
     // Fetch training

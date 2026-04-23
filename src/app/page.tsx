@@ -29,7 +29,7 @@ export default async function Home() {
   const { rows: safetyTrainings } = await sql`
       SELECT id, title, lat, lng FROM safety_trainings WHERE date = ${today} LIMIT 1
   `;
-  const activeSafetyTraining = safetyTrainings.length > 0 ? safetyTrainings[0] : null;
+  const activeSafetyTraining = safetyTrainings.length > 0 ? (safetyTrainings[0] as { id: string; title: string; lat: number; lng: number }) : null;
 
   // Check if user already signed
   let hasSignedSafetyTraining = false;
