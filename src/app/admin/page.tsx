@@ -73,6 +73,7 @@ export default async function AdminPage({
                 <MobileAdminHome
                     userName={user.name}
                     agencyName={agencyName}
+                    userRole={user.role}
                     onLogout={logout}
                 />
             </div>

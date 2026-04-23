@@ -38,10 +38,10 @@ interface DashboardClientProps {
     };
     excelData: any[];
     notices: Notice[];
-    agencyName?: string;
+    agencyName?: string;\n    userRole?: string;
 }
 
-export default function AdminDashboardClient({ records, stats, currentDate, summaryStats, excelData, notices, agencyName }: DashboardClientProps) {
+export default function AdminDashboardClient({ records, stats, currentDate, summaryStats, excelData, notices, agencyName, userRole }: DashboardClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>('daily-report');
     const router = useRouter();
 

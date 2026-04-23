@@ -6,11 +6,11 @@ import styles from '../admin.module.css';
 
 interface MobileAdminHomeProps {
     userName: string;
-    agencyName?: string;
+    agencyName?: string;\n    userRole?: string;
     onLogout: () => void;
 }
 
-export default function MobileAdminHome({ userName, agencyName, onLogout }: MobileAdminHomeProps) {
+export default function MobileAdminHome({ userName, agencyName, userRole, onLogout }: MobileAdminHomeProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -85,6 +85,15 @@ export default function MobileAdminHome({ userName, agencyName, onLogout }: Mobi
                                 </button>
                             </Link>
 
+                            
+                            {userRole === 'super_admin' && (
+                                <button onClick={() => {
+                                    document.cookie = "view_mode=super_admin; path=/";
+                                    window.location.href = '/super-admin?v=' + Date.now();
+                                }} style={{ width: '100%', padding: '1rem', background: '#e2e8f0', color: '#333', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                                    👑 마스터 대시보드로 복귀
+                                </button>
+                            )}
                             <button onClick={async () => {
                                 document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                                 await onLogout();
