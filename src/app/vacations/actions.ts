@@ -37,7 +37,7 @@ export async function getVacationRequests(isAdmin: boolean = false): Promise<{ s
         return { success: false, error: 'Unauthorized' };
     }
 
-    if (isAdmin && user.role !== 'admin') {
+    if (isAdmin && (user.role !== 'admin' && user.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -81,7 +81,7 @@ export async function getMyLeaveStatus(): Promise<{ success: boolean; data?: { t
 
 export async function processVacationRequest(id: string, approved: boolean): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 

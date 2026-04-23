@@ -212,7 +212,7 @@ export async function createUser(data: Omit<User, 'id' | 'createdAt'>): Promise<
     // Check auth - only admin logic could be added here, but for now we trust the caller (or add checks)
     // For better security, we should check if currentUser.role === 'admin'
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -227,7 +227,7 @@ export async function createUser(data: Omit<User, 'id' | 'createdAt'>): Promise<
 
 export async function deleteUserAction(userId: string): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -278,7 +278,7 @@ export async function deleteAgencyAdminAction(userId: string): Promise<{ success
 }
 export async function resetUserPassword(userId: string): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -311,7 +311,7 @@ export async function resetUserPassword(userId: string): Promise<{ success: bool
 
 export async function updateUserAction(id: string, updates: Partial<User>): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -326,7 +326,7 @@ export async function updateUserAction(id: string, updates: Partial<User>): Prom
 
 export async function cleanupOrphanedRecordsAction(): Promise<{ success: boolean; count?: number; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -346,7 +346,7 @@ import { addNotice, deleteNotice as removeNotice, updateNotice } from '@/lib/dat
 
 export async function createNoticeAction(title: string, content: string, imageData?: string, isPinned: boolean = false): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -371,7 +371,7 @@ export async function createNoticeAction(title: string, content: string, imageDa
 
 export async function deleteNoticeAction(id: string): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -388,7 +388,7 @@ export async function deleteNoticeAction(id: string): Promise<{ success: boolean
 
 export async function updateNoticeAction(id: string, title: string, content: string, imageData?: string, isPinned?: boolean): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -741,7 +741,7 @@ export async function getMyAttendanceAction() {
 
 export async function getAllAttendanceStatusAction() {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') return [];
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) return [];
 
     const users = await getUsers();
     const records = await getAttendanceRecords();
@@ -791,7 +791,7 @@ import { updateAttendanceRecord, deleteAttendanceRecord } from '@/lib/data';
 
 export async function getMonthlyAttendanceAction(year: number, month: number) {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') return { users: [], records: [] };
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) return { users: [], records: [] };
 
     // Calculate start and end of month in KST (or UTC equivalent)
     // We want all records that fall within the month in KST.
@@ -824,7 +824,7 @@ export async function updateAttendanceRecordAction(
     data: { id?: string, userId?: string, type?: 'CHECK_IN' | 'CHECK_OUT', timestamp?: string }
 ): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -870,7 +870,7 @@ export async function upsertDailyAttendanceAction(
     checkOutTime: string | null // HH:mm
 ): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
 
@@ -948,13 +948,13 @@ import {
 
 export async function getWorkplacesAction(): Promise<Workplace[]> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') return [];
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) return [];
     return await getWorkplaces(currentUser.agencyId);
 }
 
 export async function addWorkplaceAction(data: Omit<Workplace, 'id' | 'createdAt'>): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
     try {
@@ -969,7 +969,7 @@ export async function addWorkplaceAction(data: Omit<Workplace, 'id' | 'createdAt
 
 export async function updateWorkplaceAction(id: string, updates: Partial<Workplace>): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
     try {
@@ -984,7 +984,7 @@ export async function updateWorkplaceAction(id: string, updates: Partial<Workpla
 
 export async function deleteWorkplaceAction(id: string): Promise<{ success: boolean; error?: string }> {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         return { success: false, error: 'Unauthorized' };
     }
     try {
@@ -1101,7 +1101,7 @@ export async function addZoneAction(zone: Omit<Zone, 'workerName' | 'createdAt'>
     
     // Allow admins to create zones for anyone.
     // Allow workers to only create zones for themselves.
-    if (user.role !== 'admin' && zone.workerId !== user.id) {
+    if ((user.role !== 'admin' && user.role !== 'super_admin') && zone.workerId !== user.id) {
         return { success: false, error: 'Unauthorized: cannot create zone for another worker' };
     }
     
@@ -1201,7 +1201,7 @@ export async function updateIssuePhotoAndStatusAction(id: string, photoUrl: stri
 
 export async function closeIssueAction(id: string): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return { success: false, error: 'Unauthorized' };
     
     try {
         await closeIssue(id);
@@ -1214,7 +1214,7 @@ export async function closeIssueAction(id: string): Promise<{ success: boolean; 
 
 export async function deleteIssueAction(id: string): Promise<{ success: boolean; error?: string }> {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') return { success: false, error: 'Unauthorized' };
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return { success: false, error: 'Unauthorized' };
     
     try {
         await deleteIssue(id);
