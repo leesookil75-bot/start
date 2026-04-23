@@ -40,14 +40,17 @@ export default function LoginPage() {
     }, []);
 
     const handleRouting = (role: string) => {
+        // 클라이언트 캐시(Client Cache)로 인한 이전 화면 표시 방지를 위해 window.location.href 사용
+        // 로그인 성공 시 무조건 view_mode 초기화 (프론트엔드에서도 확실하게)
+        document.cookie = "view_mode=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        
         if (role === 'super_admin') {
-            router.push('/super-admin');
+            window.location.href = '/super-admin';
         } else if (role === 'admin') {
-            router.push('/admin');
+            window.location.href = '/admin';
         } else {
-            router.push('/');
+            window.location.href = '/';
         }
-        router.refresh();
     };
 
     const handleSendCode = async () => {
