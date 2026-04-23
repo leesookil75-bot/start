@@ -38,7 +38,8 @@ interface DashboardClientProps {
     };
     excelData: any[];
     notices: Notice[];
-    agencyName?: string;\n    userRole?: string;
+    agencyName?: string;
+    userRole?: string;
 }
 
 export default function AdminDashboardClient({ records, stats, currentDate, summaryStats, excelData, notices, agencyName, userRole }: DashboardClientProps) {

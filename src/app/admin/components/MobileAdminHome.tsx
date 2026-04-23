@@ -6,7 +6,8 @@ import styles from '../admin.module.css';
 
 interface MobileAdminHomeProps {
     userName: string;
-    agencyName?: string;\n    userRole?: string;
+    agencyName?: string;
+    userRole?: string;
     onLogout: () => void;
 }
 
