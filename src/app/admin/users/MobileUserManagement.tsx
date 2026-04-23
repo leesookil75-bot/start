@@ -54,8 +54,8 @@ export default function MobileUserManagement({ initialUsers, workplaces }: { ini
                                 <div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                                         <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{user.name}</span>
-                                        <span style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', background: user.role === 'super_admin' ? '#eab308' : user.role === 'admin' ? '#7c4dff' : '#444', fontSize: '0.7rem' }}>
-                                            {user.role === 'super_admin' ? '최고관리자' : user.role === 'admin' ? '관리자' : '청소부'}
+                                        <span style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', background: user.role === 'admin' ? '#7c4dff' : '#444', fontSize: '0.7rem' }}>
+                                            {user.role === 'admin' ? '관리자' : '청소부'}
                                         </span>
                                     </div>
                                     <div style={{ color: '#aaa', fontSize: '0.85rem' }}>{user.phoneNumber}</div>

@@ -218,11 +218,11 @@ export default function UserManagement({ initialUsers, workplaces }: { initialUs
                                             <span style={{
                                                 padding: '0.2rem 0.5rem',
                                                 borderRadius: '4px',
-                                                background: user.role === 'super_admin' ? '#eab308' : user.role === 'admin' ? '#7c4dff' : '#444',
+                                                background: user.role === 'admin' ? '#7c4dff' : '#444',
                                                 fontSize: '0.8rem',
                                                 color: 'white'
                                             }}>
-                                                {user.role === 'super_admin' ? '최고관리자' : user.role === 'admin' ? '관리자' : '청소부'}
+                                                {user.role === 'admin' ? '관리자' : '청소부'}
                                             </span>
                                         </td>
                                         <td>{userWorkplace ? userWorkplace.name : (user.workAddress ? '개별 설정' : '-')}</td>

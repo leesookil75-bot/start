@@ -15,8 +15,7 @@ export default async function UsersPage() {
         redirect('/login');
     }
 
-    const allUsers = await getUsers(currentUser.agencyId);
-    const users = currentUser.role === 'super_admin' ? allUsers : allUsers.filter(u => u.role !== 'super_admin');
+    const users = await getUsers(currentUser.agencyId);
     const workplaces = await getWorkplaces(currentUser.agencyId);
 
     return (
