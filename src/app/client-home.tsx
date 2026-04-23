@@ -185,6 +185,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                     <form action={logout}>
                         <button type="submit" onClick={() => {
                             document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                document.cookie = "view_mode=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                         }} className={styles.sidebarLogoutBtn}>로그아웃</button>
                     </form>
                 </nav>
@@ -222,6 +223,8 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                         <form action={logout}>
                             <button type="submit" onClick={() => {
                                 document.cookie = "clean-track-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                document.cookie = "view_mode=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                document.cookie = "view_mode=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                             }} className={styles.iconButton} aria-label="로그아웃">
                                 <LogOutIcon />
                             </button>

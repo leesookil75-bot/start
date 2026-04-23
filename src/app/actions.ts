@@ -40,12 +40,15 @@ export async function login(phoneNumber: string, password?: string): Promise<{ s
     }
 
     // Set cookie
-    (await cookies()).set(COOKIE_NAME, user.id, {
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAME, user.id, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 365, // 1년 (모바일 웹뷰 오버플로우 방지)
         path: '/',
     });
+    // Clear view_mode to ensure clean state
+    cookieStore.set('view_mode', '', { maxAge: 0, path: '/' });
 
     return { success: true, role: user.role };
 }
@@ -77,12 +80,15 @@ export async function verifySmsLogin(idToken: string): Promise<{ success: boolea
         }
 
         // Set cookie
-        (await cookies()).set(COOKIE_NAME, user.id, {
+        const cookieStore = await cookies();
+        cookieStore.set(COOKIE_NAME, user.id, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 60 * 60 * 24 * 365, // 1년 (모바일 웹뷰 오버플로우 방지)
             path: '/',
         });
+        // Clear view_mode to ensure clean state
+        cookieStore.set('view_mode', '', { maxAge: 0, path: '/' });
 
         return { success: true, role: user.role };
     } catch (e: any) {
@@ -162,9 +168,14 @@ export async function changePassword(currentPassword: string, newPassword: strin
 }
 
 export async function logout() {
-    (await cookies()).set(COOKIE_NAME, '', {
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAME, '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
+        maxAge: 0,
+        path: '/'
+    });
+    cookieStore.set('view_mode', '', {
         maxAge: 0,
         path: '/'
     });
