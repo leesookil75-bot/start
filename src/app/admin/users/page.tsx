@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
         redirect('/login');
     }
 

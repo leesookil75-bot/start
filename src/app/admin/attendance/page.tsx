@@ -14,7 +14,7 @@ export default async function AdminAttendancePage({
     searchParams?: { [key: string]: string | string[] | undefined };
 }) {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         redirect('/login');
     }
 

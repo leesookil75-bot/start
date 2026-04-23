@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminNoticesPage() {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         redirect('/login');
     }
 

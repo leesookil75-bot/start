@@ -5,7 +5,7 @@ import PrintClient from './PrintClient';
 
 export default async function PrintSafetyTrainingPage(props: { params: Promise<{ id: string }> }) {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         redirect('/login');
     }
 

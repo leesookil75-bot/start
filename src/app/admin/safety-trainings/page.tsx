@@ -5,7 +5,7 @@ import SafetyTrainingClient from './SafetyTrainingClient';
 
 export default async function SafetyTrainingsPage() {
     const user = await getCurrentUser();
-    if (!user || user.role !== 'admin') {
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
         redirect('/login');
     }
 
