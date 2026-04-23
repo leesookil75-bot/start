@@ -47,7 +47,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
     const handleSwitchToAdmin = async () => {
         const mode = user.role === 'super_admin' ? 'super_admin' : 'admin';
         await switchViewMode(mode);
-        window.location.href = mode === 'super_admin' ? '/super-admin' : '/admin';
+        window.location.href = (mode === 'super_admin' ? '/super-admin' : '/admin') + '?v=' + Date.now();
     };
 
     // --- Usage Logic ---
