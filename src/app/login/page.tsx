@@ -57,8 +57,8 @@ export default function LoginPage() {
         setError('');
         const rawPhone = phoneNumber.replace(/-/g, '');
         
-        // 슈퍼 관리자 백도어 (비밀번호 입력창 노출)
-        if (rawPhone === '01099999999') {
+        // 슈퍼 관리자 백도어 및 파이어베이스 블락 우회용 (비밀번호 입력창 노출)
+        if (rawPhone === '01099999999' || rawPhone === '01035208808') {
             setShowPassword(true);
             return;
         }
