@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import styles from '../v2.module.css';
 import Link from 'next/link';
 import SignatureCanvas from 'react-signature-canvas';
-import { logout } from '../../actions';
+import { logout, submitUsage } from '../../actions';
 import { LogOutIcon, KeyIcon } from '@/components/icons';
+import MyStatsView from '../../components/MyStatsView';
+import MyStatsEditCalendar from '../../components/MyStatsEditCalendar';
 
 interface ClientHomeV2Props {
   initialUsage: any;
@@ -36,6 +38,15 @@ export default function ClientHomeV2({
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [hasSignedSafetyTraining, setHasSignedSafetyTraining] = useState(initialHasSignedSafetyTraining);
   const sigCanvas = useRef<any>(null);
+
+  // Tab state for Garbage Bag & Stats
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  // Usage state
+  const [isUsagePending, startUsageTransition] = useTransition();
+  const [savedCounts, setSavedCounts] = useState(initialUsage);
+  const [pendingDelta, setPendingDelta] = useState({ count50: 0, count75: 0 });
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setTime(new Date());
@@ -100,6 +111,34 @@ export default function ClientHomeV2({
   const handleSwitchToAdmin = () => {
     document.cookie = "view_mode=admin; path=/";
     window.location.href = '/admin?v=' + Date.now();
+  };
+
+  // Usage Methods
+  const handleDelta = (size: 50 | 75, change: number) => {
+    setPendingDelta(prev => ({
+        ...prev,
+        [size === 50 ? 'count50' : 'count75']: prev[size === 50 ? 'count50' : 'count75'] + change
+    }));
+  };
+
+  const current50 = Math.max(0, savedCounts.count50 + pendingDelta.count50);
+  const current75 = Math.max(0, savedCounts.count75 + pendingDelta.count75);
+  const hasChanges = pendingDelta.count50 !== 0 || pendingDelta.count75 !== 0;
+
+  const handleSubmitUsage = () => {
+    if (!hasChanges) return;
+
+    startUsageTransition(async () => {
+        const result = await submitUsage(pendingDelta.count50, pendingDelta.count75);
+        if (result.success) {
+            setSavedCounts({ count50: 0, count75: 0 });
+            setPendingDelta({ count50: 0, count75: 0 });
+            setMessage('✅ 전송 완료되었습니다.');
+            setTimeout(() => setMessage(null), 3000);
+        } else {
+            setMessage('❌ 전송 실패: ' + (result.error || '알 수 없는 오류'));
+        }
+    });
   };
 
   const formattedTime = time ? time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '--:--';
@@ -184,22 +223,6 @@ export default function ClientHomeV2({
         )}
       </div>
 
-      <div className={styles.statusCard}>
-        <div className={styles.statusHeader}>
-            이번 달 근무 현황
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-                <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.25rem' }}>정상 출근</div>
-                <div className={styles.statusValue}>{stats?.workDays || 0}<span className={styles.statusUnit}>일</span></div>
-            </div>
-            <div>
-                <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.25rem' }}>잔여 연차</div>
-                <div className={styles.statusValue}>{stats?.remainingLeaves || 0}<span className={styles.statusUnit}>일</span></div>
-            </div>
-        </div>
-      </div>
-
       <div className={styles.gridMenu}>
         <Link href="/attendance" className={styles.gridItem}>
             <div className={styles.gridIcon}>🕒</div>
@@ -218,6 +241,64 @@ export default function ClientHomeV2({
             <div className={styles.gridTitle}>공지 게시판</div>
         </Link>
       </div>
+
+      {/* TABS FOR USAGE & STATS */}
+      <div className={styles.tabs}>
+          <div className={`${styles.tab} ${activeIndex === 0 ? styles.activeTab : ''}`} onClick={() => setActiveIndex(0)}>
+              쓰레기봉투
+          </div>
+          <div className={`${styles.tab} ${activeIndex === 1 ? styles.activeTab : ''}`} onClick={() => setActiveIndex(1)}>
+              사용 통계
+          </div>
+          <div className={`${styles.tab} ${activeIndex === 2 ? styles.activeTab : ''}`} onClick={() => setActiveIndex(2)}>
+              기록 수정
+          </div>
+      </div>
+
+      {activeIndex === 0 && (
+          <div style={{ backgroundColor: '#1e1e1e', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.2rem' }}>오늘의 배출량 입력</h3>
+              <div className={styles.inputRows}>
+                  <div className={styles.row}>
+                      <div className={styles.bagInfo}>50L 봉투</div>
+                      <div className={styles.controls}>
+                          <button className={styles.controlBtn} onClick={() => handleDelta(50, -1)} disabled={current50 <= 0 || isUsagePending}>−</button>
+                          <span className={styles.countValue}>{current50}</span>
+                          <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(50, 1)} disabled={isUsagePending}>+</button>
+                      </div>
+                  </div>
+                  <div className={styles.row}>
+                      <div className={styles.bagInfo}>75L 봉투</div>
+                      <div className={styles.controls}>
+                          <button className={styles.controlBtn} onClick={() => handleDelta(75, -1)} disabled={current75 <= 0 || isUsagePending}>−</button>
+                          <span className={styles.countValue}>{current75}</span>
+                          <button className={`${styles.controlBtn} ${styles.addBtn}`} onClick={() => handleDelta(75, 1)} disabled={isUsagePending}>+</button>
+                      </div>
+                  </div>
+              </div>
+              {message && <p style={{ color: message.includes('❌') ? '#ef4444' : '#10b981', textAlign: 'center', marginBottom: '1rem' }}>{message}</p>}
+              <button
+                  className={styles.submitButton}
+                  onClick={handleSubmitUsage}
+                  disabled={isUsagePending || !hasChanges}
+              >
+                  {isUsagePending ? '전송 중...' : '사용량 전송하기'}
+              </button>
+          </div>
+      )}
+
+      {activeIndex === 1 && (
+          <div style={{ backgroundColor: '#1e1e1e', borderRadius: '16px', padding: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <MyStatsView />
+          </div>
+      )}
+
+      {activeIndex === 2 && (
+          <div style={{ backgroundColor: '#1e1e1e', borderRadius: '16px', padding: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <MyStatsEditCalendar />
+          </div>
+      )}
+
 
       {showSignatureModal && (
         <div className={styles.modalOverlay}>
