@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import styles from '../v2.module.css';
 import Link from 'next/link';
 import SignatureCanvas from 'react-signature-canvas';
-import { submitUsage, logout } from '../../actions';
+import { logout } from '../../actions';
 import { LogOutIcon, KeyIcon } from '@/components/icons';
 
 interface ClientHomeV2Props {
@@ -203,18 +203,31 @@ export default function ClientHomeV2({
         </Link>
       )}
 
+      
       <div className={styles.mainActionContainer}>
-        <button
-            onClick={() => buttonMode !== 'disabled' && handleAction(buttonMode)}
-            disabled={isPending || buttonMode === 'disabled'}
-            className={`${styles.checkInOutButton} ${
-                buttonMode === 'check-in' ? styles.checkInMode : 
-                buttonMode === 'check-out' ? styles.checkOutMode : styles.disabled
-            }`}
-        >
-            <div className={styles.buttonIcon}>
-                {buttonMode === 'check-in' ? '👋' : buttonMode === 'check-out' ? '🏠' : '✨'}
-            </div>
+        {attendanceStatus?.status === 'IDLE' && (
+            <Link href="/attendance/map?mode=CHECK_IN" className={`${styles.checkInOutButton} ${styles.checkInMode}`}>
+                <div className={styles.buttonIcon}>👋</div>
+                <div className={styles.buttonText}>출근하기</div>
+                <div className={styles.buttonSubtext}>오늘 하루도 안전하게!</div>
+            </Link>
+        )}
+        {attendanceStatus?.status === 'WORKING' && (
+            <Link href="/attendance/map?mode=CHECK_OUT" className={`${styles.checkInOutButton} ${styles.checkOutMode}`}>
+                <div className={styles.buttonIcon}>🏠</div>
+                <div className={styles.buttonText}>퇴근하기</div>
+                <div className={styles.buttonSubtext}>수고하셨습니다!</div>
+            </Link>
+        )}
+        {attendanceStatus?.status === 'DONE' && (
+            <Link href="/attendance" className={`${styles.checkInOutButton} ${styles.disabled}`}>
+                <div className={styles.buttonIcon}>✨</div>
+                <div className={styles.buttonText}>근무 종료</div>
+                <div className={styles.buttonSubtext}>오늘의 일정이 끝났습니다.</div>
+            </Link>
+        )}
+      </div>
+
             <div className={styles.buttonText}>{isPending ? '처리 중...' : buttonText}</div>
             <div className={styles.buttonSubtext}>{buttonSubtext}</div>
         </button>
