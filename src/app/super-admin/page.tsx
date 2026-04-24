@@ -5,6 +5,7 @@ import AgencyList from './AgencyList';
 import Link from 'next/link';
 import LogoutButton from './LogoutButton';
 import RoleSwitchButtons from './RoleSwitchButtons';
+import AddAgencyButton from './AddAgencyButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,9 +46,7 @@ export default async function SuperAdminPage() {
             <section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>가입된 업체 (Agencies)</h2>
-                    <button style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
-                        + 새 업체 등록
-                    </button>
+                    <AddAgencyButton />
                 </div>
                 
                 <AgencyList agencies={agencies} adminUsers={adminUsers} />

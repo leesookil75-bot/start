@@ -1,6 +1,8 @@
 'use server';
 
 import {
+    createAgency,
+
     addRecord,
     getRecords,
     UsageRecord,
@@ -1255,4 +1257,19 @@ export async function switchViewMode(mode: 'worker' | 'admin' | 'super_admin') {
     const cookieStore = await cookies();
     cookieStore.set('view_mode', mode, { path: '/' });
     revalidatePath('/', 'layout');
+}
+
+export async function createNewAgencyAction(name: string, phone: string, planType: string): Promise<{ success: boolean; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'super_admin') {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    try {
+        await createAgency(name, phone, planType);
+        revalidatePath('/super-admin');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
 }
