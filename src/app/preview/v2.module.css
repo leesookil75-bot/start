@@ -1,0 +1,361 @@
+.main {
+    background-color: #121212;
+    min-height: 100vh;
+    color: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 1.5rem;
+    padding-bottom: 6rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.greeting {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.greeting span {
+    color: #3b82f6;
+}
+
+.roleBadge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+}
+
+.topActions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.iconButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.iconButton:active {
+    transform: scale(0.95);
+    background-color: #2a2a2a;
+}
+
+.clockContainer {
+    text-align: center;
+    margin: 2rem 0 3rem 0;
+}
+
+.time {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin: 0;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.date {
+    font-size: 1.1rem;
+    color: #888;
+    margin-top: 0.5rem;
+}
+
+.mainActionContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+
+.checkInOutButton {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.checkInOutButton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    margin: 10px;
+}
+
+.checkInOutButton:active {
+    transform: scale(0.95);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+}
+
+.checkInOutButton.checkInMode {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.checkInOutButton.checkOutMode {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+}
+
+.checkInOutButton.disabled {
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.buttonIcon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.buttonText {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.buttonSubtext {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+.statusCard {
+    background-color: #1e1e1e;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.statusHeader {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.statusValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.statusUnit {
+    font-size: 1rem;
+    color: #888;
+    font-weight: normal;
+}
+
+.gridMenu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.gridItem {
+    background-color: #1e1e1e;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    aspect-ratio: 1.2;
+}
+
+.gridItem:active {
+    transform: scale(0.97);
+    background-color: #252525;
+}
+
+.gridIcon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.gridTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.safetyBanner {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+    border: none;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.safetyBannerIcon {
+    font-size: 2rem;
+}
+
+.safetyBannerTitle {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.noticeBanner {
+    background-color: #1e1e1e;
+    border-radius: 16px;
+    padding: 1.25rem;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 4px solid #3b82f6;
+    margin-bottom: 1.5rem;
+}
+
+.noticeContent {
+    flex: 1;
+    overflow: hidden;
+}
+
+.noticeTitle {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.noticeDate {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+}
+
+.modalContent {
+    background-color: #1e1e1e;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.modalTitle {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 0 1rem 0;
+    text-align: center;
+}
+
+.modalDescription {
+    color: #aaa;
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.signatureCanvas {
+    background-color: #fff;
+    border-radius: 12px;
+    width: 100%;
+    height: 200px;
+    margin-bottom: 1.5rem;
+}
+
+.modalActions {
+    display: flex;
+    gap: 1rem;
+}
+
+.modalBtnPrimary {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    background-color: #3b82f6;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modalBtnSecondary {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    background-color: #333;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
