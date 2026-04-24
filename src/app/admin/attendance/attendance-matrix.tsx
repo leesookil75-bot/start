@@ -165,7 +165,8 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
         wsData.push(headerRow);
 
         // 3. User Data Rows (2 rows per user)
-        const usersToExport = selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users;
+        const displayUsers = data.users.filter(u => u.name !== '최고관리자' && u.name !== '관리자1' && u.name !== '간이환경 관리자');
+        const usersToExport = selectedWorkplace ? displayUsers.filter(u => u.workplaceId === selectedWorkplace) : displayUsers;
         
         let currentRowIdx = 2; // Row 0 is Title, Row 1 is Header
 
@@ -270,7 +271,7 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                         </tr>
                     </thead>
                     <tbody>
-                        {(selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users).map(user => {
+                        {((selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users).filter(u => u.name !== '최고관리자' && u.name !== '관리자1' && u.name !== '간이환경 관리자')).map(user => {
                             const wp = data.workplaces?.find(w => w.id === user.workplaceId);
                             return (
                                 <tr key={user.id}>

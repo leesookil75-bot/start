@@ -28,7 +28,8 @@ export default function MobileAttendance({ year, month, data, vacations }: Mobil
     const [selectedWorkplace, setSelectedWorkplace] = useState<string>('');
 
     // Group users by Area
-    const filteredUsers = selectedWorkplace ? data.users.filter(u => u.workplaceId === selectedWorkplace) : data.users;
+    const displayUsers = data.users.filter(u => u.name !== '최고관리자' && u.name !== '관리자1' && u.name !== '간이환경 관리자');
+    const filteredUsers = selectedWorkplace ? displayUsers.filter(u => u.workplaceId === selectedWorkplace) : displayUsers;
 
     const usersByArea = filteredUsers.reduce((acc, user) => {
         const wp = data.workplaces?.find(w => w.id === user.workplaceId);
