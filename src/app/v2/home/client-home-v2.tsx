@@ -45,31 +45,6 @@ export default function ClientHomeV2({
     return () => clearInterval(timer);
   }, []);
 
-  const handleAction = (actionType: 'check-in' | 'check-out') => {
-    setIsPending(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            await submitUsage(actionType, position.coords.latitude, position.coords.longitude);
-            window.location.reload();
-          } catch (error) {
-            alert('기록 중 오류가 발생했습니다.');
-            setIsPending(false);
-          }
-        },
-        (error) => {
-          alert('위치 정보를 가져올 수 없습니다. 권한을 확인해주세요.');
-          setIsPending(false);
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      alert('이 기기에서는 위치 정보를 지원하지 않습니다.');
-      setIsPending(false);
-    }
-  };
-
   const handleSignatureSubmit = async () => {
     if (sigCanvas.current?.isEmpty()) {
       alert('서명을 입력해주세요.');
@@ -79,48 +54,47 @@ export default function ClientHomeV2({
     if (!signatureDataUrl || !activeSafetyTraining) return;
 
     setIsPending(true);
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    try {
-                        const res = await fetch('/api/safety-signatures', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                training_id: activeSafetyTraining.id,
-                                user_id: user.id,
-                                signature_data: signatureDataUrl,
-                                lat,
-                                lng
-                            })
-                        });
-                        const data = await res.json();
-                        setIsPending(false);
-                        if (res.ok) {
-                            setShowSignatureModal(false);
-                            setHasSignedSafetyTraining(true);
-                            alert('안전교육 서명이 완료되었습니다.');
-                        } else {
-                            alert(data.error || '서명 제출에 실패했습니다.');
-                        }
-                    } catch(e) {
-                        setIsPending(false);
-                        alert('서명 제출 중 오류가 발생했습니다.');
-                    }
-                },
-                () => {
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                try {
+                    const res = await fetch('/api/safety-signatures', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            training_id: activeSafetyTraining.id,
+                            user_id: user.id,
+                            signature_data: signatureDataUrl,
+                            lat,
+                            lng
+                        })
+                    });
+                    const data = await res.json();
                     setIsPending(false);
-                    alert('위치 정보를 가져올 수 없어 서명을 제출할 수 없습니다.');
+                    if (res.ok) {
+                        setShowSignatureModal(false);
+                        setHasSignedSafetyTraining(true);
+                        alert('안전교육 서명이 완료되었습니다.');
+                    } else {
+                        alert(data.error || '서명 제출에 실패했습니다.');
+                    }
+                } catch(e) {
+                    setIsPending(false);
+                    alert('서명 제출 중 오류가 발생했습니다.');
                 }
-            );
-        } else {
-            setIsPending(false);
-            alert('위치 정보를 지원하지 않는 브라우저입니다.');
-        }
-
+            },
+            () => {
+                setIsPending(false);
+                alert('위치 정보를 가져올 수 없어 서명을 제출할 수 없습니다.');
+            }
+        );
+    } else {
+        setIsPending(false);
+        alert('위치 정보를 지원하지 않는 브라우저입니다.');
+    }
   };
 
   const handleSwitchToAdmin = () => {
@@ -130,23 +104,6 @@ export default function ClientHomeV2({
 
   const formattedTime = time ? time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '--:--';
   const formattedDate = time ? time.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }) : '로딩 중...';
-
-  // Determine button state
-  let buttonMode: 'check-in' | 'check-out' | 'disabled' = 'check-in';
-  let buttonText = '출근하기';
-  let buttonSubtext = '오늘 하루도 안전하게!';
-
-  if (attendanceStatus) {
-      if (attendanceStatus.checkInTime && !attendanceStatus.checkOutTime) {
-          buttonMode = 'check-out';
-          buttonText = '퇴근하기';
-          buttonSubtext = '수고하셨습니다!';
-      } else if (attendanceStatus.checkInTime && attendanceStatus.checkOutTime) {
-          buttonMode = 'disabled';
-          buttonText = '근무 종료';
-          buttonSubtext = '오늘의 일정이 끝났습니다.';
-      }
-  }
 
   return (
     <div className={styles.main}>
@@ -203,9 +160,8 @@ export default function ClientHomeV2({
         </Link>
       )}
 
-      
       <div className={styles.mainActionContainer}>
-        {attendanceStatus?.status === 'IDLE' && (
+        {(!attendanceStatus || attendanceStatus.status === 'IDLE') && (
             <Link href="/attendance/map?mode=CHECK_IN" className={`${styles.checkInOutButton} ${styles.checkInMode}`}>
                 <div className={styles.buttonIcon}>👋</div>
                 <div className={styles.buttonText}>출근하기</div>
@@ -228,11 +184,6 @@ export default function ClientHomeV2({
         )}
       </div>
 
-            <div className={styles.buttonText}>{isPending ? '처리 중...' : buttonText}</div>
-            <div className={styles.buttonSubtext}>{buttonSubtext}</div>
-        </button>
-      </div>
-
       <div className={styles.statusCard}>
         <div className={styles.statusHeader}>
             이번 달 근무 현황
@@ -240,11 +191,11 @@ export default function ClientHomeV2({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
                 <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.25rem' }}>정상 출근</div>
-                <div className={styles.statusValue}>{stats.workDays}<span className={styles.statusUnit}>일</span></div>
+                <div className={styles.statusValue}>{stats?.workDays || 0}<span className={styles.statusUnit}>일</span></div>
             </div>
             <div>
                 <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '0.25rem' }}>잔여 연차</div>
-                <div className={styles.statusValue}>{stats.remainingLeaves}<span className={styles.statusUnit}>일</span></div>
+                <div className={styles.statusValue}>{stats?.remainingLeaves || 0}<span className={styles.statusUnit}>일</span></div>
             </div>
         </div>
       </div>
