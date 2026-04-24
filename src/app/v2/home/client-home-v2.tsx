@@ -289,7 +289,7 @@ export default function ClientHomeV2({
 
       {activeIndex === 1 && (
           <div style={{ backgroundColor: '#1e1e1e', borderRadius: '16px', padding: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <MyStatsView />
+              <MyStatsView stats={stats} />
           </div>
       )}
 
