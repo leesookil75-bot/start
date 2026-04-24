@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import styles from '../v2.module.css';
 import Link from 'next/link';
 import SignatureCanvas from 'react-signature-canvas';
-import { recordUsage, logout } from '../../actions';
+import { submitUsage, logout } from '../../actions';
 import { LogOutIcon, KeyIcon } from '@/components/icons';
 
 interface ClientHomeV2Props {
@@ -51,7 +51,7 @@ export default function ClientHomeV2({
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            await recordUsage(actionType, position.coords.latitude, position.coords.longitude);
+            await submitUsage(actionType, position.coords.latitude, position.coords.longitude);
             window.location.reload();
           } catch (error) {
             alert('기록 중 오류가 발생했습니다.');
