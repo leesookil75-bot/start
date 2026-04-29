@@ -1377,7 +1377,7 @@ export default function CleaningMapClient({
                             const assignedWorker = workers?.find(w => w.id === workerId);
                             const wArea = assignedWorker?.cleaningArea;
                             const zGroup = wZones[0]?.groupName;
-                            const displayArea = [wArea, zGroup].filter(Boolean).join(' ') || '구역미지정';
+                            const displayArea = [wArea, zGroup].filter(Boolean).join('') || '구역미지정';
                             const name = assignedWorker?.name || wZones[0]?.workerName;
 
                             const bufferedPolys: any[] = [];
@@ -1539,7 +1539,7 @@ export default function CleaningMapClient({
                                                             {(() => {
                                                                 const wArea = workers?.find(w => w.id === zone.workerId)?.cleaningArea;
                                                                 const zGroup = zone.groupName;
-                                                                const combined = [wArea, zGroup].filter(Boolean).join(' ');
+                                                                const combined = [wArea, zGroup].filter(Boolean).join('');
                                                                 return combined ? (
                                                                     <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
                                                                         {combined}
@@ -1575,7 +1575,7 @@ export default function CleaningMapClient({
                                                         {(() => {
                                                             const wArea = workers?.find(w => w.id === zone.workerId)?.cleaningArea;
                                                             const zGroup = zone.groupName;
-                                                            const combined = [wArea, zGroup].filter(Boolean).join(' ');
+                                                            const combined = [wArea, zGroup].filter(Boolean).join('');
                                                             return combined ? (
                                                                 <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
                                                                     {combined}

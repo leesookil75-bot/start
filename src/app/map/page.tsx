@@ -14,17 +14,15 @@ export default async function MapPage() {
     const allUsers = await getUsers(user.agencyId);
     const workplaces = await getWorkplaces(user.agencyId);
     
-    const workers = allUsers
-        .filter((u: User) => u.role === 'cleaner')
-        .map((u: User) => {
-            const wp = workplaces.find(w => w.id === u.workplaceId);
-            return {
-                id: u.id, 
-                name: u.name, 
-                cleaningArea: u.cleaningArea,
-                workplaceName: wp?.dong || wp?.name || u.workAddress || undefined
-            };
-        });
+    const workers = allUsers.map((u: User) => {
+        const wp = workplaces.find(w => w.id === u.workplaceId);
+        return {
+            id: u.id, 
+            name: u.name, 
+            cleaningArea: u.cleaningArea,
+            workplaceName: wp?.name || u.workAddress || undefined
+        };
+    });
 
     return (
         <MapWrapper 
