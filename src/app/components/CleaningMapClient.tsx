@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Polygon, Popup, Marker, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Polygon, Popup, Marker, useMap, useMapEvents, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import * as turf from '@turf/turf';
@@ -1443,6 +1443,15 @@ export default function CleaningMapClient({
                             </Popup>
                         );
 
+                        const tooltipContent = currentZoom >= 15 ? (
+                            <Tooltip permanent direction="center" className="bg-white/90 font-bold border border-slate-200 shadow-md text-slate-800 text-xs sm:text-sm px-2 py-1 rounded-lg backdrop-blur-sm" opacity={1}>
+                                <div className="text-center leading-tight">
+                                    <span className="text-blue-700">{zone.workerName}</span><br/>
+                                    {zone.groupName && <span className="text-[10px] sm:text-xs text-slate-500">{zone.groupName}</span>}
+                                </div>
+                            </Tooltip>
+                        ) : null;
+
                         return isPolygon ? (
                             <Polygon
                                 key={zone.id}
@@ -1450,6 +1459,7 @@ export default function CleaningMapClient({
                                 pathOptions={{ color: color, weight: defaultWeight, fillColor: color, fillOpacity: fillOpacity, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
+                                {tooltipContent}
                             </Polygon>
                         ) : (
                             <Polyline
@@ -1458,6 +1468,7 @@ export default function CleaningMapClient({
                                 pathOptions={{ color: color, weight: dynamicWeight, opacity: isFocused ? 1 : 0.8, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
+                                {tooltipContent}
                             </Polyline>
                         );
                     })}
