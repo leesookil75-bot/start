@@ -1368,22 +1368,49 @@ export default function CleaningMapClient({
                             const displayArea = assignedWorker?.cleaningArea || wZones[0]?.groupName || '구역미지정';
                             const name = assignedWorker?.name || wZones[0]?.workerName;
 
-                            const allPoints: number[][] = [];
+                            const bufferedPolys: any[] = [];
                             wZones.forEach(z => {
-                                getZonePoints(z.path).forEach((pt: any) => allPoints.push([pt[1], pt[0]])); // [lng, lat]
+                                try {
+                                    const pts = getZonePoints(z.path).map((pt: any) => [pt[1], pt[0]]);
+                                    if (pts.length >= 2) {
+                                        let feature;
+                                        const isPoly = z.path.length > 0 && Array.isArray(z.path[0][0]);
+                                        if (isPoly) {
+                                            if (pts[0][0] !== pts[pts.length-1][0] || pts[0][1] !== pts[pts.length-1][1]) {
+                                                pts.push([...pts[0]]);
+                                            }
+                                            if (pts.length >= 4) {
+                                                feature = turf.polygon([pts]);
+                                            }
+                                        } else {
+                                            feature = turf.lineString(pts);
+                                        }
+                                        
+                                        if (feature) {
+                                            const buf = turf.buffer(feature, 20, { units: 'meters' });
+                                            if (buf) bufferedPolys.push(buf);
+                                        }
+                                    }
+                                } catch(e) {}
                             });
 
-                            if (allPoints.length >= 3) {
+                            if (bufferedPolys.length > 0) {
                                 try {
-                                    const featureColl = turf.featureCollection(allPoints.map(p => turf.point(p)));
-                                    const hull = turf.convex(featureColl);
-                                    if (hull) {
-                                        // Optional: buffer slightly to encompass paths nicely
-                                        const bufferedHull = turf.buffer(hull, 10, { units: 'meters' }) || hull;
-                                        const leafletCoords = extractLeafletCoordsFromBuffer(bufferedHull, []);
+                                    let merged: any = null;
+                                    try {
+                                        merged = turf.union(turf.featureCollection(bufferedPolys));
+                                    } catch(e) {
+                                        // Fallback for older Turf.js versions
+                                        merged = bufferedPolys.reduce((acc, curr) => turf.union(acc, curr) || acc);
+                                    }
+                                    
+                                    if (merged) {
+                                        const leafletCoords = extractLeafletCoordsFromBuffer(merged, []);
                                         territories.push({ id: 'terr_' + workerId, coords: leafletCoords, color, name, displayArea });
                                     }
-                                } catch (e) {}
+                                } catch (e) {
+                                    console.error("Union failed", e);
+                                }
                             }
                         });
 
