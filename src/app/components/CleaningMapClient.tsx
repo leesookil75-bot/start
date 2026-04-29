@@ -1375,7 +1375,9 @@ export default function CleaningMapClient({
 
                         Array.from(workerZones.entries()).forEach(([workerId, wZones]) => {
                             const assignedWorker = workers?.find(w => w.id === workerId);
-                            const displayArea = assignedWorker?.cleaningArea || wZones[0]?.groupName || '구역미지정';
+                            const wArea = assignedWorker?.cleaningArea;
+                            const zGroup = wZones[0]?.groupName;
+                            const displayArea = [wArea, zGroup].filter(Boolean).join(' ') || '구역미지정';
                             const name = assignedWorker?.name || wZones[0]?.workerName;
 
                             const bufferedPolys: any[] = [];
@@ -1534,11 +1536,16 @@ export default function CleaningMapClient({
                                                         <div className="bg-slate-50 text-slate-800 rounded-xl p-3 font-bold border-2 border-slate-200 shadow-inner">
                                                             <div className="text-sm text-slate-500 mb-1">담당 구역 마스터</div>
                                                             <div className="text-2xl text-blue-700 mb-3">{workers?.find(w => w.id === zone.workerId)?.name || zone.workerName}</div>
-                                                            {(workers?.find(w => w.id === zone.workerId)?.cleaningArea || zone.groupName) && (
-                                                                <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
-                                                                    {workers?.find(w => w.id === zone.workerId)?.cleaningArea || zone.groupName}
-                                                                </div>
-                                                            )}
+                                                            {(() => {
+                                                                const wArea = workers?.find(w => w.id === zone.workerId)?.cleaningArea;
+                                                                const zGroup = zone.groupName;
+                                                                const combined = [wArea, zGroup].filter(Boolean).join(' ');
+                                                                return combined ? (
+                                                                    <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
+                                                                        {combined}
+                                                                    </div>
+                                                                ) : null;
+                                                            })()}
                                                             <div className="flex items-center justify-between px-2">
                                                                 <span>현재 상태:</span>
                                                                 <span className={isDone ? 'text-green-600 bg-green-100 px-3 py-1 rounded-full' : 'text-red-500 bg-red-100 px-3 py-1 rounded-full'}>
@@ -1565,11 +1572,16 @@ export default function CleaningMapClient({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        {(workers?.find(w => w.id === zone.workerId)?.cleaningArea || zone.groupName) && (
-                                                            <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
-                                                                {workers?.find(w => w.id === zone.workerId)?.cleaningArea || zone.groupName}
-                                                            </div>
-                                                        )}
+                                                        {(() => {
+                                                            const wArea = workers?.find(w => w.id === zone.workerId)?.cleaningArea;
+                                                            const zGroup = zone.groupName;
+                                                            const combined = [wArea, zGroup].filter(Boolean).join(' ');
+                                                            return combined ? (
+                                                                <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
+                                                                    {combined}
+                                                                </div>
+                                                            ) : null;
+                                                        })()}
                                                         <h3 className="text-2xl font-black text-slate-800 mb-2 mt-2">
                                                             {isDone ? '✨ 이 구역은 깨끗합니다' : '🧹 청소를 시작할까요?'}
                                                         </h3>
