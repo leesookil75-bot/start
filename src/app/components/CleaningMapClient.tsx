@@ -371,7 +371,7 @@ export default function CleaningMapClient({
 }: {
     role: 'admin' | 'worker',
     currentUser: { id: string, name: string, lat?: number, lng?: number },
-    workers?: { id: string, name: string, cleaningArea?: string }[]
+    workers?: { id: string, name: string, cleaningArea?: string, workplaceName?: string }[]
 }) {
     const [isMounted, setIsMounted] = useState(false);
     const mapRef = useRef<L.Map | null>(null);
