@@ -363,7 +363,7 @@ export default function CleaningMapClient({
 }: {
     role: 'admin' | 'worker',
     currentUser: { id: string, name: string, lat?: number, lng?: number },
-    workers?: { id: string, name: string }[]
+    workers?: { id: string, name: string, cleaningArea?: string }[]
 }) {
     const [isMounted, setIsMounted] = useState(false);
     const mapRef = useRef<L.Map | null>(null);
@@ -371,6 +371,7 @@ export default function CleaningMapClient({
     const currentUserRole = role;
     const currentWorkerId = currentUser.id;
     const currentWorkerName = currentUser.name;
+    const WORKER_COLORS = ['#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e', '#6366f1', '#10b981', '#0ea5e9'];
     
     // Core Data
     const [zones, setZones] = useState<Zone[]>([]);
@@ -1356,10 +1357,20 @@ export default function CleaningMapClient({
                     {visibleZones.map((zone) => {
                         const isDone = zone.isCleaned;
                         const isFocused = focusedGroup === zone.groupName;
-                        let color = isDone ? '#22c55e' : '#ef4444'; 
+                        
+                        // Find worker to get assigned cleaningArea and index for color
+                        const workerIndex = workers?.findIndex(w => w.id === zone.workerId) ?? 0;
+                        const assignedWorker = workers?.find(w => w.id === zone.workerId);
+                        const displayArea = assignedWorker?.cleaningArea || zone.groupName || '구역미지정';
+                        
+                        const baseColor = WORKER_COLORS[Math.max(0, workerIndex) % WORKER_COLORS.length];
+                        let color = baseColor;
+                        
+                        // 구분 기준: 농도의 차이 (투명도)
+                        let fillOpacity = isDone ? 0.7 : 0.15; 
+                        let defaultWeight = isDone ? 3 : 2;
+                        
                         let weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
-                        let fillOpacity = 0.4;
-                        let defaultWeight = 2;
                         
                         if (isFocused) {
                             color = '#facc15'; // 눈에 띄는 노란색(Yellow) 
@@ -1380,10 +1391,10 @@ export default function CleaningMapClient({
                                         <>
                                             <div className="bg-slate-50 text-slate-800 rounded-xl p-3 font-bold border-2 border-slate-200 shadow-inner">
                                                 <div className="text-sm text-slate-500 mb-1">담당 구역 마스터</div>
-                                                <div className="text-2xl text-blue-700 mb-3">{zone.workerName}</div>
-                                                {zone.groupName && (
+                                                <div className="text-2xl text-blue-700 mb-3">{assignedWorker?.name || zone.workerName}</div>
+                                                {displayArea && (
                                                     <div className="bg-slate-200 text-slate-700 text-sm font-bold py-1 px-3 rounded-full mb-3 inline-block">
-                                                        {zone.groupName}
+                                                        {displayArea}
                                                     </div>
                                                 )}
                                                 <div className="flex items-center justify-between px-2">
@@ -1412,9 +1423,9 @@ export default function CleaningMapClient({
                                         </>
                                     ) : (
                                         <>
-                                            {zone.groupName && (
+                                            {displayArea && (
                                                 <div className="bg-blue-100 text-blue-800 text-sm font-black py-1 px-3 rounded-md mb-2 inline-block">
-                                                    {zone.groupName}
+                                                    {displayArea}
                                                 </div>
                                             )}
                                             <h3 className="text-2xl font-black text-slate-800 mb-2 mt-2">
@@ -1446,8 +1457,8 @@ export default function CleaningMapClient({
                         const tooltipContent = currentZoom >= 15 ? (
                             <Tooltip permanent direction="center" className="bg-white/90 font-bold border border-slate-200 shadow-md text-slate-800 text-xs sm:text-sm px-2 py-1 rounded-lg backdrop-blur-sm" opacity={1}>
                                 <div className="text-center leading-tight">
-                                    <span className="text-blue-700">{zone.workerName}</span><br/>
-                                    {zone.groupName && <span className="text-[10px] sm:text-xs text-slate-500">{zone.groupName}</span>}
+                                    <span style={{color: baseColor}} className="text-sm font-black">{assignedWorker?.name || zone.workerName}</span><br/>
+                                    {displayArea && <span className="text-[10px] sm:text-xs text-slate-500">{displayArea}</span>}
                                 </div>
                             </Tooltip>
                         ) : null;

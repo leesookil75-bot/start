@@ -14,7 +14,7 @@ export default async function MapPage() {
     const allUsers = await getUsers();
     const workers = allUsers
         .filter((u: User) => u.role === 'cleaner')
-        .map((u: User) => ({ id: u.id, name: u.name }));
+        .map((u: User) => ({ id: u.id, name: u.name, cleaningArea: u.cleaningArea }));
 
     return (
         <MapWrapper 
