@@ -1436,25 +1436,33 @@ export default function CleaningMapClient({
                         const isDone = zone.isCleaned;
                         const isFocused = focusedGroup === zone.groupName;
                         
+                        const workerIndex = workers?.findIndex(w => w.id === zone.workerId) ?? 0;
                         const assignedWorker = workers?.find(w => w.id === zone.workerId);
                         const displayArea = assignedWorker?.cleaningArea || zone.groupName || '구역미지정';
                         
-                        // 복구: 실제 도로는 완료/미완료(Red/Green)로 명확히 표시
-                        let color = isDone ? '#22c55e' : '#ef4444'; 
-                        let fillOpacity = 0.4; 
-                        let defaultWeight = 2;
+                        const baseColor = WORKER_COLORS[Math.max(0, workerIndex) % WORKER_COLORS.length];
                         
-                        let weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
+                        // 변경: 면적 색상과 선 색상을 100% 동일하게 일치시킴
+                        let color = baseColor; 
+                        
+                        let weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 5 : 6;
+                        
+                        // 시각적 피로도를 줄이기 위해 색상(Red/Green) 대신, 선의 점선(Dash)과 투명도(Opacity)로 완료상태 표현
+                        let lineOpacity = isDone ? 1.0 : 0.4;
+                        let dashArray = isDone ? undefined : '5, 8'; // 점선 간격 설정
+                        let weightMultiplier = isDone ? 1.2 : 0.8; // 완료 시 선명하게 두껍게
+                        let fillOpacity = isDone ? 0.7 : 0.2; // 폴리곤일 경우 채우기 농도
                         
                         if (isFocused) {
                             color = '#facc15'; // 눈에 띄는 노란색(Yellow) 
                             weightAtZoom18 = 10;
-                            fillOpacity = 0.8;
-                            defaultWeight = 5;
+                            lineOpacity = 1.0;
+                            weightMultiplier = 1.5;
+                            dashArray = undefined;
                         }
 
                         // 줌 레벨에 비례하여 실제 도로 폭(지리적 크기)에 맞게 굵기 조정 
-                        const dynamicWeight = Math.max(1, weightAtZoom18 * Math.pow(2, currentZoom - 18));
+                        const dynamicWeight = Math.max(2, weightAtZoom18 * weightMultiplier * Math.pow(2, currentZoom - 18));
 
                         const isPolygon = zone.path.length > 0 && Array.isArray(zone.path[0][0]);
                         
@@ -1534,7 +1542,7 @@ export default function CleaningMapClient({
                             <Polygon
                                 key={zone.id}
                                 positions={zone.path as any}
-                                pathOptions={{ color: color, weight: defaultWeight, fillColor: color, fillOpacity: fillOpacity, className: isFocused ? 'animate-pulse' : '' }}
+                                pathOptions={{ color: color, weight: dynamicWeight, fillColor: color, fillOpacity: fillOpacity, dashArray: dashArray, opacity: lineOpacity, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
                             </Polygon>
@@ -1542,7 +1550,7 @@ export default function CleaningMapClient({
                             <Polyline
                                 key={zone.id}
                                 positions={zone.path as any}
-                                pathOptions={{ color: color, weight: dynamicWeight, opacity: isFocused ? 1 : 0.8, className: isFocused ? 'animate-pulse' : '' }}
+                                pathOptions={{ color: color, weight: dynamicWeight, opacity: lineOpacity, dashArray: dashArray, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
                             </Polyline>
