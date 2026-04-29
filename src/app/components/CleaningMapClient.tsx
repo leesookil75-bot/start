@@ -1319,7 +1319,6 @@ export default function CleaningMapClient({
                                                                 <img src={issue.adminPhotoUrl} alt="민원 상황" className="w-full h-20 object-cover rounded-xl border border-slate-300 shadow-sm" />
                                                             </div>
                                                         )}
-                                                        
                                                         {issue.photoUrl ? (
                                                             <div className="relative">
                                                                 <img src={issue.photoUrl} alt="Preview" className="w-full h-24 object-cover rounded-xl border-4 border-green-500 shadow-md" />
@@ -1353,22 +1352,70 @@ export default function CleaningMapClient({
                             </Marker>
                         );
                     })}
+                    {/* Territories (Convex Hulls) */}
+                    {(() => {
+                        const workerZones = new Map<string, Zone[]>();
+                        visibleZones.forEach(z => {
+                            if (!workerZones.has(z.workerId)) workerZones.set(z.workerId, []);
+                            workerZones.get(z.workerId)!.push(z);
+                        });
+
+                        const territories: any[] = [];
+                        Array.from(workerZones.entries()).forEach(([workerId, wZones]) => {
+                            const workerIndex = workers?.findIndex(w => w.id === workerId) ?? 0;
+                            const color = WORKER_COLORS[Math.max(0, workerIndex) % WORKER_COLORS.length];
+                            const assignedWorker = workers?.find(w => w.id === workerId);
+                            const displayArea = assignedWorker?.cleaningArea || wZones[0]?.groupName || '구역미지정';
+                            const name = assignedWorker?.name || wZones[0]?.workerName;
+
+                            const allPoints: number[][] = [];
+                            wZones.forEach(z => {
+                                getZonePoints(z.path).forEach((pt: any) => allPoints.push([pt[1], pt[0]])); // [lng, lat]
+                            });
+
+                            if (allPoints.length >= 3) {
+                                try {
+                                    const featureColl = turf.featureCollection(allPoints.map(p => turf.point(p)));
+                                    const hull = turf.convex(featureColl);
+                                    if (hull) {
+                                        // Optional: buffer slightly to encompass paths nicely
+                                        const bufferedHull = turf.buffer(hull, 10, { units: 'meters' }) || hull;
+                                        const leafletCoords = extractLeafletCoordsFromBuffer(bufferedHull, []);
+                                        territories.push({ id: 'terr_' + workerId, coords: leafletCoords, color, name, displayArea });
+                                    }
+                                } catch (e) {}
+                            }
+                        });
+
+                        return territories.map(t => (
+                            <Polygon 
+                                key={t.id} 
+                                positions={t.coords} 
+                                pathOptions={{ color: t.color, fillColor: t.color, fillOpacity: 0.15, weight: 2, dashArray: '8, 8', interactive: false }}
+                            >
+                                {currentZoom >= 14 && (
+                                    <Tooltip permanent direction="center" className="bg-white/95 border-2 shadow-xl text-slate-800 text-xs sm:text-sm px-3 py-2 rounded-2xl backdrop-blur-md z-[1000]" opacity={1} interactive={true}>
+                                        <div className="text-center leading-tight min-w-[80px]">
+                                            <span style={{color: t.color}} className="text-base sm:text-lg font-black drop-shadow-sm">{t.name}</span><br/>
+                                            <span className="text-[11px] sm:text-xs text-slate-600 font-bold mt-1 inline-block">{t.displayArea}</span>
+                                        </div>
+                                    </Tooltip>
+                                )}
+                            </Polygon>
+                        ));
+                    })()}
 
                     {visibleZones.map((zone) => {
                         const isDone = zone.isCleaned;
                         const isFocused = focusedGroup === zone.groupName;
                         
-                        // Find worker to get assigned cleaningArea and index for color
-                        const workerIndex = workers?.findIndex(w => w.id === zone.workerId) ?? 0;
                         const assignedWorker = workers?.find(w => w.id === zone.workerId);
                         const displayArea = assignedWorker?.cleaningArea || zone.groupName || '구역미지정';
                         
-                        const baseColor = WORKER_COLORS[Math.max(0, workerIndex) % WORKER_COLORS.length];
-                        let color = baseColor;
-                        
-                        // 구분 기준: 농도의 차이 (투명도)
-                        let fillOpacity = isDone ? 0.7 : 0.15; 
-                        let defaultWeight = isDone ? 3 : 2;
+                        // 복구: 실제 도로는 완료/미완료(Red/Green)로 명확히 표시
+                        let color = isDone ? '#22c55e' : '#ef4444'; 
+                        let fillOpacity = 0.4; 
+                        let defaultWeight = 2;
                         
                         let weightAtZoom18 = typeof window !== 'undefined' && window.innerWidth > 600 ? 4 : 5;
                         
@@ -1431,6 +1478,7 @@ export default function CleaningMapClient({
                                             <h3 className="text-2xl font-black text-slate-800 mb-2 mt-2">
                                                 {isDone ? '✨ 이 구역은 깨끗합니다' : '🧹 청소를 시작할까요?'}
                                             </h3>
+
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); toggleCleaningStatus(zone.id); }}
                                                 className={`w-full min-h-[120px] rounded-3xl flex items-center justify-center gap-2 text-3xl font-black shadow-2xl text-white transform active:scale-95 transition-all ${
@@ -1442,7 +1490,8 @@ export default function CleaningMapClient({
                                                 ) : (
                                                     <><CheckCircle2 size={44} /> 구역 청소 완료!</>
                                                 )}
-                                            </button>                                                <button 
+                                            </button>
+                                            <button 
                                                 onClick={(e) => { e.stopPropagation(); deleteZone(zone.id); }}
                                                 className="w-full bg-slate-200 hover:bg-red-100 text-slate-600 hover:text-red-600 min-h-[40px] mt-3 rounded-xl flex items-center justify-center gap-2 text-md font-bold transition-all"
                                             >
@@ -1454,15 +1503,6 @@ export default function CleaningMapClient({
                             </Popup>
                         );
 
-                        const tooltipContent = currentZoom >= 15 ? (
-                            <Tooltip permanent direction="center" className="bg-white/90 font-bold border border-slate-200 shadow-md text-slate-800 text-xs sm:text-sm px-2 py-1 rounded-lg backdrop-blur-sm" opacity={1}>
-                                <div className="text-center leading-tight">
-                                    <span style={{color: baseColor}} className="text-sm font-black">{assignedWorker?.name || zone.workerName}</span><br/>
-                                    {displayArea && <span className="text-[10px] sm:text-xs text-slate-500">{displayArea}</span>}
-                                </div>
-                            </Tooltip>
-                        ) : null;
-
                         return isPolygon ? (
                             <Polygon
                                 key={zone.id}
@@ -1470,7 +1510,6 @@ export default function CleaningMapClient({
                                 pathOptions={{ color: color, weight: defaultWeight, fillColor: color, fillOpacity: fillOpacity, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
-                                {tooltipContent}
                             </Polygon>
                         ) : (
                             <Polyline
@@ -1479,7 +1518,6 @@ export default function CleaningMapClient({
                                 pathOptions={{ color: color, weight: dynamicWeight, opacity: isFocused ? 1 : 0.8, className: isFocused ? 'animate-pulse' : '' }}
                             >
                                 {popupContent}
-                                {tooltipContent}
                             </Polyline>
                         );
                     })}
