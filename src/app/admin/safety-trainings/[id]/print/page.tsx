@@ -30,7 +30,14 @@ export default async function PrintSafetyTrainingPage(props: { params: Promise<{
         ORDER BY s.created_at ASC
     `;
 
+    // Fetch all workers
+    const { rows: workers } = await sql`
+        SELECT id, name, cleaning_area, workplace_name 
+        FROM users 
+        WHERE role = 'worker'
+    `;
+
     return (
-        <PrintClient training={trainingRows[0]} signatures={signatureRows} />
+        <PrintClient training={trainingRows[0]} signatures={signatureRows} workers={workers} />
     );
 }

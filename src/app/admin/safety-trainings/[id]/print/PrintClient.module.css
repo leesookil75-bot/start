@@ -54,6 +54,44 @@
     font-weight: bold;
 }
 
+@media screen and (max-width: 768px) {
+    .document {
+        width: 100%;
+        min-height: auto;
+        padding: 15px;
+        margin: 0;
+        box-shadow: none;
+    }
+    
+    .tableContainer {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+    }
+    
+    .signatureTable {
+        min-width: 600px; /* Ensure table doesn't crush too much */
+    }
+    
+    .th, .td {
+        font-size: 10pt;
+        padding: 6px;
+    }
+    
+    .docTitle {
+        font-size: 18pt;
+        margin-bottom: 20px;
+    }
+    
+    .footer {
+        margin-top: 30px;
+        font-size: 12pt;
+    }
+}
+
 @media print {
     .noPrint {
         display: none !important;

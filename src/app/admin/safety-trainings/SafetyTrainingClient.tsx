@@ -96,11 +96,18 @@ export default function SafetyTrainingClient({ initialTrainings }: { initialTrai
                         {trainings.map(t => (
                             <div key={t.id} style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div>
-                                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '4px' }}>{t.title}</div>
-                                    <div style={{ color: '#718096', fontSize: '0.9rem' }}>{t.date} | 강사: {t.instructor}</div>
+                                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '8px' }}>
+                                        {t.title}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <span style={{ fontSize: '0.9rem', color: '#718096' }}>{t.date} | 강사: {t.instructor}</span>
+                                        <span style={{ padding: '2px 8px', background: '#e6fffa', color: '#047857', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold', border: '1px solid #a7f3d0' }}>
+                                            ✍️ {t.signature_count || 0}명 서명 완료
+                                        </span>
+                                    </div>
                                 </div>
-                                <Link href={`/admin/safety-trainings/${t.id}/print`} target="_blank" style={{ padding: '8px 16px', background: '#48bb78', color: 'white', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>
-                                    🖨️ 보고서 출력
+                                <Link href={`/admin/safety-trainings/${t.id}/print`} style={{ padding: '8px 16px', background: '#48bb78', color: 'white', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>
+                                    🖨️ 명단 보기 및 인쇄
                                 </Link>
                             </div>
                         ))}

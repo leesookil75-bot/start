@@ -10,7 +10,11 @@ export default async function SafetyTrainingsPage() {
     }
 
     const { rows } = await sql`
-        SELECT * FROM safety_trainings ORDER BY created_at DESC
+        SELECT 
+            st.*, 
+            (SELECT COUNT(*) FROM safety_signatures ss WHERE ss.training_id = st.id) as signature_count 
+        FROM safety_trainings st 
+        ORDER BY created_at DESC
     `;
 
     return (
