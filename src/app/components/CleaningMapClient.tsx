@@ -1761,7 +1761,14 @@ export default function CleaningMapClient({
                                     
                                     const assignedWorker = workers?.find(w => w.id === wId);
                                     const wWorkplace = assignedWorker?.workplaceName || '';
-                                    const wArea = assignedWorker?.cleaningArea ? `${assignedWorker.cleaningArea}구역` : '';
+                                    
+                                    let wArea = '';
+                                    if (assignedWorker?.cleaningArea) {
+                                        wArea = assignedWorker.cleaningArea.includes('구역') 
+                                            ? assignedWorker.cleaningArea 
+                                            : `${assignedWorker.cleaningArea}구역`;
+                                    }
+
                                     const displayName = assignedWorker?.name || workerBlocks[0]?.workerName || '알수없음';
                                     const title = `${displayName} ${wWorkplace} ${wArea}`.trim();
                                     
