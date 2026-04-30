@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './PrintClient.module.css';
 
@@ -21,6 +21,20 @@ export default function PrintClient({ training, signatures, workers = [] }: Prin
         const areaB = b.cleaning_area || '';
         return areaA.localeCompare(areaB, undefined, { numeric: true, sensitivity: 'base' });
     });
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const formatTime = (dateStr: string | Date) => {
+        if (!mounted) return ''; // Hydration 방지
+        try {
+            return new Date(dateStr).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch (e) {
+            return '-';
+        }
+    };
 
     return (
         <div className={styles.printContainer}>
@@ -54,13 +68,13 @@ export default function PrintClient({ training, signatures, workers = [] }: Prin
                         <tbody>
                             <tr>
                                 <th className={styles.th}>교육 일자</th>
-                                <td className={styles.td}>{training.date}</td>
+                                <td className={styles.td}>{training?.date || ''}</td>
                                 <th className={styles.th}>교육 강사</th>
-                                <td className={styles.td}>{training.instructor}</td>
+                                <td className={styles.td}>{training?.instructor || ''}</td>
                             </tr>
                             <tr>
                                 <th className={styles.th}>교육 주제</th>
-                                <td className={styles.td} colSpan={3}>{training.title}</td>
+                                <td className={styles.td} colSpan={3}>{training?.title || ''}</td>
                             </tr>
                             <tr>
                                 <th className={styles.th}>교육 장소</th>
@@ -86,13 +100,13 @@ export default function PrintClient({ training, signatures, workers = [] }: Prin
                         <tbody>
                             {sortedWorkers.length > 0 ? sortedWorkers.map((worker, index) => {
                                 const sig = signatures.find(s => s.user_id === worker.id);
-                                const timeStr = sig ? new Date(sig.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-';
+                                const timeStr = sig && sig.created_at ? formatTime(sig.created_at) : '-';
                                 
                                 return (
                                     <tr key={worker.id} style={{ backgroundColor: sig ? 'white' : '#fff5f5' }}>
                                         <td className={styles.td} style={{ textAlign: 'center' }}>{index + 1}</td>
-                                        <td className={styles.td} style={{ textAlign: 'center' }}>{worker.workplace_name} {worker.cleaning_area}</td>
-                                        <td className={styles.td} style={{ textAlign: 'center', fontWeight: 'bold' }}>{worker.name}</td>
+                                        <td className={styles.td} style={{ textAlign: 'center' }}>{worker.workplace_name || ''} {worker.cleaning_area || ''}</td>
+                                        <td className={styles.td} style={{ textAlign: 'center', fontWeight: 'bold' }}>{worker.name || '알수없음'}</td>
                                         <td className={styles.td} style={{ padding: '4px', textAlign: 'center', height: '60px' }}>
                                             {sig ? (
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
@@ -110,12 +124,12 @@ export default function PrintClient({ training, signatures, workers = [] }: Prin
                                 );
                             }) : signatures.map((sig, index) => {
                                 // Fallback if workers array is empty
-                                const timeStr = new Date(sig.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                                const timeStr = sig.created_at ? formatTime(sig.created_at) : '-';
                                 return (
                                     <tr key={sig.id}>
                                         <td className={styles.td} style={{ textAlign: 'center' }}>{index + 1}</td>
-                                        <td className={styles.td} style={{ textAlign: 'center' }}>{sig.cleaning_area}</td>
-                                        <td className={styles.td} style={{ textAlign: 'center', fontWeight: 'bold' }}>{sig.name}</td>
+                                        <td className={styles.td} style={{ textAlign: 'center' }}>{sig.cleaning_area || ''}</td>
+                                        <td className={styles.td} style={{ textAlign: 'center', fontWeight: 'bold' }}>{sig.name || '알수없음'}</td>
                                         <td className={styles.td} style={{ padding: '4px', textAlign: 'center', height: '60px' }}>
                                             {sig.signature_data ? (
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -144,7 +158,7 @@ export default function PrintClient({ training, signatures, workers = [] }: Prin
                 <div className={styles.footer}>
                     <p>위와 같이 안전보건교육을 실시하고 참석하였음을 확인합니다.</p>
                     <div style={{ marginTop: '30px', textAlign: 'right', paddingRight: '40px' }}>
-                        강사 성명: {training.instructor} (서명/인)
+                        강사 성명: {training?.instructor || ''} (서명/인)
                     </div>
                 </div>
             </div>
