@@ -1768,53 +1768,71 @@ export default function CleaningMapClient({
                             const myZones = zones.filter(z => currentUserRole === 'admin' || z.workerId === currentWorkerId);
                             
                             if (currentUserRole === 'admin') {
-                                const workerIds = Array.from(new Set(myZones.map(z => z.workerId)));
-                                if (workerIds.length === 0) {
+                                const sortedWorkers = [...(workers || [])].sort((a, b) => {
+                                    const wpA = a.workplaceName || '';
+                                    const wpB = b.workplaceName || '';
+                                    if (wpA !== wpB) return wpA.localeCompare(wpB);
+                                    
+                                    const areaA = a.cleaningArea || '';
+                                    const areaB = b.cleaningArea || '';
+                                    return areaA.localeCompare(areaB, undefined, { numeric: true, sensitivity: 'base' });
+                                });
+
+                                if (sortedWorkers.length === 0) {
                                     return (
                                         <div className="text-center py-10 text-slate-400 font-bold">
-                                            아직 할당된 작업자의 구역이 없습니다.
+                                            아직 등록된 작업자가 없습니다.
                                         </div>
                                     );
                                 }
                                 
-                                return workerIds.map((wId, idx) => {
+                                return sortedWorkers.map((w, idx) => {
+                                    const wId = w.id;
                                     const workerBlocks = myZones.filter(z => z.workerId === wId);
                                     const cleanedBlocks = workerBlocks.filter(z => z.isCleaned);
                                     const progress = workerBlocks.length > 0 ? Math.round((cleanedBlocks.length / workerBlocks.length) * 100) : 0;
                                     
-                                    const assignedWorker = workers?.find(w => w.id === wId);
-                                    const wWorkplace = assignedWorker?.workplaceName || '';
-                                    
+                                    const wWorkplace = w.workplaceName || '';
                                     let wArea = '';
-                                    if (assignedWorker?.cleaningArea) {
-                                        wArea = assignedWorker.cleaningArea.includes('구역') 
-                                            ? assignedWorker.cleaningArea 
-                                            : `${assignedWorker.cleaningArea}구역`;
+                                    if (w.cleaningArea) {
+                                        wArea = w.cleaningArea.includes('구역') 
+                                            ? w.cleaningArea 
+                                            : `${w.cleaningArea}구역`;
                                     }
 
-                                    const displayName = assignedWorker?.name || workerBlocks[0]?.workerName || '알수없음';
+                                    const displayName = w.name || '알수없음';
                                     const title = `${displayName} ${wWorkplace} ${wArea}`.trim();
                                     
                                     return (
                                         <div key={idx} className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 mb-3 shadow-sm flex flex-col gap-3">
                                             <div className="flex justify-between items-start">
-                                                <div className="flex-1" onClick={() => focusTerritoryCoords(wId)}>
-                                                    <h3 className="text-lg font-black text-blue-900 mb-1 cursor-pointer hover:underline">{title}</h3>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">
-                                                            총 {workerBlocks.length}개 블록 묶음
-                                                        </span>
-                                                        {progress === 100 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">청소 완료</span>}
+                                                <div className="flex-1" onClick={() => workerBlocks.length > 0 && focusTerritoryCoords(wId)}>
+                                                    <h3 className={`text-lg font-black mb-1 ${workerBlocks.length > 0 ? 'text-blue-900 cursor-pointer hover:underline' : 'text-slate-700'}`}>{title}</h3>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        {workerBlocks.length > 0 ? (
+                                                            <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">
+                                                                총 {workerBlocks.length}개 블록 묶음
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs font-bold bg-red-50 text-red-600 px-2 py-1 rounded-md border border-red-200 shadow-sm">
+                                                                🗺️ 지도 미작성
+                                                            </span>
+                                                        )}
+                                                        {progress === 100 && workerBlocks.length > 0 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">청소 완료</span>}
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2 ml-2">
-                                                    <button onClick={() => focusTerritoryCoords(wId)} className="p-2.5 sm:p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors shrink-0 shadow-sm" title="구역 위치로 이동">
+                                                    <button 
+                                                        onClick={() => focusTerritoryCoords(wId)} 
+                                                        className={`p-2.5 sm:p-3 rounded-xl transition-colors shrink-0 shadow-sm ${workerBlocks.length > 0 ? 'bg-blue-50 hover:bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`} 
+                                                        title="구역 위치로 이동"
+                                                    >
                                                         <Crosshair size={18} className="stroke-[2.5px]" />
                                                     </button>
                                                 </div>
                                             </div>
                                             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                                <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                                                <div className={`h-2.5 rounded-full transition-all ${workerBlocks.length > 0 ? 'bg-blue-600' : 'bg-slate-300'}`} style={{ width: `${workerBlocks.length > 0 ? progress : 0}%` }}></div>
                                             </div>
                                         </div>
                                     );
