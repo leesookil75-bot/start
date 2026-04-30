@@ -733,12 +733,17 @@ export default function CleaningMapClient({
         if (groupZones.length === 0) return;
         
         const allPoints: [number, number][] = [];
+        const isValidArea = (lat: number, lng: number) => lat > 37.4 && lat < 37.8 && lng > 126.4 && lng < 127.2;
+
         groupZones.forEach(z => {
             z.path.forEach(p => {
                 if (Array.isArray(p[0])) { 
-                    (p as unknown as [number, number][]).forEach(c => allPoints.push(c));
+                    (p as unknown as [number, number][]).forEach(c => {
+                        if (isValidArea(c[0], c[1])) allPoints.push(c);
+                    });
                 } else {
-                    allPoints.push(p as [number, number]);
+                    const c = p as [number, number];
+                    if (isValidArea(c[0], c[1])) allPoints.push(c);
                 }
             });
         });
@@ -748,6 +753,8 @@ export default function CleaningMapClient({
             const bounds = L.latLngBounds(allPoints);
             mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
             setUiMode('IDLE');
+        } else {
+            alert('이 구역에 유효한 위치 데이터가 없습니다.');
         }
     };
 
@@ -757,12 +764,17 @@ export default function CleaningMapClient({
         if (workerZones.length === 0) return;
         
         const allPoints: [number, number][] = [];
+        const isValidArea = (lat: number, lng: number) => lat > 37.4 && lat < 37.8 && lng > 126.4 && lng < 127.2;
+
         workerZones.forEach(z => {
             z.path.forEach(p => {
                 if (Array.isArray(p[0])) { 
-                    (p as unknown as [number, number][]).forEach(c => allPoints.push(c));
+                    (p as unknown as [number, number][]).forEach(c => {
+                        if (isValidArea(c[0], c[1])) allPoints.push(c);
+                    });
                 } else {
-                    allPoints.push(p as [number, number]);
+                    const c = p as [number, number];
+                    if (isValidArea(c[0], c[1])) allPoints.push(c);
                 }
             });
         });
@@ -772,6 +784,8 @@ export default function CleaningMapClient({
             const bounds = L.latLngBounds(allPoints);
             mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
             setUiMode('IDLE');
+        } else {
+            alert('해당 작업자의 유효한 위치 데이터가 없습니다.');
         }
     };
 
