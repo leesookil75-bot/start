@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, Polyline, Polygon, Popup, Marker, useMap, useMapEvents, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -495,6 +495,100 @@ export default function CleaningMapClient({
 
     const completedCount = visibleZones.filter(z => z.isCleaned).length;
     const totalCount = visibleZones.length;
+
+    const memoizedTerritoriesData = useMemo(() => {
+        const workerZones = new Map<string, Zone[]>();
+        visibleZones.forEach(z => {
+            if (!workerZones.has(z.workerId)) workerZones.set(z.workerId, []);
+            workerZones.get(z.workerId)!.push(z);
+        });
+
+        const territories: any[] = [];
+        const workerFeatures = new Map<string, any>();
+
+        Array.from(workerZones.entries()).forEach(([workerId, wZones]) => {
+            const assignedWorker = workers?.find(w => w.id === workerId);
+            const wWorkplace = assignedWorker?.workplaceName;
+            const wArea = assignedWorker?.cleaningArea;
+            const displayArea = [wWorkplace, wArea].filter(Boolean).join(' ') || wZones[0]?.groupName || '구역미지정';
+            const name = assignedWorker?.name || wZones[0]?.workerName;
+
+            const bufferedPolys: any[] = [];
+            wZones.forEach(z => {
+                try {
+                    const pts = getZonePoints(z.path).map((pt: any) => [pt[1], pt[0]]);
+                    if (pts.length >= 2) {
+                        let feature;
+                        const isPoly = z.path.length > 0 && Array.isArray(z.path[0][0]);
+                        if (isPoly) {
+                            if (pts[0][0] !== pts[pts.length-1][0] || pts[0][1] !== pts[pts.length-1][1]) {
+                                pts.push([...pts[0]]);
+                            }
+                            if (pts.length >= 4) {
+                                feature = turf.polygon([pts]);
+                            }
+                        } else {
+                            feature = turf.lineString(pts);
+                        }
+                        
+                        if (feature) {
+                            const buf = turf.buffer(feature, 20, { units: 'meters' });
+                            if (buf) bufferedPolys.push(buf);
+                        }
+                    }
+                } catch(e) {}
+            });
+
+            if (bufferedPolys.length > 0) {
+                try {
+                    let merged: any = null;
+                    try {
+                        merged = turf.union(turf.featureCollection(bufferedPolys));
+                    } catch(e) {
+                        merged = bufferedPolys.reduce((acc, curr) => turf.union(acc, curr) || acc);
+                    }
+                    
+                    if (merged) {
+                        workerFeatures.set(workerId, { merged, name, displayArea });
+                    }
+                } catch (e) {
+                    console.error("Union failed", e);
+                }
+            }
+        });
+
+        const colorAssignments = new Map<string, string>();
+        const workerIds = Array.from(workerFeatures.keys());
+        
+        workerIds.forEach((id, idx) => {
+            const featureInfo = workerFeatures.get(id)!;
+            const usedNeighborsColors = new Set<string>();
+
+            workerIds.forEach(otherId => {
+                if (id !== otherId) {
+                    const otherFeature = workerFeatures.get(otherId)!;
+                    try {
+                        if (turf.booleanIntersects(featureInfo.merged, otherFeature.merged)) {
+                            if (colorAssignments.has(otherId)) {
+                                usedNeighborsColors.add(colorAssignments.get(otherId)!);
+                            }
+                        }
+                    } catch(e) {}
+                }
+            });
+
+            let assignedColor = WORKER_COLORS.find(c => !usedNeighborsColors.has(c));
+            if (!assignedColor) {
+                assignedColor = WORKER_COLORS[idx % WORKER_COLORS.length]; // Fallback
+            }
+            colorAssignments.set(id, assignedColor);
+            
+            const leafletCoords = extractLeafletCoordsFromBuffer(featureInfo.merged, []);
+            territories.push({ id: 'terr_' + id, workerId: id, coords: leafletCoords, color: assignedColor, name: featureInfo.name, displayArea: featureInfo.displayArea });
+        });
+
+        return { territories, colorAssignments };
+    }, [visibleZones, workers]);
 
     const findNearestWorker = (lat: number, lng: number): Zone | null => {
         if (zones.length === 0) return null;
@@ -1280,7 +1374,7 @@ export default function CleaningMapClient({
                     </div>
                 )}
 
-                <MapContainer ref={mapRef} center={defaultCenter} zoom={17} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false}>
+                <MapContainer ref={mapRef} center={defaultCenter} zoom={17} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={false} preferCanvas={true}>
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -1402,96 +1496,9 @@ export default function CleaningMapClient({
                     })}
                     {/* Territories and Zones */}
                     {(() => {
-                        const workerZones = new Map<string, Zone[]>();
-                        visibleZones.forEach(z => {
-                            if (!workerZones.has(z.workerId)) workerZones.set(z.workerId, []);
-                            workerZones.get(z.workerId)!.push(z);
-                        });
+                        const { territories, colorAssignments } = memoizedTerritoriesData;
 
-                        const territories: any[] = [];
-                        const workerFeatures = new Map<string, any>();
 
-                        Array.from(workerZones.entries()).forEach(([workerId, wZones]) => {
-                            const assignedWorker = workers?.find(w => w.id === workerId);
-                            const wWorkplace = assignedWorker?.workplaceName;
-                            const wArea = assignedWorker?.cleaningArea;
-                            const displayArea = [wWorkplace, wArea].filter(Boolean).join(' ') || wZones[0]?.groupName || '구역미지정';
-                            const name = assignedWorker?.name || wZones[0]?.workerName;
-
-                            const bufferedPolys: any[] = [];
-                            wZones.forEach(z => {
-                                try {
-                                    const pts = getZonePoints(z.path).map((pt: any) => [pt[1], pt[0]]);
-                                    if (pts.length >= 2) {
-                                        let feature;
-                                        const isPoly = z.path.length > 0 && Array.isArray(z.path[0][0]);
-                                        if (isPoly) {
-                                            if (pts[0][0] !== pts[pts.length-1][0] || pts[0][1] !== pts[pts.length-1][1]) {
-                                                pts.push([...pts[0]]);
-                                            }
-                                            if (pts.length >= 4) {
-                                                feature = turf.polygon([pts]);
-                                            }
-                                        } else {
-                                            feature = turf.lineString(pts);
-                                        }
-                                        
-                                        if (feature) {
-                                            const buf = turf.buffer(feature, 20, { units: 'meters' });
-                                            if (buf) bufferedPolys.push(buf);
-                                        }
-                                    }
-                                } catch(e) {}
-                            });
-
-                            if (bufferedPolys.length > 0) {
-                                try {
-                                    let merged: any = null;
-                                    try {
-                                        merged = turf.union(turf.featureCollection(bufferedPolys));
-                                    } catch(e) {
-                                        merged = bufferedPolys.reduce((acc, curr) => turf.union(acc, curr) || acc);
-                                    }
-                                    
-                                    if (merged) {
-                                        workerFeatures.set(workerId, { merged, name, displayArea });
-                                    }
-                                } catch (e) {
-                                    console.error("Union failed", e);
-                                }
-                            }
-                        });
-
-                        // 공간 인지 배색 (Spatial Graph Coloring)
-                        const colorAssignments = new Map<string, string>();
-                        const workerIds = Array.from(workerFeatures.keys());
-                        
-                        workerIds.forEach((id, idx) => {
-                            const featureInfo = workerFeatures.get(id)!;
-                            const usedNeighborsColors = new Set<string>();
-
-                            workerIds.forEach(otherId => {
-                                if (id !== otherId) {
-                                    const otherFeature = workerFeatures.get(otherId)!;
-                                    try {
-                                        if (turf.booleanIntersects(featureInfo.merged, otherFeature.merged)) {
-                                            if (colorAssignments.has(otherId)) {
-                                                usedNeighborsColors.add(colorAssignments.get(otherId)!);
-                                            }
-                                        }
-                                    } catch(e) {}
-                                }
-                            });
-
-                            let assignedColor = WORKER_COLORS.find(c => !usedNeighborsColors.has(c));
-                            if (!assignedColor) {
-                                assignedColor = WORKER_COLORS[idx % WORKER_COLORS.length]; // Fallback
-                            }
-                            colorAssignments.set(id, assignedColor);
-                            
-                            const leafletCoords = extractLeafletCoordsFromBuffer(featureInfo.merged, []);
-                            territories.push({ id: 'terr_' + id, workerId: id, coords: leafletCoords, color: assignedColor, name: featureInfo.name, displayArea: featureInfo.displayArea });
-                        });
 
                         return (
                             <>
