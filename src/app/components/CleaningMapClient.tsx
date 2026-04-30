@@ -751,6 +751,30 @@ export default function CleaningMapClient({
         }
     };
 
+    const focusTerritoryCoords = (workerId: string) => {
+        if (!mapRef.current) return;
+        const workerZones = zones.filter(z => z.workerId === workerId);
+        if (workerZones.length === 0) return;
+        
+        const allPoints: [number, number][] = [];
+        workerZones.forEach(z => {
+            z.path.forEach(p => {
+                if (Array.isArray(p[0])) { 
+                    (p as unknown as [number, number][]).forEach(c => allPoints.push(c));
+                } else {
+                    allPoints.push(p as [number, number]);
+                }
+            });
+        });
+        
+        if (allPoints.length > 0) {
+            setFocusedTerritoryId(workerId);
+            const bounds = L.latLngBounds(allPoints);
+            mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
+            setUiMode('IDLE');
+        }
+    };
+
     const confirmIssue = async () => {
         if (!pendingIssuePoint || !suggestedWorker) return;
         const newIssue: Omit<Issue, 'workerName'> = {
@@ -1719,51 +1743,99 @@ export default function CleaningMapClient({
                     <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-100/50">
                         {(() => {
                             const myZones = zones.filter(z => currentUserRole === 'admin' || z.workerId === currentWorkerId);
-                            const groupNames = Array.from(new Set(myZones.map(z => z.groupName).filter(Boolean))) as string[];
                             
-                            if (groupNames.length === 0) {
-                                return (
-                                    <div className="text-center py-10 text-slate-400 font-bold">
-                                        아직 설정된 구역 그룹이 없습니다.
-                                    </div>
-                                );
-                            }
-
-                            return groupNames.map((gName, idx) => {
-                                const groupBlocks = myZones.filter(z => z.groupName === gName);
-                                const cleanedBlocks = groupBlocks.filter(z => z.isCleaned);
-                                const progress = Math.round((cleanedBlocks.length / groupBlocks.length) * 100);
+                            if (currentUserRole === 'admin') {
+                                const workerIds = Array.from(new Set(myZones.map(z => z.workerId)));
+                                if (workerIds.length === 0) {
+                                    return (
+                                        <div className="text-center py-10 text-slate-400 font-bold">
+                                            아직 할당된 작업자의 구역이 없습니다.
+                                        </div>
+                                    );
+                                }
                                 
-                                return (
-                                    <div key={idx} className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 mb-3 shadow-sm flex flex-col gap-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1" onClick={() => focusGroupCoords(gName)}>
-                                                <h3 className="text-lg font-black text-blue-900 mb-1 cursor-pointer hover:underline">{gName}</h3>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">
-                                                        총 {groupBlocks.length}개 블록 묶음
-                                                    </span>
-                                                    {progress === 100 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">청소 완료</span>}
+                                return workerIds.map((wId, idx) => {
+                                    const workerBlocks = myZones.filter(z => z.workerId === wId);
+                                    const cleanedBlocks = workerBlocks.filter(z => z.isCleaned);
+                                    const progress = workerBlocks.length > 0 ? Math.round((cleanedBlocks.length / workerBlocks.length) * 100) : 0;
+                                    
+                                    const assignedWorker = workers?.find(w => w.id === wId);
+                                    const wWorkplace = assignedWorker?.workplaceName || '';
+                                    const wArea = assignedWorker?.cleaningArea ? `${assignedWorker.cleaningArea}구역` : '';
+                                    const displayName = assignedWorker?.name || workerBlocks[0]?.workerName || '알수없음';
+                                    const title = `${displayName} ${wWorkplace} ${wArea}`.trim();
+                                    
+                                    return (
+                                        <div key={idx} className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 mb-3 shadow-sm flex flex-col gap-3">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1" onClick={() => focusTerritoryCoords(wId)}>
+                                                    <h3 className="text-lg font-black text-blue-900 mb-1 cursor-pointer hover:underline">{title}</h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">
+                                                            총 {workerBlocks.length}개 블록 묶음
+                                                        </span>
+                                                        {progress === 100 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">청소 완료</span>}
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 ml-2">
+                                                    <button onClick={() => focusTerritoryCoords(wId)} className="p-2.5 sm:p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors shrink-0 shadow-sm" title="구역 위치로 이동">
+                                                        <Crosshair size={18} className="stroke-[2.5px]" />
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 ml-2">
-                                                <button onClick={() => focusGroupCoords(gName)} className="p-2.5 sm:p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors shrink-0 shadow-sm" title="구역 위치로 이동">
-                                                    <Crosshair size={18} className="stroke-[2.5px]" />
-                                                </button>
-                                                <button onClick={() => handleRenameGroup(gName)} className="p-2.5 sm:p-3 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl transition-colors shrink-0 shadow-sm" title="이름 수정">
-                                                    <Edit2 size={18} className="stroke-[2.5px]" />
-                                                </button>
-                                                <button onClick={() => handleDeleteGroup(gName)} className="p-2.5 sm:p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors shrink-0 shadow-sm" title="그룹 삭제">
-                                                    <Trash2 size={18} className="stroke-[2.5px]" />
-                                                </button>
+                                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                                <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
                                             </div>
                                         </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                            <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                                    );
+                                });
+                            } else {
+                                const groupNames = Array.from(new Set(myZones.map(z => z.groupName).filter(Boolean))) as string[];
+                                
+                                if (groupNames.length === 0) {
+                                    return (
+                                        <div className="text-center py-10 text-slate-400 font-bold">
+                                            아직 설정된 구역 그룹이 없습니다.
                                         </div>
-                                    </div>
-                                );
-                            });
+                                    );
+                                }
+
+                                return groupNames.map((gName, idx) => {
+                                    const groupBlocks = myZones.filter(z => z.groupName === gName);
+                                    const cleanedBlocks = groupBlocks.filter(z => z.isCleaned);
+                                    const progress = groupBlocks.length > 0 ? Math.round((cleanedBlocks.length / groupBlocks.length) * 100) : 0;
+                                    
+                                    return (
+                                        <div key={idx} className="bg-white border-2 border-slate-200 rounded-2xl p-4 sm:p-5 mb-3 shadow-sm flex flex-col gap-3">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1" onClick={() => focusGroupCoords(gName)}>
+                                                    <h3 className="text-lg font-black text-blue-900 mb-1 cursor-pointer hover:underline">{gName}</h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md border border-slate-200">
+                                                            총 {groupBlocks.length}개 블록 묶음
+                                                        </span>
+                                                        {progress === 100 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md">청소 완료</span>}
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 ml-2">
+                                                    <button onClick={() => focusGroupCoords(gName)} className="p-2.5 sm:p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors shrink-0 shadow-sm" title="구역 위치로 이동">
+                                                        <Crosshair size={18} className="stroke-[2.5px]" />
+                                                    </button>
+                                                    <button onClick={() => handleRenameGroup(gName)} className="p-2.5 sm:p-3 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl transition-colors shrink-0 shadow-sm" title="이름 수정">
+                                                        <Edit2 size={18} className="stroke-[2.5px]" />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteGroup(gName)} className="p-2.5 sm:p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors shrink-0 shadow-sm" title="그룹 삭제">
+                                                        <Trash2 size={18} className="stroke-[2.5px]" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                                <div className="bg-blue-600 h-2.5 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            }
                         })()}
                     </div>
                 </div>
