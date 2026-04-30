@@ -169,9 +169,9 @@ function MapBoundsFitter({ zones, issues }: { zones: Zone[], issues: Issue[] }) 
             }, 500); 
             hasFitted.current = true;
         } else if (!hasPoints) {
-            // 데이터가 아예 없을 경우 (혹은 아직 다운로드 중일 경우) 기본 김포 시청 부근으로 임시 설정하되,
-            // later에 데이터가 들어오면 다시 중앙정렬을 탈 수 있도록 Lock(hasFitted)을 걸지 않습니다.
+            // 데이터 로드 완료 후 사용자의 데이터가 아예 없을 경우 김포 시청 부근으로 설정
             map.setView([37.615246, 126.715632], 17);
+            hasFitted.current = true; // 스와이프 방해를 막기 위해 데이터가 없어도 Lock을 겁니다.
         }
     }, [zones, issues, map]); 
 
@@ -384,6 +384,7 @@ export default function CleaningMapClient({
     // Core Data
     const [zones, setZones] = useState<Zone[]>([]);
     const [issues, setIssues] = useState<Issue[]>([]);
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
     const router = useRouter();
     
     // Address Search State
@@ -432,6 +433,7 @@ export default function CleaningMapClient({
                 const fetchedIssues = await getIssuesAction();
                 setZones(fetchedZones || []);
                 setIssues(fetchedIssues || []);
+                setIsDataLoaded(true);
             } catch (error) {
                 console.error("Failed to load map data from server", error);
             }
@@ -1381,7 +1383,7 @@ export default function CleaningMapClient({
                     />
 
                     {/* Applies auto bounding box zoom when data changes. Disable when recording track so auto-pan takes priority. */}
-                    {uiMode !== 'ROUTE_GPS' && <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />}
+                    {uiMode !== 'ROUTE_GPS' && isDataLoaded && <MapBoundsFitter zones={visibleZones} issues={visibleIssues} />}
                     <MapFlyTo target={searchFlyTarget} />
                     <MapZoomTracker onZoomChange={setCurrentZoom} />
                     <MapClickHandler onMapClick={() => setFocusedTerritoryId(null)} />
