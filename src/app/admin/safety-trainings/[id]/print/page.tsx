@@ -37,7 +37,12 @@ export default async function PrintSafetyTrainingPage(props: { params: Promise<{
         WHERE role = 'worker'
     `;
 
+    // Serialize to prevent "Only plain objects can be passed to Client Components" error
+    const safeTraining = JSON.parse(JSON.stringify(trainingRows[0]));
+    const safeSignatures = JSON.parse(JSON.stringify(signatureRows));
+    const safeWorkers = JSON.parse(JSON.stringify(workers));
+
     return (
-        <PrintClient training={trainingRows[0]} signatures={signatureRows} workers={workers} />
+        <PrintClient training={safeTraining} signatures={safeSignatures} workers={safeWorkers} />
     );
 }

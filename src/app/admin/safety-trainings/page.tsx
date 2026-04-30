@@ -17,7 +17,9 @@ export default async function SafetyTrainingsPage() {
         ORDER BY created_at DESC
     `;
 
+    const safeRows = JSON.parse(JSON.stringify(rows));
+
     return (
-        <SafetyTrainingClient initialTrainings={rows} />
+        <SafetyTrainingClient initialTrainings={safeRows} />
     );
 }
