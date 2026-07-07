@@ -939,6 +939,71 @@ export async function upsertDailyAttendanceAction(
     }
 }
 
+// 일괄 퇴근: 해당 날짜에 출근했으나 아직 퇴근하지 않은 직원(연차 승인자 제외)을 일괄 퇴근 처리.
+// 단체행사 등으로 관리자가 처리. 체크리스트 작성 여부와 무관.
+export async function bulkCheckOutAction(
+    dateStr: string,   // YYYY-MM-DD (KST 기준)
+    outTime: string,   // HH:mm
+    preview: boolean = false // true면 대상자만 조회하고 실제 퇴근 처리는 하지 않음
+): Promise<{ success: boolean; count?: number; names?: string[]; error?: string }> {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || !/^([01]?\d|2[0-3]):[0-5]\d$/.test(outTime)) {
+        return { success: false, error: '날짜 또는 시각 형식이 올바르지 않습니다.' };
+    }
+
+    try {
+        const dayStart = new Date(`${dateStr}T00:00:00+09:00`).toISOString();
+        const dayEnd = new Date(`${dateStr}T23:59:59+09:00`).toISOString();
+        const outIso = new Date(`${dateStr}T${outTime}:00+09:00`).toISOString();
+        const agencyFilter = currentUser.role === 'super_admin' ? null : (currentUser.agencyId ?? null);
+
+        // 출근했으나 미퇴근 + 연차(승인) 아님 인 직원 조회
+        const { rows: candidates } = await sql`
+            SELECT DISTINCT ci.user_id, u.name
+            FROM attendance_records ci
+            JOIN users u ON u.id = ci.user_id
+            WHERE ci.type = 'CHECK_IN'
+              AND ci.timestamp >= ${dayStart} AND ci.timestamp <= ${dayEnd}
+              AND NOT EXISTS (
+                  SELECT 1 FROM attendance_records co
+                  WHERE co.user_id = ci.user_id AND co.type = 'CHECK_OUT'
+                    AND co.timestamp >= ${dayStart} AND co.timestamp <= ${dayEnd}
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM leave_requests lr
+                  WHERE lr.user_id = ci.user_id AND lr.status = 'APPROVED'
+                    AND lr.start_date <= ${dateStr} AND lr.end_date >= ${dateStr}
+              )
+              AND (${agencyFilter}::uuid IS NULL OR u.agency_id = ${agencyFilter}::uuid)
+        `;
+
+        // 미리보기: 대상자만 반환하고 실제 처리는 하지 않음
+        if (preview) {
+            const names = candidates.map((c) => c.name as string);
+            return { success: true, count: names.length, names };
+        }
+
+        const names: string[] = [];
+        for (const c of candidates) {
+            await sql`
+                INSERT INTO attendance_records (id, user_id, type, timestamp)
+                VALUES (${crypto.randomUUID()}, ${c.user_id}, 'CHECK_OUT', ${outIso})
+            `;
+            names.push(c.name);
+        }
+
+        revalidatePath('/admin/attendance');
+        return { success: true, count: names.length, names };
+    } catch (e: any) {
+        console.error('Bulk checkout error:', e);
+        return { success: false, error: e.message || '일괄 퇴근 처리에 실패했습니다.' };
+    }
+}
+
 // --- Workplace Actions ---
 import {
     addWorkplace,

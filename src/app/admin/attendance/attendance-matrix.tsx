@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { User } from '@/lib/data';
-import { upsertDailyAttendanceAction } from '../../actions';
+import { upsertDailyAttendanceAction, bulkCheckOutAction } from '../../actions';
 import * as XLSX from 'xlsx';
 import styles from './attendance-matrix.module.css';
 
@@ -23,6 +23,49 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
     const [editValue, setEditValue] = useState('');
     const [selectedWorkplace, setSelectedWorkplace] = useState<string>('');
     const [isPending, startTransition] = useTransition();
+
+    // 일괄 퇴근 모달
+    const kstTodayStr = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const [showBulkModal, setShowBulkModal] = useState(false);
+    const [bulkDate, setBulkDate] = useState(kstTodayStr);
+    const [bulkTime, setBulkTime] = useState('18:00');
+    const [pendingNames, setPendingNames] = useState<string[] | null>(null); // 확인 단계용 대상 명단
+    const [isBulkPending, startBulkTransition] = useTransition();
+
+    const openBulkModal = () => {
+        setBulkDate(kstTodayStr);
+        setBulkTime('18:00');
+        setPendingNames(null);
+        setShowBulkModal(true);
+    };
+
+    // 1단계: 대상자 미리 조회
+    const handleBulkPreview = () => {
+        startBulkTransition(async () => {
+            const result = await bulkCheckOutAction(bulkDate, bulkTime, true);
+            if (!result.success) { alert(result.error || '대상자 조회에 실패했습니다.'); return; }
+            if ((result.count ?? 0) === 0) {
+                alert('일괄 퇴근 대상자가 없습니다.\n(출근 미기록·이미 퇴근·연차자 제외)');
+                return;
+            }
+            setPendingNames(result.names || []);
+        });
+    };
+
+    // 2단계: 실제 퇴근 처리
+    const handleBulkConfirm = () => {
+        startBulkTransition(async () => {
+            const result = await bulkCheckOutAction(bulkDate, bulkTime, false);
+            if (result.success) {
+                setShowBulkModal(false);
+                setPendingNames(null);
+                alert(`${result.count}명 일괄 퇴근 처리되었습니다. (${bulkDate} ${bulkTime})`);
+                window.location.reload();
+            } else {
+                alert(result.error || '일괄 퇴근 처리에 실패했습니다.');
+            }
+        });
+    };
 
     const daysInMonth = new Date(year, month, 0).getDate();
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -244,6 +287,12 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                             ))}
                         </select>
                     )}
+                    <button
+                        onClick={openBulkModal}
+                        style={{ background: '#dc2626', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                        ⏹ 일괄 퇴근
+                    </button>
                     <button className={styles.exportButton} onClick={handleExport}>
                         Excel 다운로드
                     </button>
@@ -321,6 +370,89 @@ export default function AttendanceMatrix({ year, month, data }: AttendanceMatrix
                     </tbody>
                 </table>
             </div>
+
+            {showBulkModal && (
+                <div
+                    onClick={() => !isBulkPending && setShowBulkModal(false)}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}
+                >
+                    <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '440px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+                        <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 800, color: '#111' }}>⏹ 일괄 퇴근 처리</h3>
+
+                        {pendingNames === null ? (
+                            // 1단계: 날짜/시각 입력
+                            <>
+                                <p style={{ margin: '0 0 18px', fontSize: '0.9rem', color: '#4b5563', lineHeight: 1.5 }}>
+                                    선택한 날짜에 <b>출근했으나 아직 퇴근하지 않은 직원</b>을 지정한 시각으로 일괄 퇴근 처리합니다.
+                                    <br />연차(승인) 직원은 제외되며, 체크리스트 작성 여부와 무관합니다.
+                                </p>
+
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>날짜</label>
+                                <input
+                                    type="date"
+                                    value={bulkDate}
+                                    onChange={(e) => setBulkDate(e.target.value)}
+                                    style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #d1d5db', marginBottom: '14px', fontSize: '1rem' }}
+                                />
+
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>퇴근 시각</label>
+                                <input
+                                    type="time"
+                                    value={bulkTime}
+                                    onChange={(e) => setBulkTime(e.target.value)}
+                                    style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #d1d5db', marginBottom: '22px', fontSize: '1rem' }}
+                                />
+
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={() => setShowBulkModal(false)}
+                                        disabled={isBulkPending}
+                                        style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', background: '#f3f4f6', color: '#374151', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        취소
+                                    </button>
+                                    <button
+                                        onClick={handleBulkPreview}
+                                        disabled={isBulkPending}
+                                        style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: 'none', background: isBulkPending ? '#9ca3af' : '#2563eb', color: '#fff', fontWeight: 700, cursor: isBulkPending ? 'not-allowed' : 'pointer' }}
+                                    >
+                                        {isBulkPending ? '조회 중...' : '대상 확인'}
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            // 2단계: 대상 명단 확인 후 실행
+                            <>
+                                <p style={{ margin: '0 0 12px', fontSize: '0.95rem', color: '#111', lineHeight: 1.5 }}>
+                                    <b style={{ color: '#dc2626' }}>{bulkDate} {bulkTime}</b> 기준으로 아래 <b>{pendingNames.length}명</b>을 퇴근 처리합니다. 계속할까요?
+                                </p>
+                                <div style={{ maxHeight: '220px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px 12px', marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    {pendingNames.map((n, i) => (
+                                        <span key={i} style={{ background: '#f3f4f6', borderRadius: '999px', padding: '4px 10px', fontSize: '0.85rem', color: '#374151' }}>{n}</span>
+                                    ))}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={() => setPendingNames(null)}
+                                        disabled={isBulkPending}
+                                        style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', background: '#f3f4f6', color: '#374151', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        ← 뒤로
+                                    </button>
+                                    <button
+                                        onClick={handleBulkConfirm}
+                                        disabled={isBulkPending}
+                                        style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: 'none', background: isBulkPending ? '#9ca3af' : '#dc2626', color: '#fff', fontWeight: 700, cursor: isBulkPending ? 'not-allowed' : 'pointer' }}
+                                    >
+                                        {isBulkPending ? '처리 중...' : `${pendingNames.length}명 퇴근 확정`}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
