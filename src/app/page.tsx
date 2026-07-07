@@ -1,5 +1,5 @@
 import styles from './page.module.css';
-import { recordUsage, getCurrentUser, logout, getTodayUserUsage, getMyStats, getMyDailyAttendanceStatus } from './actions';
+import { recordUsage, getCurrentUser, logout, getTodayUserUsage, getMyStats, getMyDailyAttendanceStatus, getTodayPreworkChecklist } from './actions';
 import { redirect } from 'next/navigation';
 import ClientHome from './client-home';
 
@@ -44,6 +44,10 @@ export default async function Home() {
       hasSignedSafetyTraining = signRows.length > 0;
   }
 
+  // 작업 전 안전점검 오늘 완료 여부
+  const preworkChecklist = await getTodayPreworkChecklist();
+  const hasPreworkChecklist = preworkChecklist !== null;
+
   // Get recent notices
   const { getNotices } = await import('@/lib/data');
   const notices = await getNotices();
@@ -61,6 +65,7 @@ export default async function Home() {
         attendanceStatus={attendanceStatus}
         activeSafetyTraining={activeSafetyTraining}
         hasSignedSafetyTraining={hasSignedSafetyTraining}
+        hasPreworkChecklist={hasPreworkChecklist}
         user={{
           id: user.id,
           name: user.name,

@@ -34,6 +34,13 @@ export default function MobileAdminHome({ userName, agencyName, userRole, onLogo
                     </div>
                 </Link>
 
+                <Link href="/admin/checklists" style={{ textDecoration: 'none' }}>
+                    <div style={{ background: '#1e1e1e', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📋</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#fff' }}>작업전 체크리스트</div>
+                    </div>
+                </Link>
+
                 <Link href="/admin/users" style={{ textDecoration: 'none' }}>
                     <div style={{ background: '#1e1e1e', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', aspectRatio: '1', border: '1px solid rgba(255,255,255,0.1)' }}>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>👥</div>

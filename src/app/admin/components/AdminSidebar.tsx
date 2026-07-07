@@ -71,6 +71,12 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                     🦺 안전교육 관리
                 </Link>
                 <Link
+                    href="/admin/checklists"
+                    className={`${styles.sidebarNavItem} ${isActive('/admin/checklists') ? styles.sidebarNavActive : ''}`}
+                >
+                    📋 작업전 체크리스트
+                </Link>
+                <Link
                     href="/map"
                     className={`${styles.sidebarNavItem} ${isActive('/map') ? styles.sidebarNavActive : ''}`}
                 >

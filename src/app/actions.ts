@@ -1273,3 +1273,132 @@ export async function createNewAgencyAction(name: string, phone: string, planTyp
         return { success: false, error: error.message };
     }
 }
+
+
+// --- 작업 전 체크리스트 (Pre-work Safety Checklist) ---
+
+import {
+    getChecklistDef,
+    DEFAULT_CHECKLIST_TYPE,
+    type ChecklistResultItem,
+} from '@/lib/checklists';
+
+// KST 기준 오늘 날짜 문자열(YYYY-MM-DD)
+function getTodayStrKST(): string {
+    const kstNow = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+    const yyyy = kstNow.getUTCFullYear();
+    const mm = String(kstNow.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(kstNow.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+// 오늘 내 체크리스트 제출 결과 조회 (없으면 null)
+export async function getTodayPreworkChecklist(
+    type: string = DEFAULT_CHECKLIST_TYPE
+): Promise<{ results: ChecklistResultItem[]; createdAt: string } | null> {
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    const today = getTodayStrKST();
+    const { rows } = await sql`
+        SELECT results, created_at FROM prework_checklists
+        WHERE user_id = ${user.id} AND checklist_type = ${type} AND work_date = ${today}
+        LIMIT 1
+    `;
+    if (rows.length === 0) return null;
+    return {
+        results: rows[0].results as ChecklistResultItem[],
+        createdAt: new Date(rows[0].created_at).toISOString(),
+    };
+}
+
+// 체크리스트 제출 (하루 1회, 재제출 시 덮어쓰기)
+export async function submitPreworkChecklist(
+    type: string,
+    results: ChecklistResultItem[]
+): Promise<{ success: boolean; error?: string }> {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: '로그인이 필요합니다.' };
+
+    const def = getChecklistDef(type);
+    if (!def) return { success: false, error: '알 수 없는 체크리스트 유형입니다.' };
+
+    // 모든 항목에 유효한 답변이 있는지 검증
+    const validAnswers = new Set(['O', 'V', '-']);
+    const byNo = new Map(results.map(r => [r.no, r.answer]));
+    for (const item of def.items) {
+        const ans = byNo.get(item.no);
+        if (!ans || !validAnswers.has(ans)) {
+            return { success: false, error: '모든 항목을 점검해 주세요.' };
+        }
+    }
+
+    // 정의된 항목만 순서대로 정규화하여 저장
+    const normalized: ChecklistResultItem[] = def.items.map(item => ({
+        no: item.no,
+        answer: byNo.get(item.no)!,
+    }));
+
+    const today = getTodayStrKST();
+    try {
+        const id = crypto.randomUUID();
+        await sql`
+            INSERT INTO prework_checklists (id, user_id, checklist_type, work_date, results)
+            VALUES (${id}, ${user.id}, ${type}, ${today}, ${JSON.stringify(normalized)}::jsonb)
+            ON CONFLICT (user_id, checklist_type, work_date)
+            DO UPDATE SET results = ${JSON.stringify(normalized)}::jsonb, created_at = CURRENT_TIMESTAMP
+        `;
+        revalidatePath('/');
+        revalidatePath('/checklist');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+// 관리자용: 특정 월의 전체 근로자 + 체크리스트 제출 데이터
+export async function getMonthlyChecklistsAction(year: number, month: number) {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'super_admin')) {
+        return { workers: [], submissions: [], workplaces: [] };
+    }
+
+    const allUsers =
+        currentUser.role === 'super_admin' ? await getUsers() : await getUsers(currentUser.agencyId);
+    const workers = allUsers
+        .filter((u) => u.role !== 'admin' && u.role !== 'super_admin')
+        .map((u) => ({
+            id: u.id,
+            name: u.name,
+            cleaningArea: u.cleaningArea,
+            workplaceId: u.workplaceId ?? null,
+        }));
+
+    const wpList =
+        currentUser.role === 'super_admin' ? await getWorkplaces() : await getWorkplaces(currentUser.agencyId);
+    const workplaces = wpList.map((w) => ({ id: w.id, name: w.name }));
+
+    const prefix = `${year}-${String(month).padStart(2, '0')}-`;
+    const { rows } = await sql`
+        SELECT
+            pc.id, pc.user_id, pc.checklist_type, pc.work_date, pc.results, pc.created_at,
+            u.name AS user_name, u.cleaning_area
+        FROM prework_checklists pc
+        LEFT JOIN users u ON u.id = pc.user_id
+        WHERE pc.work_date LIKE ${prefix + '%'}
+        ORDER BY pc.work_date ASC
+    `;
+
+    const submissions = rows.map((r) => ({
+        id: r.id as string,
+        userId: r.user_id as string,
+        checklistType: r.checklist_type as string,
+        workDate: r.work_date as string,
+        results: r.results as { no: number; answer: string }[],
+        createdAt: new Date(r.created_at).toISOString(),
+        userName: (r.user_name as string) ?? '(삭제된 사용자)',
+        cleaningArea: (r.cleaning_area as string) ?? '',
+    }));
+
+    return { workers, submissions, workplaces };
+}

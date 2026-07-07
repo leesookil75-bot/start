@@ -29,6 +29,7 @@ interface ClientHomeProps {
         title: string;
     } | null;
     hasSignedSafetyTraining?: boolean;
+    hasPreworkChecklist?: boolean;
     user: {
         id: string;
         name: string;
@@ -37,7 +38,7 @@ interface ClientHomeProps {
     };
 }
 
-export default function ClientHome({ initialUsage, stats, attendanceStatus, activeSafetyTraining, hasSignedSafetyTraining: initialHasSigned, user, recentNotice }: ClientHomeProps) {
+export default function ClientHome({ initialUsage, stats, attendanceStatus, activeSafetyTraining, hasSignedSafetyTraining: initialHasSigned, hasPreworkChecklist, user, recentNotice }: ClientHomeProps) {
     const router = useRouter();
     // 0 = Usage, 1 = Stats, 2 = Edit Calendar
     const [activeIndex, setActiveIndex] = useState(0);
@@ -235,6 +236,37 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                 {/* Attendance Buttons (Replaces Notice Widget) */}
                 <div className={styles.noticeContainer}>
                     {renderAttendanceButton()}
+                </div>
+
+                {/* 작업 전 안전점검 체크리스트 */}
+                <div className={styles.noticeContainer} style={{ marginBottom: '16px' }}>
+                    <Link
+                        href="/checklist"
+                        style={{
+                            width: '100%',
+                            padding: '18px 20px',
+                            backgroundColor: hasPreworkChecklist ? '#f0fff4' : '#fffaf0',
+                            color: hasPreworkChecklist ? '#276749' : '#c05621',
+                            borderRadius: '16px',
+                            border: `1.5px solid ${hasPreworkChecklist ? '#9ae6b4' : '#fbd38d'}`,
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            textDecoration: 'none',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+                        }}
+                    >
+                        <span style={{ fontSize: '1.6rem' }}>{hasPreworkChecklist ? '✅' : '📋'}</span>
+                        <span style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>작업 전 안전점검</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 500, opacity: 0.85 }}>
+                                {hasPreworkChecklist ? '오늘 점검 완료 · 눌러서 확인/수정' : '오늘 점검을 진행해 주세요'}
+                            </span>
+                        </span>
+                        <span style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>›</span>
+                    </Link>
                 </div>
 
                 {/* Safety Training Banner */}

@@ -128,9 +128,12 @@ export async function initializeDB() {
                 lat DOUBLE PRECISION NOT NULL,
                 lng DOUBLE PRECISION NOT NULL,
                 instructor VARCHAR(255) DEFAULT '관리자',
+                radius INTEGER DEFAULT 500,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         `;
+
+        await sql`ALTER TABLE safety_trainings ADD COLUMN IF NOT EXISTS radius INTEGER DEFAULT 500;`;
 
         await sql`
             CREATE TABLE IF NOT EXISTS safety_signatures (
@@ -142,6 +145,18 @@ export async function initializeDB() {
                 lng DOUBLE PRECISION,
                 distance_m INTEGER,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+
+        await sql`
+            CREATE TABLE IF NOT EXISTS prework_checklists (
+                id UUID PRIMARY KEY,
+                user_id UUID REFERENCES users(id),
+                checklist_type VARCHAR(50) NOT NULL DEFAULT 'street_cleaning',
+                work_date VARCHAR(10) NOT NULL,
+                results JSONB NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, checklist_type, work_date)
             );
         `;
 

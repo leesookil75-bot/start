@@ -1,0 +1,286 @@
+.container {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: calc(100vh - 150px);
+    display: flex;
+    flex-direction: column;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.monthSelector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.monthSelector button {
+    background: #f3f4f6;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.currentMonth {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #111;
+}
+
+.rightControls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.exportButton {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.legend {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #4b5563;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.legendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tableWrapper {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid #9ca3af;
+    position: relative;
+    background-color: #f9fafb;
+}
+
+.matrixTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 0.9rem;
+    color: #111;
+}
+
+.matrixTable th,
+.matrixTable td {
+    border-right: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
+    padding: 0.5rem 0.4rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.matrixTable th {
+    background: #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-weight: 700;
+    color: #1f2937;
+    border-bottom: 2px solid #9ca3af;
+}
+
+.matrixTable thead tr th:first-child {
+    border-left: 1px solid #d1d5db;
+}
+
+.matrixTable tbody tr:nth-child(even) {
+    background-color: #f3f4f6;
+}
+
+.matrixTable tbody tr:hover {
+    background-color: #e0f2fe;
+}
+
+.stickyCol {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 20;
+    border-right: 2px solid #6b7280 !important;
+    min-width: 120px;
+    text-align: left;
+}
+
+.matrixTable tbody tr:nth-child(even) .stickyCol {
+    background-color: #f3f4f6;
+}
+
+.matrixTable tbody tr:hover .stickyCol {
+    background-color: #e0f2fe;
+}
+
+.matrixTable thead th.stickyCol {
+    z-index: 30;
+    background: #e5e7eb;
+}
+
+.name {
+    font-weight: 800;
+    color: #000;
+    font-size: 0.95rem;
+}
+
+.area {
+    font-size: 0.75rem;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.dayCell {
+    cursor: default;
+    min-width: 42px;
+    font-weight: 700;
+}
+
+.dayCell.clickable {
+    cursor: pointer;
+}
+
+/* 상태 색상 */
+.ok {
+    color: #059669;
+}
+
+.issue {
+    background-color: #fff7ed !important;
+    color: #c2410c;
+}
+
+.matrixTable tbody tr:nth-child(even) .issue {
+    background-color: #ffedd5 !important;
+}
+
+.empty {
+    color: #e5e7eb;
+}
+
+.countCol {
+    font-weight: 800;
+    color: #1d4ed8;
+    background: #eff6ff;
+    min-width: 60px;
+}
+
+.weekend {
+    background-color: #fff1f2;
+    color: #881337;
+}
+
+.saturday {
+    background-color: #eff6ff;
+    color: #1e3a8a;
+}
+
+/* 상세 모달 */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.modalContent {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    color: #111;
+}
+
+.modalTitle {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 0 4px;
+}
+
+.modalSub {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0 0 16px;
+}
+
+.modalList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modalItem {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.modalItemNo {
+    color: #9ca3af;
+    min-width: 20px;
+}
+
+.modalItemText {
+    flex: 1;
+    color: #374151;
+    line-height: 1.4;
+}
+
+.modalAnswer {
+    min-width: 76px;
+    text-align: right;
+    font-weight: 700;
+}
+
+.closeButton {
+    margin-top: 16px;
+    width: 100%;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.emptyState {
+    padding: 40px;
+    text-align: center;
+    color: #9ca3af;
+}
