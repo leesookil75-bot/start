@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import { ANSWER_SYMBOLS, ANSWER_LABELS, ChecklistAnswer } from '@/lib/checklists';
 import styles from './checklist-matrix.module.css';
@@ -133,6 +134,10 @@ export default function ChecklistMatrix({ year, month, workers, submissions, wor
 
     return (
         <div className={styles.container}>
+            <div className={styles.pageHeader}>
+                <h1 className={styles.pageTitle}>📋 작업전 체크리스트</h1>
+                <Link href="/admin" className={styles.backLink}>&larr; 대시보드로 돌아가기</Link>
+            </div>
             <div className={styles.controls}>
                 <div className={styles.monthSelector}>
                     <button onClick={() => goMonth(-1)}>&lt;</button>

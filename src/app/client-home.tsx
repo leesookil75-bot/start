@@ -44,6 +44,7 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
     const [activeIndex, setActiveIndex] = useState(0);
     const [showSignatureModal, setShowSignatureModal] = useState(false);
     const [hasSignedSafetyTraining, setHasSignedSafetyTraining] = useState(initialHasSigned);
+    const [showCheckoutWarning, setShowCheckoutWarning] = useState(false);
 
     const handleSwitchToAdmin = async () => {
         const mode = user.role === 'super_admin' ? 'super_admin' : 'admin';
@@ -118,6 +119,25 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                 </Link>
             );
         } else if (attendanceStatus.status === 'WORKING') {
+            // 작업 전 안전점검 미완료 시 퇴근 잠금
+            if (!hasPreworkChecklist) {
+                return (
+                    <button
+                        type="button"
+                        onClick={() => setShowCheckoutWarning(true)}
+                        className={styles.attendanceBtn}
+                        style={{ background: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)', boxShadow: 'none', flexDirection: 'column', gap: '4px', cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className={styles.attendanceIcon}>🔒</div>
+                            <div className={styles.attendanceText}>퇴근하기</div>
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                            작업 전 안전점검을 먼저 완료하세요
+                        </div>
+                    </button>
+                );
+            }
             return (
                 <Link href="/attendance/map?mode=CHECK_OUT" className={`${styles.attendanceBtn} ${styles.checkOutBtn}`}>
                     <div className={styles.attendanceIcon}>🏃</div>
@@ -411,6 +431,41 @@ export default function ClientHome({ initialUsage, stats, attendanceStatus, acti
                         alert('안전교육 출석이 완료되었습니다!');
                     }}
                 />
+            )}
+
+            {/* 퇴근 잠금 경고 모달 (작업 전 안전점검 미완료) */}
+            {showCheckoutWarning && (
+                <div
+                    onClick={() => setShowCheckoutWarning(false)}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ background: '#fff', borderRadius: '18px', padding: '28px 22px', width: '100%', maxWidth: '380px', textAlign: 'center', boxShadow: '0 12px 32px rgba(0,0,0,0.25)' }}
+                    >
+                        <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>⚠️</div>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1a202c', margin: '0 0 10px' }}>
+                            작업 전 안전점검 미완료
+                        </h3>
+                        <p style={{ fontSize: '0.95rem', color: '#4a5568', lineHeight: 1.5, margin: '0 0 22px' }}>
+                            오늘 <b>작업 전 안전점검</b>을 완료해야 퇴근할 수 있습니다.<br />
+                            지금 점검을 진행해 주세요.
+                        </p>
+                        <Link
+                            href="/checklist"
+                            style={{ display: 'block', width: '100%', padding: '15px', background: '#2b6cb0', color: '#fff', borderRadius: '12px', fontSize: '1.05rem', fontWeight: 700, textDecoration: 'none', marginBottom: '10px' }}
+                        >
+                            안전점검 하러 가기
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => setShowCheckoutWarning(false)}
+                            style={{ width: '100%', padding: '13px', background: '#edf2f7', color: '#4a5568', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                            닫기
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

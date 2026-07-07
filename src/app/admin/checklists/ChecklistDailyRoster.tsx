@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { ANSWER_SYMBOLS, ANSWER_LABELS, ChecklistAnswer } from '@/lib/checklists';
 
 interface Submission {
@@ -124,6 +125,9 @@ export default function ChecklistDailyRoster({ submissions, workers, defs, today
 
     return (
         <div style={{ padding: '20px 16px', color: '#fff' }}>
+            <Link href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#90cdf4', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600, marginBottom: '12px' }}>
+                ← 관리자 홈으로
+            </Link>
             <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '4px' }}>📋 작업전 체크리스트</h1>
             <p style={{ color: '#a0aec0', marginBottom: '18px', fontSize: '0.9rem' }}>
                 전체 근로자의 작업 전 안전점검 제출 현황입니다.

@@ -8,6 +8,36 @@
     flex-direction: column;
 }
 
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pageTitle {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111;
+    margin: 0;
+}
+
+.backLink {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    background: #eff6ff;
+}
+
+.backLink:hover {
+    background: #dbeafe;
+}
+
 .controls {
     display: flex;
     justify-content: space-between;
